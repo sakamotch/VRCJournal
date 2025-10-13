@@ -54,7 +54,7 @@ CREATE TABLE session_players (
     session_id INTEGER NOT NULL,
     player_id INTEGER NOT NULL,
     joined_at TEXT NOT NULL,
-    leaved_at TEXT,
+    left_at TEXT,
     PRIMARY KEY (session_id, player_id),
     FOREIGN KEY (session_id) REFERENCES sessions(id) ON DELETE CASCADE,
     FOREIGN KEY (player_id) REFERENCES players(id) ON DELETE CASCADE
