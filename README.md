@@ -45,11 +45,10 @@
    docker-compose exec tauri-dev bash
    ```
 
-4. **Tauriプロジェクトを初期化（初回のみ）**
+4. **プロジェクトを初期化（初回のみ）**
    ```bash
    # コンテナ内で実行
    npm create tauri-app
-   # または既存のフロントエンドフレームワークを使用
    ```
 
 5. **開発サーバーを起動**
@@ -76,8 +75,3 @@ docker-compose logs -f
 # コンテナを再ビルド
 docker-compose up -d --build
 ```
-
-### トラブルシューティング
-
-- **GUIアプリが表示されない場合**: Docker環境ではGUIの表示に制限があります。開発時はWebビュー機能を使用するか、ホスト環境でのビルドを検討してください。
-- **ポートが使用中の場合**: [docker-compose.yml](docker-compose.yml) のポート設定を変更してください。
