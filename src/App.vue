@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
 import { invoke } from "@tauri-apps/api/core";
-import { open } from "@tauri-apps/plugin-opener";
 
 interface LocalUser {
   id: number;
@@ -112,13 +111,12 @@ function formatDuration(startStr: string, endStr: string | null): string {
 
 async function openInviteUrl(session: Session) {
   try {
-    const url = await invoke<string>("generate_invite_url", {
+    // バックエンドでURLを生成して開く
+    const url = await invoke<string>("open_invite_url", {
       worldId: session.worldId,
       instanceId: session.instanceId,
     });
 
-    // デフォルトブラウザで開く
-    await open(url);
     message.value = `招待URLを開きました: ${url}`;
 
     // 3秒後にメッセージをクリア
