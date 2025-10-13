@@ -4521,6 +4521,7 @@ version = "0.1.0"
 dependencies = [
  "chrono",
  "notify",
+ "regex",
  "rusqlite",
  "serde",
  "serde_json",

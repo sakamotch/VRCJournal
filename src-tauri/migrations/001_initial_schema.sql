@@ -20,9 +20,6 @@ CREATE TABLE sessions (
     world_id TEXT NOT NULL,
     world_name TEXT,
     instance_id TEXT NOT NULL,
-    instance_type TEXT,
-    instance_owner_id TEXT,
-    region TEXT,
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (local_user_id) REFERENCES local_users(id) ON DELETE CASCADE
 );
