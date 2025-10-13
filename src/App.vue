@@ -22,12 +22,22 @@ interface Session {
   playerCount: number;
 }
 
+interface Player {
+  id: number;
+  displayName: string;
+  userId: string;
+  firstSeenAt: string;
+  lastSeenAt: string;
+}
+
 const isWatching = ref(false);
 const isLoading = ref(false);
 const message = ref("");
 const localUsers = ref<LocalUser[]>([]);
 const sessions = ref<Session[]>([]);
 const selectedUserId = ref<number | null>(null);
+const expandedSessions = ref<Set<number>>(new Set());
+const sessionPlayers = ref<Map<number, Player[]>>(new Map());
 
 async function startWatching() {
   isLoading.value = true;
@@ -130,6 +140,48 @@ async function openInviteUrl(session: Session) {
   }
 }
 
+async function toggleSessionPlayers(sessionId: number) {
+  if (expandedSessions.value.has(sessionId)) {
+    // 折りたたむ
+    expandedSessions.value.delete(sessionId);
+  } else {
+    // 展開する
+    expandedSessions.value.add(sessionId);
+
+    // プレイヤーリストをまだ取得していない場合は取得
+    if (!sessionPlayers.value.has(sessionId)) {
+      try {
+        const players = await invoke<Player[]>("get_session_players", {
+          sessionId: sessionId,
+        });
+        sessionPlayers.value.set(sessionId, players);
+      } catch (error) {
+        console.error("Failed to load players:", error);
+        message.value = `プレイヤー読み込みエラー: ${error}`;
+      }
+    }
+  }
+}
+
+async function openUserPage(userId: string) {
+  try {
+    const url = await invoke<string>("open_user_page", {
+      userId: userId,
+    });
+
+    message.value = `ユーザーページを開きました: ${url}`;
+
+    // 3秒後にメッセージをクリア
+    setTimeout(() => {
+      if (message.value.startsWith("ユーザーページを開きました")) {
+        message.value = "";
+      }
+    }, 3000);
+  } catch (error) {
+    message.value = `エラー: ${error}`;
+  }
+}
+
 onMounted(() => {
   loadUsers();
   loadSessions();
@@ -198,9 +250,42 @@ onMounted(() => {
                 <span class="user-name">{{ session.userName }}</span>
                 <span class="time">{{ formatDateTime(session.startedAt) }}</span>
                 <span class="duration">{{ formatDuration(session.startedAt, session.endedAt) }}</span>
-                <span class="player-count">👥 {{ session.playerCount }}人</span>
+                <span
+                  class="player-count clickable"
+                  @click="toggleSessionPlayers(session.id)"
+                  :title="expandedSessions.has(session.id) ? 'プレイヤーを非表示' : 'プレイヤーを表示'"
+                >
+                  👥 {{ session.playerCount }}人
+                  {{ expandedSessions.has(session.id) ? '▼' : '▶' }}
+                </span>
               </div>
             </div>
+
+            <!-- プレイヤーリスト -->
+            <div
+              v-if="expandedSessions.has(session.id)"
+              class="player-list"
+            >
+              <h4>参加プレイヤー</h4>
+              <div
+                v-if="sessionPlayers.get(session.id)"
+                class="player-items"
+              >
+                <div
+                  v-for="player in sessionPlayers.get(session.id)"
+                  :key="player.id"
+                  class="player-item"
+                  @click="openUserPage(player.userId)"
+                >
+                  <span class="player-name">{{ player.displayName }}</span>
+                  <span class="player-icon">🔗</span>
+                </div>
+              </div>
+              <div v-else class="loading-players">
+                読み込み中...
+              </div>
+            </div>
+
             <div class="session-details">
               <div class="detail-item">
                 <span class="label">Instance:</span>
@@ -396,6 +481,72 @@ onMounted(() => {
   color: #e74c3c;
 }
 
+.clickable {
+  cursor: pointer;
+  user-select: none;
+  transition: color 0.2s;
+}
+
+.clickable:hover {
+  color: #c0392b;
+}
+
+.player-list {
+  margin-top: 1rem;
+  padding: 1rem;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+}
+
+.player-list h4 {
+  margin: 0 0 0.75rem 0;
+  font-size: 0.95rem;
+  color: #495057;
+}
+
+.player-items {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.player-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  background-color: white;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.player-item:hover {
+  background-color: #e9ecef;
+  transform: translateX(4px);
+}
+
+.player-name {
+  font-weight: 500;
+  color: #2c3e50;
+}
+
+.player-icon {
+  opacity: 0.5;
+  transition: opacity 0.2s;
+}
+
+.player-item:hover .player-icon {
+  opacity: 1;
+}
+
+.loading-players {
+  text-align: center;
+  padding: 1rem;
+  color: #6c757d;
+  font-size: 0.9rem;
+}
+
 .session-details {
   margin-top: 0.5rem;
   padding-top: 0.5rem;
@@ -481,6 +632,26 @@ onMounted(() => {
   }
 
   .world-name {
+    color: #e0e0e0;
+  }
+
+  .player-list {
+    background-color: #1a1a1a;
+  }
+
+  .player-list h4 {
+    color: #b0b0b0;
+  }
+
+  .player-item {
+    background-color: #2a2a2a;
+  }
+
+  .player-item:hover {
+    background-color: #3a3a3a;
+  }
+
+  .player-name {
     color: #e0e0e0;
   }
 }

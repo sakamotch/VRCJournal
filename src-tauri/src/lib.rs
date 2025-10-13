@@ -270,6 +270,45 @@ async fn get_database_stats(state: tauri::State<'_, AppState>) -> Result<String,
     ))
 }
 
+/// セッションのプレイヤー一覧を取得
+#[tauri::command]
+async fn get_session_players(
+    state: tauri::State<'_, AppState>,
+    session_id: i64,
+) -> Result<serde_json::Value, String> {
+    let db = state.db.lock().unwrap();
+    let conn = db.connection();
+
+    let players = db::operations::get_players_in_session(conn, session_id)
+        .map_err(|e| format!("Failed to get players: {}", e))?;
+
+    let json = serde_json::json!(
+        players.into_iter().map(|p| {
+            serde_json::json!({
+                "id": p.id,
+                "displayName": p.display_name,
+                "userId": p.user_id,
+                "firstSeenAt": p.first_seen_at.to_rfc3339(),
+                "lastSeenAt": p.last_seen_at.to_rfc3339(),
+            })
+        }).collect::<Vec<_>>()
+    );
+
+    Ok(json)
+}
+
+/// プレイヤーのVRChatユーザーページをデフォルトブラウザで開く
+#[tauri::command]
+async fn open_user_page(app: tauri::AppHandle, user_id: String) -> Result<String, String> {
+    let url = format!("https://vrchat.com/home/user/{}", user_id);
+
+    // デフォルトブラウザで開く
+    app.opener().open_url(&url, None::<&str>)
+        .map_err(|e| format!("Failed to open URL: {}", e))?;
+
+    Ok(url)
+}
+
 /// テスト用: 指定したログファイルを読み込んでパース＆DB登録
 #[tauri::command]
 async fn test_parse_log_file(
@@ -408,6 +447,8 @@ pub fn run() {
             get_local_users,
             get_sessions,
             get_database_stats,
+            get_session_players,
+            open_user_page,
             test_parse_log_file
         ])
         .run(tauri::generate_context!())
