@@ -4,7 +4,7 @@ use crate::parser::types::LogEvent;
 use notify::{Config, Event, EventKind, RecommendedWatcher, RecursiveMode, Watcher};
 use std::collections::HashMap;
 use std::fs::File;
-use std::io::{BufRead, BufReader, Seek, SeekFrom};
+use std::io::{Read, Seek, SeekFrom};
 use std::path::PathBuf;
 use std::sync::mpsc::{channel, Receiver, Sender};
 use std::sync::{Arc, Mutex};
@@ -73,15 +73,21 @@ impl LogWatcher {
         file.seek(SeekFrom::Start(start_position))
             .map_err(|e| format!("Failed to seek file: {}", e))?;
 
-        let reader = BufReader::new(file);
         let mut events = Vec::new();
         let mut current_position = start_position;
 
-        for line in reader.lines() {
-            let line = line.map_err(|e| format!("Failed to read line: {}", e))?;
+        // バイト列を読み込んで、UTF-8エラーを無視しながら行ごとに処理
+        let mut buffer = Vec::new();
+        file.read_to_end(&mut buffer)
+            .map_err(|e| format!("Failed to read file: {}", e))?;
+
+        // 不正なUTF-8シーケンスを置換して文字列に変換
+        let content = String::from_utf8_lossy(&buffer);
+
+        for line in content.lines() {
             current_position += line.len() as u64 + 1; // +1 for newline
 
-            if let Some(event) = self.parser.parse_line(&line) {
+            if let Some(event) = self.parser.parse_line(line) {
                 events.push(event);
             }
         }
@@ -183,14 +189,20 @@ impl LogWatcher {
         file.seek(SeekFrom::Start(position))
             .map_err(|e| format!("Failed to seek file: {}", e))?;
 
-        let reader = BufReader::new(file);
         let mut new_position = position;
 
-        for line in reader.lines() {
-            let line = line.map_err(|e| format!("Failed to read line: {}", e))?;
+        // バイト列を読み込んで、UTF-8エラーを無視しながら行ごとに処理
+        let mut buffer = Vec::new();
+        file.read_to_end(&mut buffer)
+            .map_err(|e| format!("Failed to read file: {}", e))?;
+
+        // 不正なUTF-8シーケンスを置換して文字列に変換
+        let content = String::from_utf8_lossy(&buffer);
+
+        for line in content.lines() {
             new_position += line.len() as u64 + 1; // +1 for newline
 
-            if let Some(event) = parser.parse_line(&line) {
+            if let Some(event) = parser.parse_line(line) {
                 let _ = event_tx.send((log_path.clone(), event));
             }
         }
