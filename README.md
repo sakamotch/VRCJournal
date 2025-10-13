@@ -20,58 +20,33 @@
 - ログファイルはローカルで処理され、外部への共有は一切行いません。
 
 
-## 開発環境のセットアップ（Docker）
+## 開発環境のセットアップ(Windows環境)
 
-### 必要なもの
+### 前提条件
 
-- Docker
-- Docker Compose
+- [nvm-windows](https://github.com/coreybutler/nvm-windows)でNode.jsをインストール
+- [Rustup](https://rustup.rs/)でRustをインストール
 
-### 環境構築手順
-
-1. **リポジトリをクローン**
-   ```bash
-   git clone <repository-url>
-   cd VRCJournal
-   ```
-
-2. **Dockerコンテナをビルド・起動**
-   ```bash
-   docker-compose up -d --build
-   ```
-
-3. **コンテナに入る**
-   ```bash
-   docker-compose exec tauri-dev bash
-   ```
-
-4. **プロジェクトを初期化（初回のみ）**
-   ```bash
-   # コンテナ内で実行
-   npm create tauri-app
-   ```
-
-5. **開発サーバーを起動**
-   ```bash
-   # コンテナ内で実行
-   npm run tauri dev
-   ```
-
-### よく使うコマンド
+### セットアップ手順
 
 ```bash
-# コンテナを起動
-docker-compose up -d
+# リポジトリのクローン
+git clone https://github.com/sakamotch/VRCJournal.git
+cd VRCJournal
 
-# コンテナを停止
-docker-compose down
+# 依存関係のインストール
+npm install
 
-# コンテナに入る
-docker-compose exec tauri-dev bash
-
-# ログを確認
-docker-compose logs -f
-
-# コンテナを再ビルド
-docker-compose up -d --build
+# 開発サーバーの起動
+npm run tauri dev
 ```
+
+初回起動時はRustの依存関係のビルドに時間がかかります。
+
+### ビルド
+
+```bash
+npm run tauri build
+```
+
+ビルドされたファイルは `src-tauri/target/release/` に出力されます。
