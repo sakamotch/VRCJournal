@@ -18,7 +18,13 @@ RUN apt-get update && apt-get install -y \
     libxcb-render0-dev \
     libxcb-shape0-dev \
     libxcb-xfixes0-dev \
+    fonts-noto-cjk \
+    fonts-noto-cjk-extra \
+    fontconfig \
     && rm -rf /var/lib/apt/lists/*
+
+# フォントキャッシュを更新
+RUN fc-cache -fv
 
 RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
     && apt-get install -y nodejs
