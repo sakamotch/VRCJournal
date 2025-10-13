@@ -127,6 +127,90 @@ async fn get_log_path() -> Result<String, String> {
         .map(|p| p.to_string_lossy().to_string())
 }
 
+/// ローカルユーザー一覧を取得
+#[tauri::command]
+async fn get_local_users(state: tauri::State<'_, AppState>) -> Result<serde_json::Value, String> {
+    let db = state.db.lock().unwrap();
+    let conn = db.connection();
+
+    let users = db::operations::get_all_local_users(conn)
+        .map_err(|e| format!("Failed to get local users: {}", e))?;
+
+    let json = serde_json::json!(
+        users.into_iter().map(|u| {
+            serde_json::json!({
+                "id": u.id,
+                "displayName": u.display_name,
+                "userId": u.user_id,
+                "firstAuthenticatedAt": u.first_authenticated_at.to_rfc3339(),
+                "lastAuthenticatedAt": u.last_authenticated_at.to_rfc3339(),
+            })
+        }).collect::<Vec<_>>()
+    );
+
+    Ok(json)
+}
+
+/// セッション一覧を取得
+#[tauri::command]
+async fn get_sessions(
+    state: tauri::State<'_, AppState>,
+    local_user_id: Option<i64>,
+    limit: Option<i64>,
+) -> Result<serde_json::Value, String> {
+    let db = state.db.lock().unwrap();
+    let conn = db.connection();
+
+    let limit = limit.unwrap_or(50);
+
+    let query = if let Some(user_id) = local_user_id {
+        format!(
+            "SELECT s.id, s.local_user_id, lu.display_name as user_name, s.started_at, s.ended_at,
+                    s.world_id, s.world_name, s.instance_id,
+                    (SELECT COUNT(*) FROM session_players WHERE session_id = s.id) as player_count
+             FROM sessions s
+             JOIN local_users lu ON s.local_user_id = lu.id
+             WHERE s.local_user_id = {}
+             ORDER BY s.started_at DESC
+             LIMIT {}",
+            user_id, limit
+        )
+    } else {
+        format!(
+            "SELECT s.id, s.local_user_id, lu.display_name as user_name, s.started_at, s.ended_at,
+                    s.world_id, s.world_name, s.instance_id,
+                    (SELECT COUNT(*) FROM session_players WHERE session_id = s.id) as player_count
+             FROM sessions s
+             JOIN local_users lu ON s.local_user_id = lu.id
+             ORDER BY s.started_at DESC
+             LIMIT {}",
+            limit
+        )
+    };
+
+    let mut stmt = conn.prepare(&query)
+        .map_err(|e| format!("Failed to prepare statement: {}", e))?;
+
+    let sessions = stmt.query_map([], |row| {
+        Ok(serde_json::json!({
+            "id": row.get::<_, i64>(0)?,
+            "localUserId": row.get::<_, i64>(1)?,
+            "userName": row.get::<_, String>(2)?,
+            "startedAt": row.get::<_, String>(3)?,
+            "endedAt": row.get::<_, Option<String>>(4)?,
+            "worldId": row.get::<_, String>(5)?,
+            "worldName": row.get::<_, Option<String>>(6)?,
+            "instanceId": row.get::<_, String>(7)?,
+            "playerCount": row.get::<_, i64>(8)?,
+        }))
+    })
+    .map_err(|e| format!("Failed to query sessions: {}", e))?
+    .collect::<Result<Vec<_>, _>>()
+    .map_err(|e| format!("Failed to collect sessions: {}", e))?;
+
+    Ok(serde_json::json!(sessions))
+}
+
 /// データベースの統計情報を取得
 #[tauri::command]
 async fn get_database_stats(state: tauri::State<'_, AppState>) -> Result<String, String> {
@@ -289,6 +373,8 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             start_log_watching,
             get_log_path,
+            get_local_users,
+            get_sessions,
             get_database_stats,
             test_parse_log_file
         ])

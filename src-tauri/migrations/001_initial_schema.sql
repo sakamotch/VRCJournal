@@ -104,3 +104,16 @@ CREATE TABLE memos (
     FOREIGN KEY (session_id) REFERENCES sessions(id) ON DELETE CASCADE
 );
 CREATE INDEX idx_memos_session ON memos(session_id);
+
+-- 10. Log Files (ログファイルの解析状態を追跡)
+CREATE TABLE IF NOT EXISTS log_files (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    file_path TEXT NOT NULL UNIQUE,
+    file_size INTEGER NOT NULL DEFAULT 0,
+    last_processed_position INTEGER NOT NULL DEFAULT 0,
+    last_modified_at TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_log_files_file_path ON log_files(file_path);
+CREATE INDEX IF NOT EXISTS idx_log_files_last_modified ON log_files(last_modified_at);
