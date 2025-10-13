@@ -127,6 +127,15 @@ async fn get_log_path() -> Result<String, String> {
         .map(|p| p.to_string_lossy().to_string())
 }
 
+/// インスタンス招待URLを生成
+#[tauri::command]
+async fn generate_invite_url(world_id: String, instance_id: String) -> Result<String, String> {
+    // VRChatのインスタンス招待URL形式
+    // vrchat://launch?id=wrld_xxx:instance_id
+    let url = format!("vrchat://launch?id={}:{}", world_id, instance_id);
+    Ok(url)
+}
+
 /// ローカルユーザー一覧を取得
 #[tauri::command]
 async fn get_local_users(state: tauri::State<'_, AppState>) -> Result<serde_json::Value, String> {
@@ -373,6 +382,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             start_log_watching,
             get_log_path,
+            generate_invite_url,
             get_local_users,
             get_sessions,
             get_database_stats,

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
 import { invoke } from "@tauri-apps/api/core";
+import { open } from "@tauri-apps/plugin-opener";
 
 interface LocalUser {
   id: number;
@@ -109,6 +110,28 @@ function formatDuration(startStr: string, endStr: string | null): string {
   }
 }
 
+async function openInviteUrl(session: Session) {
+  try {
+    const url = await invoke<string>("generate_invite_url", {
+      worldId: session.worldId,
+      instanceId: session.instanceId,
+    });
+
+    // デフォルトブラウザで開く
+    await open(url);
+    message.value = `招待URLを開きました: ${url}`;
+
+    // 3秒後にメッセージをクリア
+    setTimeout(() => {
+      if (message.value.startsWith("招待URLを開きました")) {
+        message.value = "";
+      }
+    }, 3000);
+  } catch (error) {
+    message.value = `エラー: ${error}`;
+  }
+}
+
 onMounted(() => {
   loadUsers();
   loadSessions();
@@ -185,6 +208,9 @@ onMounted(() => {
                 <span class="label">Instance:</span>
                 <span class="value">{{ session.instanceId }}</span>
               </div>
+              <button @click="openInviteUrl(session)" class="open-url-button">
+                🚀 ワールドを開く
+              </button>
             </div>
           </div>
         </div>
@@ -376,11 +402,32 @@ onMounted(() => {
   margin-top: 0.5rem;
   padding-top: 0.5rem;
   border-top: 1px solid #e9ecef;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
 }
 
 .detail-item {
   font-size: 0.85rem;
   color: #6c757d;
+  flex: 1;
+}
+
+.open-url-button {
+  padding: 0.4rem 0.8rem;
+  background-color: #3498db;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  transition: background-color 0.2s;
+}
+
+.open-url-button:hover {
+  background-color: #2980b9;
 }
 
 .label {
