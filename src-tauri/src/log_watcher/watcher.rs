@@ -74,25 +74,24 @@ impl LogWatcher {
             .map_err(|e| format!("Failed to seek file: {}", e))?;
 
         let mut events = Vec::new();
-        let mut current_position = start_position;
 
         // バイト列を読み込んで、UTF-8エラーを無視しながら行ごとに処理
         let mut buffer = Vec::new();
-        file.read_to_end(&mut buffer)
+        let bytes_read = file.read_to_end(&mut buffer)
             .map_err(|e| format!("Failed to read file: {}", e))?;
 
         // 不正なUTF-8シーケンスを置換して文字列に変換
         let content = String::from_utf8_lossy(&buffer);
 
         for line in content.lines() {
-            current_position += line.len() as u64 + 1; // +1 for newline
-
             if let Some(event) = self.parser.parse_line(line) {
                 events.push(event);
             }
         }
 
-        Ok((events, current_position))
+        // 新しい位置は元の位置 + 実際に読み込んだバイト数
+        let final_position = start_position + bytes_read as u64;
+        Ok((events, final_position))
     }
 
     /// ディレクトリ監視を開始（ファイルの変更と新規作成を検知）
@@ -189,24 +188,27 @@ impl LogWatcher {
         file.seek(SeekFrom::Start(position))
             .map_err(|e| format!("Failed to seek file: {}", e))?;
 
-        let mut new_position = position;
-
         // バイト列を読み込んで、UTF-8エラーを無視しながら行ごとに処理
         let mut buffer = Vec::new();
-        file.read_to_end(&mut buffer)
+        let bytes_read = file.read_to_end(&mut buffer)
             .map_err(|e| format!("Failed to read file: {}", e))?;
+
+        // 新しく読み込んだデータがない場合は何もしない
+        if bytes_read == 0 {
+            return Ok(());
+        }
 
         // 不正なUTF-8シーケンスを置換して文字列に変換
         let content = String::from_utf8_lossy(&buffer);
 
         for line in content.lines() {
-            new_position += line.len() as u64 + 1; // +1 for newline
-
             if let Some(event) = parser.parse_line(line) {
                 let _ = event_tx.send((log_path.clone(), event));
             }
         }
 
+        // 新しい位置は元の位置 + 実際に読み込んだバイト数
+        let new_position = position + bytes_read as u64;
         states.insert(log_path.clone(), new_position);
         Ok(())
     }
