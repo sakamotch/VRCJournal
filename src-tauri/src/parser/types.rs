@@ -16,6 +16,11 @@ pub enum LogEvent {
         world_id: String,
         instance_id: String,
     },
+    /// ルーム名取得 (Joining or Creating Room)
+    EnteringRoom {
+        timestamp: DateTime<Utc>,
+        world_name: String,
+    },
     /// プレイヤー参加
     PlayerJoined {
         timestamp: DateTime<Utc>,
@@ -41,6 +46,7 @@ impl LogEvent {
         match self {
             LogEvent::UserAuthenticated { timestamp, .. } => timestamp,
             LogEvent::JoiningWorld { timestamp, .. } => timestamp,
+            LogEvent::EnteringRoom { timestamp, .. } => timestamp,
             LogEvent::PlayerJoined { timestamp, .. } => timestamp,
             LogEvent::PlayerLeft { timestamp, .. } => timestamp,
             LogEvent::AvatarChanged { timestamp, .. } => timestamp,

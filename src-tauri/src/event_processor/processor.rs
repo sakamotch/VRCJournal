@@ -60,6 +60,17 @@ impl EventProcessor {
                 }
             }
 
+            LogEvent::EnteringRoom { world_name, .. } => {
+                // 最後に作成したセッションのworld_nameを更新
+                if let Some(session_id) = self.current_session_id {
+                    conn.execute(
+                        "UPDATE sessions SET world_name = ?1 WHERE id = ?2",
+                        rusqlite::params![world_name, session_id],
+                    )?;
+                    println!("World name updated: {} (session: {})", world_name, session_id);
+                }
+            }
+
             LogEvent::PlayerJoined { timestamp, display_name, user_id } => {
                 if let Some(session_id) = self.current_session_id {
                     // プレイヤーを作成または更新

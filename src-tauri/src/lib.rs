@@ -305,6 +305,7 @@ async fn test_parse_log_file(
             let event_type = match &event {
                 parser::types::LogEvent::UserAuthenticated { .. } => "UserAuthenticated",
                 parser::types::LogEvent::JoiningWorld { .. } => "JoiningWorld",
+                parser::types::LogEvent::EnteringRoom { .. } => "EnteringRoom",
                 parser::types::LogEvent::PlayerJoined { .. } => "PlayerJoined",
                 parser::types::LogEvent::PlayerLeft { .. } => "PlayerLeft",
                 parser::types::LogEvent::AvatarChanged { .. } => "AvatarChanged",

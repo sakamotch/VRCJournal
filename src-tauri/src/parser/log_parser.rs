@@ -5,6 +5,7 @@ use regex::Regex;
 pub struct VRChatLogParser {
     auth_regex: Regex,
     joining_regex: Regex,
+    entering_room_regex: Regex,
     player_joined_regex: Regex,
     player_left_regex: Regex,
     avatar_changed_regex: Regex,
@@ -21,6 +22,11 @@ impl VRChatLogParser {
             // 2025.10.13 09:53:22 Debug      -  [Behaviour] Joining wrld_xxx:instance_id~region(jp)
             joining_regex: Regex::new(
                 r"(\d{4}\.\d{2}\.\d{2} \d{2}:\d{2}:\d{2}) .* \[Behaviour\] Joining (wrld_[a-f0-9\-]+):(.+)"
+            ).unwrap(),
+
+            // 2025.10.13 10:55:55 Debug      -  [Behaviour] Joining or Creating Room: VRChat Home
+            entering_room_regex: Regex::new(
+                r"(\d{4}\.\d{2}\.\d{2} \d{2}:\d{2}:\d{2}) .* \[Behaviour\] Joining or Creating Room: (.+)"
             ).unwrap(),
 
             // 2025.10.13 11:02:36 Debug      -  [Behaviour] OnPlayerJoined DisplayName (usr_xxx)
@@ -54,7 +60,14 @@ impl VRChatLogParser {
                 timestamp: parse_timestamp(&caps[1])?,
                 world_id: caps[2].to_string(),
                 instance_id: caps[3].to_string(),
-                world_name: String::new(), // 次の "Entering Room:" 行で取得
+                world_name: String::new(), // 次の "EnteringRoom" イベントで更新
+            });
+        }
+
+        if let Some(caps) = self.entering_room_regex.captures(line) {
+            return Some(LogEvent::EnteringRoom {
+                timestamp: parse_timestamp(&caps[1])?,
+                world_name: caps[2].to_string(),
             });
         }
 
