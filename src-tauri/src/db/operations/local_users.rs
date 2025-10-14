@@ -26,13 +26,13 @@ pub fn upsert_local_user(
         )
         .optional()?;
 
-    if let Some(id) = existing {
-        // 既存ユーザーの最終認証時刻を更新
+    let local_user_id = if let Some(id) = existing {
+        // 既存ユーザーの最終認証時刻と表示名を更新
         conn.execute(
             "UPDATE local_users SET last_authenticated_at = ?1, display_name = ?2 WHERE id = ?3",
             (authenticated_at.to_rfc3339(), display_name, id),
         )?;
-        Ok(id)
+        id
     } else {
         // 新規ユーザーを作成
         conn.execute(
@@ -45,8 +45,13 @@ pub fn upsert_local_user(
                 authenticated_at.to_rfc3339(),
             ),
         )?;
-        Ok(conn.last_insert_rowid())
-    }
+        conn.last_insert_rowid()
+    };
+
+    // 名前履歴を作成または更新
+    super::upsert_local_user_name_history(conn, local_user_id, display_name, authenticated_at)?;
+
+    Ok(local_user_id)
 }
 
 /// すべてのローカルユーザーを取得

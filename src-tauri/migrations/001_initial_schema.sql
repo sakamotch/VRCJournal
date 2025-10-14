@@ -6,17 +6,29 @@ CREATE TABLE local_users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     display_name TEXT NOT NULL,
     user_id TEXT NOT NULL UNIQUE,
-    first_authenticated_at TEXT NOT NULL,
-    last_authenticated_at TEXT NOT NULL
+    first_authenticated_at TEXT NOT NULL,  -- ISO 8601 / RFC3339形式
+    last_authenticated_at TEXT NOT NULL    -- ISO 8601 / RFC3339形式
 );
 CREATE INDEX idx_local_users_user_id ON local_users(user_id);
+
+-- 1-1. Local User Name History (自分のアカウントの名前変更履歴)
+CREATE TABLE local_user_name_history (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    local_user_id INTEGER NOT NULL,
+    display_name TEXT NOT NULL,
+    first_seen_at TEXT NOT NULL,           -- ISO 8601 / RFC3339形式
+    last_seen_at TEXT NOT NULL,            -- ISO 8601 / RFC3339形式
+    FOREIGN KEY (local_user_id) REFERENCES local_users(id) ON DELETE CASCADE
+);
+CREATE INDEX idx_local_user_name_history_user ON local_user_name_history(local_user_id);
+CREATE INDEX idx_local_user_name_history_seen_at ON local_user_name_history(first_seen_at);
 
 -- 2. Sessions (セッション情報)
 CREATE TABLE sessions (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     local_user_id INTEGER NOT NULL,
-    started_at TEXT NOT NULL,
-    ended_at TEXT,
+    started_at TEXT NOT NULL,              -- ISO 8601 / RFC3339形式（日付検索用）
+    ended_at TEXT,                         -- ISO 8601 / RFC3339形式
     world_id TEXT NOT NULL,
     world_name TEXT,
     instance_id TEXT NOT NULL,
@@ -24,8 +36,9 @@ CREATE TABLE sessions (
     FOREIGN KEY (local_user_id) REFERENCES local_users(id) ON DELETE CASCADE
 );
 CREATE INDEX idx_sessions_local_user ON sessions(local_user_id);
-CREATE INDEX idx_sessions_started_at ON sessions(started_at);
+CREATE INDEX idx_sessions_started_at ON sessions(started_at);  -- 日付範囲検索用
 CREATE INDEX idx_sessions_world_id ON sessions(world_id);
+CREATE INDEX idx_sessions_user_started ON sessions(local_user_id, started_at DESC);  -- 複合インデックス（ユーザー別時系列）
 
 -- 3. Avatars (アバター情報)
 CREATE TABLE avatars (
@@ -77,19 +90,22 @@ CREATE INDEX idx_session_players_session ON session_players(session_id);
 CREATE INDEX idx_session_players_player ON session_players(player_id);
 
 -- 7. Avatar Usages (アバター使用履歴)
+-- セッション内での各プレイヤーのアバター変更を記録
+-- 自分（local_user）のアバター変更も含む
 CREATE TABLE avatar_usages (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     session_id INTEGER NOT NULL,
-    user_id TEXT NOT NULL,
-    avatar_id INTEGER,
-    avatar_name TEXT NOT NULL,
-    changed_at TEXT NOT NULL,
+    player_id INTEGER,                     -- NULLの場合は自分（local_user）のアバター
+    avatar_id INTEGER,                     -- avatarsテーブルへの参照
+    changed_at TEXT NOT NULL,              -- ISO 8601 / RFC3339形式
     FOREIGN KEY (session_id) REFERENCES sessions(id) ON DELETE CASCADE,
+    FOREIGN KEY (player_id) REFERENCES players(id) ON DELETE CASCADE,
     FOREIGN KEY (avatar_id) REFERENCES avatars(id) ON DELETE SET NULL
 );
 CREATE INDEX idx_avatar_usages_session ON avatar_usages(session_id);
-CREATE INDEX idx_avatar_usages_user ON avatar_usages(user_id);
+CREATE INDEX idx_avatar_usages_player ON avatar_usages(player_id);
 CREATE INDEX idx_avatar_usages_avatar ON avatar_usages(avatar_id);
+CREATE INDEX idx_avatar_usages_session_changed ON avatar_usages(session_id, changed_at);  -- セッション内時系列
 
 -- 8. Tags (タグマスター)
 CREATE TABLE tags (

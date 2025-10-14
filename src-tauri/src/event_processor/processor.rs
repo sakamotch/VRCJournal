@@ -124,45 +124,57 @@ impl EventProcessor {
 
             LogEvent::AvatarChanged { timestamp, display_name, avatar_name } => {
                 if let Some(session_id) = self.current_session_id {
-                    // アバターを作成または更新（名前ベース）
+                    // アバターを作成または更新
                     let avatar_id = operations::upsert_avatar_by_name(
                         conn,
                         &avatar_name,
-                        None, // avatar_idは現状取得できない
+                        None,
                         timestamp,
                     )?;
 
-                    // user_idを特定（ローカルユーザーまたはプレイヤー）
-                    // display_nameからuser_idを逆引きする必要があるが、ここでは簡易実装
-                    // 実際にはローカルユーザーのdisplay_nameと一致するか確認
-                    let user_id = if let Some(local_user_id) = self.current_local_user_id {
-                        // ローカルユーザーの情報を取得してdisplay_nameを比較
-                        // 簡易実装: ローカルユーザーと仮定
-                        if let Ok(Some(local_user)) = operations::get_local_user_by_user_id(conn, &self.get_current_user_id(conn)?) {
-                            if local_user.display_name == display_name {
-                                local_user.user_id
-                            } else {
-                                // プレイヤーの中から探す
-                                self.find_user_id_by_display_name(&display_name).unwrap_or_default()
-                            }
-                        } else {
-                            String::new()
-                        }
+                    // display_nameから誰のアバター変更かを判定
+                    // 1. まず自分（local_user）のdisplay_nameと比較
+                    let is_local_user = if let Some(local_user_id) = self.current_local_user_id {
+                        conn.query_row(
+                            "SELECT display_name FROM local_users WHERE id = ?1",
+                            [local_user_id],
+                            |row| row.get::<_, String>(0),
+                        ).ok().map(|name| name == display_name).unwrap_or(false)
                     } else {
-                        String::new()
+                        false
                     };
 
-                    if !user_id.is_empty() {
-                        // アバター使用履歴を記録
+                    if is_local_user {
+                        // 自分のアバター変更（player_id = None）
                         operations::record_avatar_usage(
                             conn,
                             session_id,
-                            &user_id,
+                            None,
                             Some(avatar_id),
-                            &avatar_name,
                             timestamp,
                         )?;
-                        println!("Avatar changed: {} -> {}", display_name, avatar_name);
+                        println!("Avatar changed (self): {} -> {}", display_name, avatar_name);
+                    } else {
+                        // 他プレイヤーのアバター変更
+                        // display_nameでplayer_idを探す（逆引き）
+                        if let Some((_user_id, &player_id)) = self.player_ids.iter()
+                            .find(|(user_id, _)| {
+                                // players テーブルから display_name を取得して比較
+                                conn.query_row(
+                                    "SELECT display_name FROM players WHERE user_id = ?1",
+                                    [user_id.as_str()],
+                                    |row| row.get::<_, String>(0),
+                                ).ok().map(|name| name == display_name).unwrap_or(false)
+                            }) {
+                            operations::record_avatar_usage(
+                                conn,
+                                session_id,
+                                Some(player_id),
+                                Some(avatar_id),
+                                timestamp,
+                            )?;
+                            println!("Avatar changed (player): {} -> {}", display_name, avatar_name);
+                        }
                     }
                 } else {
                     eprintln!("Warning: AvatarChanged event without active session");
@@ -171,25 +183,6 @@ impl EventProcessor {
         }
 
         Ok(())
-    }
-
-    fn get_current_user_id(&self, conn: &Connection) -> Result<String, rusqlite::Error> {
-        if let Some(local_user_id) = self.current_local_user_id {
-            let user_id = conn.query_row(
-                "SELECT user_id FROM local_users WHERE id = ?1",
-                [local_user_id],
-                |row| row.get(0),
-            )?;
-            Ok(user_id)
-        } else {
-            Ok(String::new())
-        }
-    }
-
-    fn find_user_id_by_display_name(&self, _display_name: &str) -> Option<String> {
-        // player_idsから逆引き（display_nameベースでは難しいので簡易実装）
-        // 本来はplayers テーブルを検索すべき
-        None
     }
 }
 
