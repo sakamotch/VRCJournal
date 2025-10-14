@@ -9,12 +9,6 @@ use std::path::PathBuf;
 use std::sync::mpsc::{channel, Receiver, Sender};
 use std::sync::{Arc, Mutex};
 
-/// ファイルごとの処理状態
-struct FileState {
-    path: PathBuf,
-    position: u64,
-}
-
 pub struct LogWatcher {
     log_dir: PathBuf,
     file_states: Arc<Mutex<HashMap<PathBuf, u64>>>,

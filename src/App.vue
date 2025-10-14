@@ -32,7 +32,6 @@ interface Player {
   lastSeenAt: string;
 }
 
-const isWatching = ref(false);
 const isLoading = ref(false);
 const message = ref("");
 const localUsers = ref<LocalUser[]>([]);
@@ -40,26 +39,6 @@ const sessions = ref<Session[]>([]);
 const selectedUserId = ref<number | null>(null);
 const expandedSessions = ref<Set<number>>(new Set());
 const sessionPlayers = ref<Map<number, Player[]>>(new Map());
-
-async function startWatching() {
-  isLoading.value = true;
-  message.value = "監視を開始しています...";
-
-  try {
-    const response = await invoke<string>("start_log_watching");
-    message.value = response;
-    isWatching.value = true;
-
-    // ユーザーとセッションを読み込み
-    await loadUsers();
-    await loadSessions();
-  } catch (error) {
-    message.value = `エラー: ${error}`;
-    isWatching.value = false;
-  } finally {
-    isLoading.value = false;
-  }
-}
 
 async function loadUsers() {
   try {
@@ -78,9 +57,6 @@ async function loadSessions() {
       limit: 100,
     });
     sessions.value = result;
-
-    // セッションを更新したらプレイヤーリストのキャッシュをクリア
-    sessionPlayers.value.clear();
   } catch (error) {
     console.error("Failed to load sessions:", error);
     message.value = `セッション読み込みエラー: ${error}`;
@@ -198,13 +174,62 @@ function formatPlayerName(player: Player): string {
 let unlistenFn: UnlistenFn | null = null;
 
 onMounted(async () => {
+  // 初期データ読み込み
   loadUsers();
   loadSessions();
 
   // Rustからのイベントをリッスン
-  unlistenFn = await listen("log-event-processed", () => {
-    // ログイベントが処理されたら、セッション一覧を更新
-    loadSessions();
+  unlistenFn = await listen<any>("log-event", (event) => {
+    // ProcessedEvent を処理
+    const processedEvent = event.payload;
+
+    switch (processedEvent.type) {
+      case "LocalPlayerUpdated":
+        // アカウントリストのみ更新
+        loadUsers();
+        break;
+
+      case "SessionCreated":
+        // 新しいセッションを先頭に追加
+        loadSessions();
+        break;
+
+      case "SessionEnded":
+        // 特定のセッションの終了時刻を更新
+        const endedSession = sessions.value.find(s => s.id === processedEvent.session_id);
+        if (endedSession) {
+          endedSession.endedAt = processedEvent.ended_at;
+        }
+        break;
+
+      case "PlayerJoined":
+      case "PlayerLeft":
+        // 特定のセッションのプレイヤー数を更新し、キャッシュを無効化
+        const sessionId = processedEvent.session_id;
+        const targetSession = sessions.value.find(s => s.id === sessionId);
+        if (targetSession) {
+          // プレイヤー数を再取得するためセッション全体をリロード
+          invoke<any>("get_session_by_id", { sessionId })
+            .then(updatedSession => {
+              targetSession.playerCount = updatedSession.playerCount;
+            })
+            .catch(err => console.error("Failed to update session:", err));
+
+          // プレイヤーリストのキャッシュを無効化
+          if (sessionPlayers.value.has(sessionId)) {
+            sessionPlayers.value.delete(sessionId);
+            // 展開中の場合は再取得
+            if (expandedSessions.value.has(sessionId)) {
+              invoke<Player[]>("get_session_players", { sessionId })
+                .then(players => {
+                  sessionPlayers.value.set(sessionId, players);
+                })
+                .catch(err => console.error("Failed to reload players:", err));
+            }
+          }
+        }
+        break;
+    }
   });
 });
 
@@ -220,13 +245,6 @@ onUnmounted(() => {
   <div class="app">
     <header class="header">
       <h1>VRCJournal</h1>
-      <button
-        @click="startWatching"
-        :disabled="isLoading || isWatching"
-        class="watch-button"
-      >
-        {{ isWatching ? "✓ 監視中" : "ログ監視を開始" }}
-      </button>
     </header>
 
     <div v-if="message" class="message">{{ message }}</div>
@@ -255,12 +273,7 @@ onUnmounted(() => {
 
       <!-- メインエリア: セッション一覧 -->
       <main class="main">
-        <div class="session-header">
-          <h2>セッション履歴</h2>
-          <button @click="loadSessions" :disabled="isLoading" class="refresh-button">
-            更新
-          </button>
-        </div>
+        <h2>セッション履歴</h2>
 
         <div v-if="isLoading" class="loading">読み込み中...</div>
 
@@ -338,9 +351,6 @@ onUnmounted(() => {
 }
 
 .header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
   padding: 1rem 1.5rem;
   background-color: #2c3e50;
   color: white;
@@ -350,25 +360,6 @@ onUnmounted(() => {
 .header h1 {
   margin: 0;
   font-size: 1.5rem;
-}
-
-.watch-button {
-  padding: 0.5rem 1rem;
-  background-color: #3498db;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 1rem;
-}
-
-.watch-button:hover:not(:disabled) {
-  background-color: #2980b9;
-}
-
-.watch-button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
 }
 
 .message {
@@ -429,29 +420,9 @@ onUnmounted(() => {
   overflow-y: auto;
 }
 
-.session-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
-}
-
-.session-header h2 {
-  margin: 0;
+.main h2 {
+  margin: 0 0 1rem 0;
   font-size: 1.3rem;
-}
-
-.refresh-button {
-  padding: 0.5rem 1rem;
-  background-color: #6c757d;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.refresh-button:hover:not(:disabled) {
-  background-color: #5a6268;
 }
 
 .loading, .empty {

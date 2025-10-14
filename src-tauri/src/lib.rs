@@ -9,6 +9,7 @@ use tauri_plugin_opener::OpenerExt;
 use event_processor::EventProcessor;
 
 // グローバルステート
+#[derive(Clone)]
 pub struct AppState {
     db: Arc<Mutex<db::Database>>,
     event_processor: Arc<Mutex<EventProcessor>>,
@@ -16,137 +17,11 @@ pub struct AppState {
 
 // Tauri Commands
 
-/// ログファイルの監視を開始
-#[tauri::command]
-async fn start_log_watching(
-    app: tauri::AppHandle,
-    state: tauri::State<'_, AppState>,
-) -> Result<String, String> {
-    use std::collections::HashMap;
-    use chrono::Utc;
-
-    let mut watcher = log_watcher::LogWatcher::new()?;
-
-    // データベースから既に処理済みのファイル位置を取得
-    let db = state.db.lock().unwrap();
-    let conn = db.connection();
-
-    let tracked_files = db::operations::get_all_log_files(conn)
-        .map_err(|e| format!("Failed to get tracked files: {}", e))?;
-
-    let mut file_positions: HashMap<std::path::PathBuf, u64> = HashMap::new();
-    for (path, _size, position, _modified) in tracked_files {
-        file_positions.insert(std::path::PathBuf::from(path), position);
-    }
-
-    drop(db); // DB lockを解放
-
-    // 全てのログファイルを読み込み（続きから）
-    let events = watcher.read_all_logs(file_positions)?;
-
-    let mut files_count = 0;
-    let mut events_count = 0;
-
-    // イベントをデータベースに保存
-    let db = state.db.lock().unwrap();
-    let conn = db.connection();
-    let mut processor = state.event_processor.lock().unwrap();
-
-    let mut current_file: Option<String> = None;
-
-    for (file_path, event) in events {
-        let file_path_str = file_path.to_string_lossy().to_string();
-
-        // 新しいファイルに移った時
-        if current_file.as_ref() != Some(&file_path_str) {
-            current_file = Some(file_path_str.clone());
-            files_count += 1;
-        }
-
-        processor.process_event(conn, event)
-            .map_err(|e| format!("Failed to process event: {}", e))?;
-        events_count += 1;
-    }
-
-    // ファイル位置をデータベースに保存
-    let file_states = watcher.get_file_states();
-    for (path, position) in file_states.iter() {
-        let path_str = path.to_string_lossy().to_string();
-        let metadata = std::fs::metadata(path).map_err(|e| format!("Failed to get metadata: {}", e))?;
-        let file_size = metadata.len();
-        let modified = metadata.modified()
-            .map_err(|e| format!("Failed to get modified time: {}", e))?;
-        let modified_dt = chrono::DateTime::<Utc>::from(modified);
-
-        db::operations::upsert_log_file(conn, &path_str, file_size, modified_dt)
-            .map_err(|e| format!("Failed to upsert log file: {}", e))?;
-        db::operations::update_log_file_position(conn, &path_str, *position)
-            .map_err(|e| format!("Failed to update position: {}", e))?;
-    }
-
-    drop(processor);
-    drop(db);
-
-    // ファイル監視を開始
-    watcher.start_watching()?;
-
-    // バックグラウンドでイベントを処理
-    let db_clone = Arc::clone(&state.db);
-    let processor_clone = Arc::clone(&state.event_processor);
-    let app_handle = app.clone();
-
-    std::thread::spawn(move || {
-        loop {
-            if let Ok((file_path, event)) = watcher.recv_event() {
-                let db = db_clone.lock().unwrap();
-                let conn = db.connection();
-                let mut processor = processor_clone.lock().unwrap();
-
-                if let Err(e) = processor.process_event(conn, event) {
-                    eprintln!("Failed to process event: {}", e);
-                    continue;
-                }
-
-                // ファイル位置を更新
-                let file_states = watcher.get_file_states();
-                if let Some(position) = file_states.get(&file_path) {
-                    let path_str = file_path.to_string_lossy().to_string();
-                    if let Err(e) = db::operations::update_log_file_position(conn, &path_str, *position) {
-                        eprintln!("Failed to update file position: {}", e);
-                    }
-                }
-
-                // フロントエンドにイベントを通知
-                if let Err(e) = app_handle.emit("log-event-processed", ()) {
-                    eprintln!("Failed to emit event: {}", e);
-                }
-            }
-        }
-    });
-
-    Ok(format!(
-        "Log watching started\nProcessed {} files with {} events",
-        files_count, events_count
-    ))
-}
-
 /// VRChatログディレクトリのパスを取得
 #[tauri::command]
 async fn get_log_path() -> Result<String, String> {
     log_watcher::get_vrchat_log_path()
         .map(|p| p.to_string_lossy().to_string())
-}
-
-/// インスタンス招待URLを生成
-#[tauri::command]
-async fn generate_invite_url(world_id: String, instance_id: String) -> Result<String, String> {
-    // VRChatのWeb招待URL形式
-    // https://vrchat.com/home/launch?worldId=wrld_xxx&instanceId=instance_id
-    let url = format!(
-        "https://vrchat.com/home/launch?worldId={}&instanceId={}",
-        world_id, instance_id
-    );
-    Ok(url)
 }
 
 /// インスタンス招待URLを生成してデフォルトブラウザで開く
@@ -180,8 +55,12 @@ async fn get_local_users(state: tauri::State<'_, AppState>) -> Result<serde_json
                 "id": p.id,
                 "displayName": p.display_name,
                 "userId": p.user_id,
-                "firstAuthenticatedAt": p.first_authenticated_at.map(|t| t.to_rfc3339()),
-                "lastAuthenticatedAt": p.last_authenticated_at.map(|t| t.to_rfc3339()),
+                "firstAuthenticatedAt": p.first_authenticated_at
+                    .expect("Local player must have first_authenticated_at")
+                    .to_rfc3339(),
+                "lastAuthenticatedAt": p.last_authenticated_at
+                    .expect("Local player must have last_authenticated_at")
+                    .to_rfc3339(),
             })
         }).collect::<Vec<_>>()
     );
@@ -248,6 +127,42 @@ async fn get_sessions(
     .map_err(|e| format!("Failed to collect sessions: {}", e))?;
 
     Ok(serde_json::json!(sessions))
+}
+
+/// 特定のセッションを取得
+#[tauri::command]
+async fn get_session_by_id(
+    state: tauri::State<'_, AppState>,
+    session_id: i64,
+) -> Result<serde_json::Value, String> {
+    let db = state.db.lock().unwrap();
+    let conn = db.connection();
+
+    let session = conn.query_row(
+        "SELECT s.id, s.player_id, p.display_name as user_name, s.started_at, s.ended_at,
+                s.world_id, s.world_name, s.instance_id,
+                (SELECT COUNT(*) FROM session_players WHERE session_id = s.id) as player_count
+         FROM sessions s
+         JOIN players p ON s.player_id = p.id
+         WHERE s.id = ?1 AND p.is_local = 1",
+        [session_id],
+        |row| {
+            Ok(serde_json::json!({
+                "id": row.get::<_, i64>(0)?,
+                "localUserId": row.get::<_, i64>(1)?,
+                "userName": row.get::<_, String>(2)?,
+                "startedAt": row.get::<_, String>(3)?,
+                "endedAt": row.get::<_, Option<String>>(4)?,
+                "worldId": row.get::<_, String>(5)?,
+                "worldName": row.get::<_, Option<String>>(6)?,
+                "instanceId": row.get::<_, String>(7)?,
+                "playerCount": row.get::<_, i64>(8)?,
+            }))
+        }
+    )
+    .map_err(|e| format!("Failed to get session: {}", e))?;
+
+    Ok(session)
 }
 
 /// データベースの統計情報を取得
@@ -320,110 +235,14 @@ async fn open_user_page(app: tauri::AppHandle, user_id: String) -> Result<String
     Ok(url)
 }
 
-/// テスト用: 指定したログファイルを読み込んでパース＆DB登録
-#[tauri::command]
-async fn test_parse_log_file(
-    state: tauri::State<'_, AppState>,
-    file_path: String,
-) -> Result<String, String> {
-    use std::fs::File;
-    use std::io::{BufRead, BufReader};
-    use parser::log_parser::VRChatLogParser;
-
-    let file = File::open(&file_path)
-        .map_err(|e| format!("Failed to open file: {}", e))?;
-
-    let reader = BufReader::new(file);
-    let parser = VRChatLogParser::new();
-
-    let mut total_lines = 0;
-    let mut parsed_events = 0;
-    let mut event_types = std::collections::HashMap::new();
-
-    let db = state.db.lock().unwrap();
-    let conn = db.connection();
-    let mut processor = state.event_processor.lock().unwrap();
-
-    for line in reader.lines() {
-        total_lines += 1;
-        let line = line.map_err(|e| format!("Failed to read line: {}", e))?;
-
-        if let Some(event) = parser.parse_line(&line) {
-            parsed_events += 1;
-
-            // イベントタイプをカウント
-            let event_type = match &event {
-                parser::types::LogEvent::UserAuthenticated { .. } => "UserAuthenticated",
-                parser::types::LogEvent::JoiningWorld { .. } => "JoiningWorld",
-                parser::types::LogEvent::EnteringRoom { .. } => "EnteringRoom",
-                parser::types::LogEvent::PlayerJoined { .. } => "PlayerJoined",
-                parser::types::LogEvent::PlayerLeft { .. } => "PlayerLeft",
-                parser::types::LogEvent::AvatarChanged { .. } => "AvatarChanged",
-            };
-            *event_types.entry(event_type).or_insert(0) += 1;
-
-            // データベースに保存
-            processor.process_event(conn, event)
-                .map_err(|e| format!("Failed to process event: {}", e))?;
-        }
-    }
-
-    // 統計情報を取得
-    let local_players: i64 = conn.query_row(
-        "SELECT COUNT(*) FROM players WHERE is_local = 1",
-        [],
-        |row| row.get(0)
-    ).unwrap_or(0);
-
-    let sessions: i64 = conn.query_row(
-        "SELECT COUNT(*) FROM sessions",
-        [],
-        |row| row.get(0)
-    ).unwrap_or(0);
-
-    let remote_players: i64 = conn.query_row(
-        "SELECT COUNT(*) FROM players WHERE is_local = 0",
-        [],
-        |row| row.get(0)
-    ).unwrap_or(0);
-
-    let avatars: i64 = conn.query_row(
-        "SELECT COUNT(*) FROM avatars",
-        [],
-        |row| row.get(0)
-    ).unwrap_or(0);
-
-    let mut result = format!(
-        "=== Parse Results ===\n\
-         Total lines: {}\n\
-         Parsed events: {}\n\
-         \n\
-         === Event Types ===\n",
-        total_lines, parsed_events
-    );
-
-    for (event_type, count) in event_types.iter() {
-        result.push_str(&format!("{}: {}\n", event_type, count));
-    }
-
-    result.push_str(&format!(
-        "\n\
-         === Database Stats ===\n\
-         Local Players: {}\n\
-         Sessions: {}\n\
-         Remote Players: {}\n\
-         Avatars: {}\n",
-        local_players, sessions, remote_players, avatars
-    ));
-
-    Ok(result)
-}
-
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {
+            use std::collections::HashMap;
+            use chrono::Utc;
+
             // データベースパスを決定
             let app_data_dir = app.path().app_data_dir()
                 .expect("Failed to get app data dir");
@@ -446,21 +265,130 @@ pub fn run() {
                 event_processor: Arc::new(Mutex::new(EventProcessor::new())),
             };
 
-            app.manage(app_state);
+            app.manage(app_state.clone());
+
+            // バックグラウンドスレッドでログ監視を自動開始
+            let app_handle = app.handle().clone();
+            std::thread::spawn(move || {
+                match log_watcher::LogWatcher::new() {
+                    Ok(mut watcher) => {
+                        // データベースから処理済みファイル位置を取得
+                        let db = app_state.db.lock().unwrap();
+                        let conn = db.connection();
+
+                        let file_positions = match db::operations::get_all_log_files(conn) {
+                            Ok(tracked_files) => {
+                                let mut positions = HashMap::new();
+                                for (path, _size, position, _modified) in tracked_files {
+                                    positions.insert(std::path::PathBuf::from(path), position);
+                                }
+                                positions
+                            }
+                            Err(e) => {
+                                eprintln!("Failed to get tracked files: {}", e);
+                                HashMap::new()
+                            }
+                        };
+                        drop(db);
+
+                        // 全てのログファイルを読み込み
+                        match watcher.read_all_logs(file_positions) {
+                            Ok(events) => {
+                                let db = app_state.db.lock().unwrap();
+                                let conn = db.connection();
+                                let mut processor = app_state.event_processor.lock().unwrap();
+
+                                let mut events_count = 0;
+                                for (_file_path, event) in events {
+                                    if let Err(e) = processor.process_event(conn, event) {
+                                        eprintln!("Failed to process event: {}", e);
+                                    } else {
+                                        events_count += 1;
+                                    }
+                                }
+
+                                // ファイル位置をデータベースに保存
+                                let file_states = watcher.get_file_states();
+                                for (path, position) in file_states.iter() {
+                                    let path_str = path.to_string_lossy().to_string();
+                                    if let Ok(metadata) = std::fs::metadata(path) {
+                                        let file_size = metadata.len();
+                                        if let Ok(modified) = metadata.modified() {
+                                            let modified_dt = chrono::DateTime::<Utc>::from(modified);
+                                            let _ = db::operations::upsert_log_file(conn, &path_str, file_size, modified_dt);
+                                            let _ = db::operations::update_log_file_position(conn, &path_str, *position);
+                                        }
+                                    }
+                                }
+
+                                drop(processor);
+                                drop(db);
+
+                                println!("Initial log processing completed: {} events", events_count);
+
+                                // ファイル監視を開始
+                                if let Err(e) = watcher.start_watching() {
+                                    eprintln!("Failed to start watching: {}", e);
+                                    return;
+                                }
+
+                                // バックグラウンドでイベントを処理
+                                let db_clone = Arc::clone(&app_state.db);
+                                let processor_clone = Arc::clone(&app_state.event_processor);
+
+                                loop {
+                                    if let Ok((file_path, event)) = watcher.recv_event() {
+                                        let db = db_clone.lock().unwrap();
+                                        let conn = db.connection();
+                                        let mut processor = processor_clone.lock().unwrap();
+
+                                        match processor.process_event(conn, event) {
+                                            Ok(Some(processed_event)) => {
+                                                // フロントエンドにイベントを通知（詳細情報付き）
+                                                if let Err(e) = app_handle.emit("log-event", &processed_event) {
+                                                    eprintln!("Failed to emit event: {}", e);
+                                                }
+                                            }
+                                            Ok(None) => {
+                                                // 通知不要なイベント
+                                            }
+                                            Err(e) => {
+                                                eprintln!("Failed to process event: {}", e);
+                                                continue;
+                                            }
+                                        }
+
+                                        // ファイル位置を更新
+                                        let file_states = watcher.get_file_states();
+                                        if let Some(position) = file_states.get(&file_path) {
+                                            let path_str = file_path.to_string_lossy().to_string();
+                                            let _ = db::operations::update_log_file_position(conn, &path_str, *position);
+                                        }
+                                    }
+                                }
+                            }
+                            Err(e) => {
+                                eprintln!("Failed to read logs: {}", e);
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("Failed to create log watcher: {}", e);
+                    }
+                }
+            });
 
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
-            start_log_watching,
             get_log_path,
-            generate_invite_url,
             open_invite_url,
             get_local_users,
             get_sessions,
+            get_session_by_id,
             get_database_stats,
             get_session_players,
-            open_user_page,
-            test_parse_log_file
+            open_user_page
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

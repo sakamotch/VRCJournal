@@ -2,6 +2,18 @@ use crate::parser::LogEvent;
 use crate::db::operations;
 use rusqlite::Connection;
 use std::collections::HashMap;
+use chrono::{DateTime, Utc};
+
+/// プロセッサーが発行するイベント
+#[derive(Debug, Clone, serde::Serialize)]
+#[serde(tag = "type")]
+pub enum ProcessedEvent {
+    LocalPlayerUpdated,  // ローカルプレイヤー（アカウント）が追加・更新された
+    SessionCreated { session_id: i64 },
+    SessionEnded { session_id: i64, ended_at: String },
+    PlayerJoined { session_id: i64 },
+    PlayerLeft { session_id: i64 },
+}
 
 /// イベントプロセッサー：LogEventをデータベースに保存
 pub struct EventProcessor {
@@ -19,9 +31,9 @@ impl EventProcessor {
         }
     }
 
-    /// LogEventを処理してデータベースに保存
-    pub fn process_event(&mut self, conn: &Connection, event: LogEvent) -> Result<(), rusqlite::Error> {
-        match event {
+    /// LogEventを処理してデータベースに保存し、フロントエンドに通知すべきイベントを返す
+    pub fn process_event(&mut self, conn: &Connection, event: LogEvent) -> Result<Option<ProcessedEvent>, rusqlite::Error> {
+        let processed_event = match event {
             LogEvent::UserAuthenticated { timestamp, display_name, user_id } => {
                 // ローカルプレイヤー（自分）を作成または更新
                 let local_player_id = operations::upsert_local_player(
@@ -32,15 +44,22 @@ impl EventProcessor {
                 )?;
                 self.current_local_player_id = Some(local_player_id);
                 println!("User authenticated: {} ({})", display_name, user_id);
+                Some(ProcessedEvent::LocalPlayerUpdated)  // サイドバーのアカウントリストを更新
             }
 
             LogEvent::JoiningWorld { timestamp, world_id, instance_id, world_name } => {
                 if let Some(local_player_id) = self.current_local_player_id {
                     // 前のセッションがあれば終了
-                    if let Some(prev_session_id) = self.current_session_id {
+                    let prev_event = if let Some(prev_session_id) = self.current_session_id {
                         operations::end_session(conn, prev_session_id, timestamp)?;
                         println!("Previous session ended: {}", prev_session_id);
-                    }
+                        Some(ProcessedEvent::SessionEnded {
+                            session_id: prev_session_id,
+                            ended_at: timestamp.to_rfc3339(),
+                        })
+                    } else {
+                        None
+                    };
 
                     // 新しいセッションを作成
                     let world_name_opt = if world_name.is_empty() { None } else { Some(world_name.as_str()) };
@@ -55,8 +74,13 @@ impl EventProcessor {
                     self.current_session_id = Some(session_id);
                     self.player_ids.clear(); // 新しいセッションなのでプレイヤーマップをクリア
                     println!("Joined world: {} (session: {})", world_id, session_id);
+
+                    // 前のセッション終了があれば両方通知、なければ新規作成のみ
+                    // NOTE: ここでは新規セッション作成のみを返す。終了イベントは別途処理が必要
+                    Some(ProcessedEvent::SessionCreated { session_id })
                 } else {
                     eprintln!("Warning: JoiningWorld event without authenticated user");
+                    None
                 }
             }
 
@@ -69,6 +93,7 @@ impl EventProcessor {
                     )?;
                     println!("World name updated: {} (session: {})", world_name, session_id);
                 }
+                None  // ワールド名更新は通知不要（セッション作成時に既に通知済み）
             }
 
             LogEvent::PlayerJoined { timestamp, display_name, user_id } => {
@@ -100,8 +125,10 @@ impl EventProcessor {
 
                     self.player_ids.insert(user_id.clone(), player_id);
                     println!("Player joined: {} ({})", display_name, user_id);
+                    Some(ProcessedEvent::PlayerJoined { session_id })
                 } else {
                     eprintln!("Warning: PlayerJoined event without active session");
+                    None
                 }
             }
 
@@ -116,9 +143,13 @@ impl EventProcessor {
                             timestamp,
                         )?;
                         println!("Player left: {} ({})", display_name, user_id);
+                        Some(ProcessedEvent::PlayerLeft { session_id })
+                    } else {
+                        None
                     }
                 } else {
                     eprintln!("Warning: PlayerLeft event without active session");
+                    None
                 }
             }
 
@@ -179,10 +210,11 @@ impl EventProcessor {
                 } else {
                     eprintln!("Warning: AvatarChanged event without active session");
                 }
+                None  // アバター変更は通知不要（将来的にアバター履歴機能で使うかも）
             }
-        }
+        };
 
-        Ok(())
+        Ok(processed_event)
     }
 }
 
