@@ -58,12 +58,11 @@ pub fn upsert_avatar_by_name(
 }
 
 /// アバター使用履歴を記録
-/// player_id が None の場合は自分（local_user）のアバター変更
 pub fn record_avatar_usage(
     conn: &Connection,
     session_id: i64,
-    player_id: Option<i64>,
-    avatar_id: Option<i64>,
+    player_id: i64,  // NOT NULL: ローカルプレイヤー or リモートプレイヤー
+    avatar_id: i64,  // NOT NULL: avatarsテーブルへの参照
     changed_at: DateTime<Utc>,
 ) -> Result<()> {
     conn.execute(
@@ -82,8 +81,9 @@ pub fn record_avatar_usage(
 /// セッション内のアバター使用履歴を取得
 #[derive(Debug, Clone)]
 pub struct AvatarUsage {
-    pub player_id: Option<i64>,     // None = 自分のアバター
-    pub display_name: Option<String>, // プレイヤー名（自分の場合はNone）
+    pub player_id: i64,
+    pub display_name: String,
+    pub is_local: bool,  // ローカルプレイヤーかどうか
     pub avatar_name: String,
     pub changed_at: DateTime<Utc>,
 }
@@ -93,10 +93,10 @@ pub fn get_avatar_usages_in_session(
     session_id: i64,
 ) -> Result<Vec<AvatarUsage>> {
     let mut stmt = conn.prepare(
-        "SELECT au.player_id, p.display_name, a.avatar_name, au.changed_at
+        "SELECT au.player_id, p.display_name, p.is_local, a.avatar_name, au.changed_at
          FROM avatar_usages au
-         LEFT JOIN players p ON au.player_id = p.id
-         LEFT JOIN avatars a ON au.avatar_id = a.id
+         INNER JOIN players p ON au.player_id = p.id
+         INNER JOIN avatars a ON au.avatar_id = a.id
          WHERE au.session_id = ?1
          ORDER BY au.changed_at",
     )?;
@@ -106,8 +106,9 @@ pub fn get_avatar_usages_in_session(
             Ok(AvatarUsage {
                 player_id: row.get(0)?,
                 display_name: row.get(1)?,
-                avatar_name: row.get::<_, Option<String>>(2)?.unwrap_or_else(|| "Unknown Avatar".to_string()),
-                changed_at: DateTime::parse_from_rfc3339(&row.get::<_, String>(3)?)
+                is_local: row.get(2)?,
+                avatar_name: row.get(3)?,
+                changed_at: DateTime::parse_from_rfc3339(&row.get::<_, String>(4)?)
                     .unwrap()
                     .with_timezone(&Utc),
             })

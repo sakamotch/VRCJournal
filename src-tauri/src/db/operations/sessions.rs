@@ -4,7 +4,7 @@ use chrono::{DateTime, Utc};
 #[derive(Debug, Clone)]
 pub struct Session {
     pub id: i64,
-    pub local_user_id: i64,
+    pub player_id: i64,  // ローカルプレイヤー (is_local=1のplayer)
     pub started_at: DateTime<Utc>,
     pub ended_at: Option<DateTime<Utc>>,
     pub world_id: String,
@@ -15,17 +15,17 @@ pub struct Session {
 /// 新しいセッションを作成
 pub fn create_session(
     conn: &Connection,
-    local_user_id: i64,
+    player_id: i64,
     started_at: DateTime<Utc>,
     world_id: &str,
     world_name: Option<&str>,
     instance_id: &str,
 ) -> Result<i64> {
     conn.execute(
-        "INSERT INTO sessions (local_user_id, started_at, world_id, world_name, instance_id)
+        "INSERT INTO sessions (player_id, started_at, world_id, world_name, instance_id)
          VALUES (?1, ?2, ?3, ?4, ?5)",
         (
-            local_user_id,
+            player_id,
             started_at.to_rfc3339(),
             world_id,
             world_name,
@@ -47,19 +47,19 @@ pub fn end_session(conn: &Connection, session_id: i64, ended_at: DateTime<Utc>) 
 /// 最新の未終了セッションを取得
 pub fn get_latest_active_session(
     conn: &Connection,
-    local_user_id: i64,
+    player_id: i64,
 ) -> Result<Option<Session>> {
     conn.query_row(
-        "SELECT id, local_user_id, started_at, ended_at, world_id, world_name, instance_id
+        "SELECT id, player_id, started_at, ended_at, world_id, world_name, instance_id
          FROM sessions
-         WHERE local_user_id = ?1 AND ended_at IS NULL
+         WHERE player_id = ?1 AND ended_at IS NULL
          ORDER BY started_at DESC
          LIMIT 1",
-        [local_user_id],
+        [player_id],
         |row| {
             Ok(Session {
                 id: row.get(0)?,
-                local_user_id: row.get(1)?,
+                player_id: row.get(1)?,
                 started_at: DateTime::parse_from_rfc3339(&row.get::<_, String>(2)?)
                     .unwrap()
                     .with_timezone(&Utc),
@@ -75,26 +75,26 @@ pub fn get_latest_active_session(
     .optional()
 }
 
-/// 指定したローカルユーザーのセッション一覧を取得
-pub fn get_sessions_by_local_user(
+/// 指定したローカルプレイヤーのセッション一覧を取得
+pub fn get_sessions_by_player(
     conn: &Connection,
-    local_user_id: i64,
+    player_id: i64,
     limit: usize,
     offset: usize,
 ) -> Result<Vec<Session>> {
     let mut stmt = conn.prepare(
-        "SELECT id, local_user_id, started_at, ended_at, world_id, world_name, instance_id
+        "SELECT id, player_id, started_at, ended_at, world_id, world_name, instance_id
          FROM sessions
-         WHERE local_user_id = ?1
+         WHERE player_id = ?1
          ORDER BY started_at DESC
          LIMIT ?2 OFFSET ?3",
     )?;
 
     let sessions = stmt
-        .query_map((local_user_id, limit, offset), |row| {
+        .query_map((player_id, limit, offset), |row| {
             Ok(Session {
                 id: row.get(0)?,
-                local_user_id: row.get(1)?,
+                player_id: row.get(1)?,
                 started_at: DateTime::parse_from_rfc3339(&row.get::<_, String>(2)?)
                     .unwrap()
                     .with_timezone(&Utc),

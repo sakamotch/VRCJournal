@@ -165,23 +165,23 @@ async fn open_invite_url(app: tauri::AppHandle, world_id: String, instance_id: S
     Ok(url)
 }
 
-/// ローカルユーザー一覧を取得
+/// ローカルプレイヤー（自分のアカウント）一覧を取得
 #[tauri::command]
 async fn get_local_users(state: tauri::State<'_, AppState>) -> Result<serde_json::Value, String> {
     let db = state.db.lock().unwrap();
     let conn = db.connection();
 
-    let users = db::operations::get_all_local_users(conn)
-        .map_err(|e| format!("Failed to get local users: {}", e))?;
+    let players = db::operations::get_all_local_players(conn)
+        .map_err(|e| format!("Failed to get local players: {}", e))?;
 
     let json = serde_json::json!(
-        users.into_iter().map(|u| {
+        players.into_iter().map(|p| {
             serde_json::json!({
-                "id": u.id,
-                "displayName": u.display_name,
-                "userId": u.user_id,
-                "firstAuthenticatedAt": u.first_authenticated_at.to_rfc3339(),
-                "lastAuthenticatedAt": u.last_authenticated_at.to_rfc3339(),
+                "id": p.id,
+                "displayName": p.display_name,
+                "userId": p.user_id,
+                "firstAuthenticatedAt": p.first_authenticated_at.map(|t| t.to_rfc3339()),
+                "lastAuthenticatedAt": p.last_authenticated_at.map(|t| t.to_rfc3339()),
             })
         }).collect::<Vec<_>>()
     );
@@ -201,25 +201,26 @@ async fn get_sessions(
 
     let limit = limit.unwrap_or(50);
 
-    let query = if let Some(user_id) = local_user_id {
+    let query = if let Some(player_id) = local_user_id {
         format!(
-            "SELECT s.id, s.local_user_id, lu.display_name as user_name, s.started_at, s.ended_at,
+            "SELECT s.id, s.player_id, p.display_name as user_name, s.started_at, s.ended_at,
                     s.world_id, s.world_name, s.instance_id,
                     (SELECT COUNT(*) FROM session_players WHERE session_id = s.id) as player_count
              FROM sessions s
-             JOIN local_users lu ON s.local_user_id = lu.id
-             WHERE s.local_user_id = {}
+             JOIN players p ON s.player_id = p.id
+             WHERE s.player_id = {} AND p.is_local = 1
              ORDER BY s.started_at DESC
              LIMIT {}",
-            user_id, limit
+            player_id, limit
         )
     } else {
         format!(
-            "SELECT s.id, s.local_user_id, lu.display_name as user_name, s.started_at, s.ended_at,
+            "SELECT s.id, s.player_id, p.display_name as user_name, s.started_at, s.ended_at,
                     s.world_id, s.world_name, s.instance_id,
                     (SELECT COUNT(*) FROM session_players WHERE session_id = s.id) as player_count
              FROM sessions s
-             JOIN local_users lu ON s.local_user_id = lu.id
+             JOIN players p ON s.player_id = p.id
+             WHERE p.is_local = 1
              ORDER BY s.started_at DESC
              LIMIT {}",
             limit
@@ -255,8 +256,8 @@ async fn get_database_stats(state: tauri::State<'_, AppState>) -> Result<String,
     let db = state.db.lock().unwrap();
     let conn = db.connection();
 
-    let local_users: i64 = conn.query_row(
-        "SELECT COUNT(*) FROM local_users",
+    let local_players: i64 = conn.query_row(
+        "SELECT COUNT(*) FROM players WHERE is_local = 1",
         [],
         |row| row.get(0)
     ).unwrap_or(0);
@@ -268,14 +269,14 @@ async fn get_database_stats(state: tauri::State<'_, AppState>) -> Result<String,
     ).unwrap_or(0);
 
     let players: i64 = conn.query_row(
-        "SELECT COUNT(*) FROM players",
+        "SELECT COUNT(*) FROM players WHERE is_local = 0",
         [],
         |row| row.get(0)
     ).unwrap_or(0);
 
     Ok(format!(
-        "Local Users: {}, Sessions: {}, Players: {}",
-        local_users, sessions, players
+        "Local Players: {}, Sessions: {}, Remote Players: {}",
+        local_players, sessions, players
     ))
 }
 
@@ -368,8 +369,8 @@ async fn test_parse_log_file(
     }
 
     // 統計情報を取得
-    let local_users: i64 = conn.query_row(
-        "SELECT COUNT(*) FROM local_users",
+    let local_players: i64 = conn.query_row(
+        "SELECT COUNT(*) FROM players WHERE is_local = 1",
         [],
         |row| row.get(0)
     ).unwrap_or(0);
@@ -380,8 +381,8 @@ async fn test_parse_log_file(
         |row| row.get(0)
     ).unwrap_or(0);
 
-    let players: i64 = conn.query_row(
-        "SELECT COUNT(*) FROM players",
+    let remote_players: i64 = conn.query_row(
+        "SELECT COUNT(*) FROM players WHERE is_local = 0",
         [],
         |row| row.get(0)
     ).unwrap_or(0);
@@ -408,11 +409,11 @@ async fn test_parse_log_file(
     result.push_str(&format!(
         "\n\
          === Database Stats ===\n\
-         Local Users: {}\n\
+         Local Players: {}\n\
          Sessions: {}\n\
-         Players: {}\n\
+         Remote Players: {}\n\
          Avatars: {}\n",
-        local_users, sessions, players, avatars
+        local_players, sessions, remote_players, avatars
     ));
 
     Ok(result)

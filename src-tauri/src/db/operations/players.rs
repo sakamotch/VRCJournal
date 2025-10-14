@@ -4,10 +4,13 @@ use chrono::{DateTime, Utc};
 #[derive(Debug, Clone)]
 pub struct Player {
     pub id: i64,
-    pub display_name: String,
     pub user_id: String,
+    pub display_name: String,
+    pub is_local: bool,
     pub first_seen_at: DateTime<Utc>,
     pub last_seen_at: DateTime<Utc>,
+    pub first_authenticated_at: Option<DateTime<Utc>>,
+    pub last_authenticated_at: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug, Clone)]
@@ -20,7 +23,7 @@ pub struct SessionPlayer {
     pub last_seen_at: DateTime<Utc>,
 }
 
-/// プレイヤーを作成または更新
+/// プレイヤーを作成または更新（一般プレイヤー用: is_local=0）
 pub fn upsert_player(
     conn: &Connection,
     display_name: &str,
@@ -36,27 +39,83 @@ pub fn upsert_player(
         )
         .optional()?;
 
-    if let Some(id) = existing {
+    let player_id = if let Some(id) = existing {
         // 既存プレイヤーの最終確認時刻と表示名を更新
         conn.execute(
             "UPDATE players SET last_seen_at = ?1, display_name = ?2 WHERE id = ?3",
             (seen_at.to_rfc3339(), display_name, id),
         )?;
-        Ok(id)
+        id
     } else {
-        // 新規プレイヤーを作成
+        // 新規プレイヤーを作成（is_local=0）
         conn.execute(
-            "INSERT INTO players (display_name, user_id, first_seen_at, last_seen_at)
-             VALUES (?1, ?2, ?3, ?4)",
+            "INSERT INTO players (user_id, display_name, is_local, first_seen_at, last_seen_at)
+             VALUES (?1, ?2, 0, ?3, ?4)",
             (
-                display_name,
                 user_id,
+                display_name,
                 seen_at.to_rfc3339(),
                 seen_at.to_rfc3339(),
             ),
         )?;
-        Ok(conn.last_insert_rowid())
-    }
+        conn.last_insert_rowid()
+    };
+
+    // 名前履歴を作成または更新
+    super::upsert_player_name_history(conn, player_id, display_name, seen_at)?;
+
+    Ok(player_id)
+}
+
+/// ローカルプレイヤー（自分）を作成または更新（is_local=1）
+pub fn upsert_local_player(
+    conn: &Connection,
+    display_name: &str,
+    user_id: &str,
+    authenticated_at: DateTime<Utc>,
+) -> Result<i64> {
+    // 既存のプレイヤーを確認
+    let existing: Option<i64> = conn
+        .query_row(
+            "SELECT id FROM players WHERE user_id = ?1",
+            [user_id],
+            |row| row.get(0),
+        )
+        .optional()?;
+
+    let player_id = if let Some(id) = existing {
+        // 既存プレイヤーを更新
+        conn.execute(
+            "UPDATE players SET display_name = ?1, is_local = 1, last_seen_at = ?2, last_authenticated_at = ?3 WHERE id = ?4",
+            (
+                display_name,
+                authenticated_at.to_rfc3339(),
+                authenticated_at.to_rfc3339(),
+                id,
+            ),
+        )?;
+        id
+    } else {
+        // 新規ローカルプレイヤーを作成
+        conn.execute(
+            "INSERT INTO players (user_id, display_name, is_local, first_seen_at, last_seen_at, first_authenticated_at, last_authenticated_at)
+             VALUES (?1, ?2, 1, ?3, ?4, ?5, ?6)",
+            (
+                user_id,
+                display_name,
+                authenticated_at.to_rfc3339(),
+                authenticated_at.to_rfc3339(),
+                authenticated_at.to_rfc3339(),
+                authenticated_at.to_rfc3339(),
+            ),
+        )?;
+        conn.last_insert_rowid()
+    };
+
+    // 名前履歴を作成または更新
+    super::upsert_player_name_history(conn, player_id, display_name, authenticated_at)?;
+
+    Ok(player_id)
 }
 
 /// セッションにプレイヤーを追加
@@ -118,4 +177,66 @@ pub fn get_players_in_session(conn: &Connection, session_id: i64) -> Result<Vec<
         .collect::<Result<Vec<_>>>()?;
 
     Ok(players)
+}
+
+/// ローカルプレイヤー（自分のアカウント）を全て取得
+pub fn get_all_local_players(conn: &Connection) -> Result<Vec<Player>> {
+    let mut stmt = conn.prepare(
+        "SELECT id, user_id, display_name, is_local, first_seen_at, last_seen_at, first_authenticated_at, last_authenticated_at
+         FROM players
+         WHERE is_local = 1
+         ORDER BY last_authenticated_at DESC",
+    )?;
+
+    let players = stmt
+        .query_map([], |row| {
+            Ok(Player {
+                id: row.get(0)?,
+                user_id: row.get(1)?,
+                display_name: row.get(2)?,
+                is_local: row.get(3)?,
+                first_seen_at: DateTime::parse_from_rfc3339(&row.get::<_, String>(4)?)
+                    .unwrap()
+                    .with_timezone(&Utc),
+                last_seen_at: DateTime::parse_from_rfc3339(&row.get::<_, String>(5)?)
+                    .unwrap()
+                    .with_timezone(&Utc),
+                first_authenticated_at: row.get::<_, Option<String>>(6)?
+                    .map(|s| DateTime::parse_from_rfc3339(&s).unwrap().with_timezone(&Utc)),
+                last_authenticated_at: row.get::<_, Option<String>>(7)?
+                    .map(|s| DateTime::parse_from_rfc3339(&s).unwrap().with_timezone(&Utc)),
+            })
+        })?
+        .collect::<Result<Vec<_>>>()?;
+
+    Ok(players)
+}
+
+/// user_idでローカルプレイヤーを取得
+pub fn get_local_player_by_user_id(conn: &Connection, user_id: &str) -> Result<Option<Player>> {
+    conn.query_row(
+        "SELECT id, user_id, display_name, is_local, first_seen_at, last_seen_at, first_authenticated_at, last_authenticated_at
+         FROM players
+         WHERE user_id = ?1 AND is_local = 1",
+        [user_id],
+        |row| {
+            Ok(Player {
+                id: row.get(0)?,
+                user_id: row.get(1)?,
+                display_name: row.get(2)?,
+                is_local: row.get(3)?,
+                first_seen_at: DateTime::parse_from_rfc3339(&row.get::<_, String>(4)?)
+                    .unwrap()
+                    .with_timezone(&Utc),
+                last_seen_at: DateTime::parse_from_rfc3339(&row.get::<_, String>(5)?)
+                    .unwrap()
+                    .with_timezone(&Utc),
+                first_authenticated_at: row.get::<_, Option<String>>(6)?
+                    .map(|s| DateTime::parse_from_rfc3339(&s).unwrap().with_timezone(&Utc)),
+                last_authenticated_at: row.get::<_, Option<String>>(7)?
+                    .map(|s| DateTime::parse_from_rfc3339(&s).unwrap().with_timezone(&Utc)),
+            })
+        },
+    )
+    .optional()
 }

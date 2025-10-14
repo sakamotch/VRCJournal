@@ -5,7 +5,7 @@ use std::collections::HashMap;
 
 /// イベントプロセッサー：LogEventをデータベースに保存
 pub struct EventProcessor {
-    current_local_user_id: Option<i64>,
+    current_local_player_id: Option<i64>,  // ローカルプレイヤー (is_local=1)
     current_session_id: Option<i64>,
     player_ids: HashMap<String, i64>, // user_id -> player_id のマッピング
 }
@@ -13,7 +13,7 @@ pub struct EventProcessor {
 impl EventProcessor {
     pub fn new() -> Self {
         Self {
-            current_local_user_id: None,
+            current_local_player_id: None,
             current_session_id: None,
             player_ids: HashMap::new(),
         }
@@ -23,19 +23,19 @@ impl EventProcessor {
     pub fn process_event(&mut self, conn: &Connection, event: LogEvent) -> Result<(), rusqlite::Error> {
         match event {
             LogEvent::UserAuthenticated { timestamp, display_name, user_id } => {
-                // ローカルユーザーを作成または更新
-                let local_user_id = operations::upsert_local_user(
+                // ローカルプレイヤー（自分）を作成または更新
+                let local_player_id = operations::upsert_local_player(
                     conn,
                     &display_name,
                     &user_id,
                     timestamp,
                 )?;
-                self.current_local_user_id = Some(local_user_id);
+                self.current_local_player_id = Some(local_player_id);
                 println!("User authenticated: {} ({})", display_name, user_id);
             }
 
             LogEvent::JoiningWorld { timestamp, world_id, instance_id, world_name } => {
-                if let Some(local_user_id) = self.current_local_user_id {
+                if let Some(local_player_id) = self.current_local_player_id {
                     // 前のセッションがあれば終了
                     if let Some(prev_session_id) = self.current_session_id {
                         operations::end_session(conn, prev_session_id, timestamp)?;
@@ -46,7 +46,7 @@ impl EventProcessor {
                     let world_name_opt = if world_name.is_empty() { None } else { Some(world_name.as_str()) };
                     let session_id = operations::create_session(
                         conn,
-                        local_user_id,
+                        local_player_id,
                         timestamp,
                         &world_id,
                         world_name_opt,
@@ -133,24 +133,24 @@ impl EventProcessor {
                     )?;
 
                     // display_nameから誰のアバター変更かを判定
-                    // 1. まず自分（local_user）のdisplay_nameと比較
-                    let is_local_user = if let Some(local_user_id) = self.current_local_user_id {
+                    // 1. まず自分（local_player）のdisplay_nameと比較
+                    let is_local_player = if let Some(local_player_id) = self.current_local_player_id {
                         conn.query_row(
-                            "SELECT display_name FROM local_users WHERE id = ?1",
-                            [local_user_id],
+                            "SELECT display_name FROM players WHERE id = ?1 AND is_local = 1",
+                            [local_player_id],
                             |row| row.get::<_, String>(0),
                         ).ok().map(|name| name == display_name).unwrap_or(false)
                     } else {
                         false
                     };
 
-                    if is_local_user {
-                        // 自分のアバター変更（player_id = None）
+                    if is_local_player {
+                        // 自分のアバター変更（local_player_id使用）
                         operations::record_avatar_usage(
                             conn,
                             session_id,
-                            None,
-                            Some(avatar_id),
+                            self.current_local_player_id.unwrap(),
+                            avatar_id,
                             timestamp,
                         )?;
                         println!("Avatar changed (self): {} -> {}", display_name, avatar_name);
@@ -169,8 +169,8 @@ impl EventProcessor {
                             operations::record_avatar_usage(
                                 conn,
                                 session_id,
-                                Some(player_id),
-                                Some(avatar_id),
+                                player_id,
+                                avatar_id,
                                 timestamp,
                             )?;
                             println!("Avatar changed (player): {} -> {}", display_name, avatar_name);
