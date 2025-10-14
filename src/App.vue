@@ -26,6 +26,7 @@ interface Session {
 interface Player {
   id: number;
   displayName: string;
+  displayNameAtJoin: string;
   userId: string;
   firstSeenAt: string;
   lastSeenAt: string;
@@ -186,6 +187,14 @@ async function openUserPage(userId: string) {
   }
 }
 
+function formatPlayerName(player: Player): string {
+  // 名前が変更されている場合は「旧名前(新しい名前)」の形式で表示
+  if (player.displayNameAtJoin !== player.displayName) {
+    return `${player.displayNameAtJoin} (${player.displayName})`;
+  }
+  return player.displayName;
+}
+
 let unlistenFn: UnlistenFn | null = null;
 
 onMounted(async () => {
@@ -296,7 +305,7 @@ onUnmounted(() => {
                   class="player-item"
                   @click="openUserPage(player.userId)"
                 >
-                  <span class="player-name">{{ player.displayName }}</span>
+                  <span class="player-name">{{ formatPlayerName(player) }}</span>
                   <span class="player-icon">🔗</span>
                 </div>
               </div>

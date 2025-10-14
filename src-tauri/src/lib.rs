@@ -296,6 +296,7 @@ async fn get_session_players(
             serde_json::json!({
                 "id": p.id,
                 "displayName": p.display_name,
+                "displayNameAtJoin": p.display_name_at_join,
                 "userId": p.user_id,
                 "firstSeenAt": p.first_seen_at.to_rfc3339(),
                 "lastSeenAt": p.last_seen_at.to_rfc3339(),

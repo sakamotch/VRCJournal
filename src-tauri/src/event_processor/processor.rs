@@ -81,11 +81,20 @@ impl EventProcessor {
                         timestamp,
                     )?;
 
-                    // セッションにプレイヤーを追加
+                    // 名前履歴を作成または更新
+                    let display_name_history_id = operations::upsert_player_name_history(
+                        conn,
+                        player_id,
+                        &display_name,
+                        timestamp,
+                    )?;
+
+                    // セッションにプレイヤーを追加（名前履歴IDと共に）
                     operations::add_player_to_session(
                         conn,
                         session_id,
                         player_id,
+                        display_name_history_id,
                         timestamp,
                     )?;
 

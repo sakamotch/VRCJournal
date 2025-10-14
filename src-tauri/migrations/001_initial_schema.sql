@@ -49,20 +49,34 @@ CREATE TABLE players (
 CREATE INDEX idx_players_user_id ON players(user_id);
 CREATE INDEX idx_players_display_name ON players(display_name);
 
--- 5. Session Players (セッションとプレイヤーの関連)
+-- 5. Player Name History (プレイヤー名変更履歴)
+CREATE TABLE player_name_history (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    player_id INTEGER NOT NULL,
+    display_name TEXT NOT NULL,
+    first_seen_at TEXT NOT NULL,
+    last_seen_at TEXT NOT NULL,
+    FOREIGN KEY (player_id) REFERENCES players(id) ON DELETE CASCADE
+);
+CREATE INDEX idx_player_name_history_player ON player_name_history(player_id);
+CREATE INDEX idx_player_name_history_seen_at ON player_name_history(first_seen_at);
+
+-- 6. Session Players (セッションとプレイヤーの関連)
 CREATE TABLE session_players (
     session_id INTEGER NOT NULL,
     player_id INTEGER NOT NULL,
     joined_at TEXT NOT NULL,
     left_at TEXT,
+    display_name_history_id INTEGER NOT NULL,
     PRIMARY KEY (session_id, player_id),
     FOREIGN KEY (session_id) REFERENCES sessions(id) ON DELETE CASCADE,
-    FOREIGN KEY (player_id) REFERENCES players(id) ON DELETE CASCADE
+    FOREIGN KEY (player_id) REFERENCES players(id) ON DELETE CASCADE,
+    FOREIGN KEY (display_name_history_id) REFERENCES player_name_history(id) ON DELETE RESTRICT
 );
 CREATE INDEX idx_session_players_session ON session_players(session_id);
 CREATE INDEX idx_session_players_player ON session_players(player_id);
 
--- 6. Avatar Usages (アバター使用履歴)
+-- 7. Avatar Usages (アバター使用履歴)
 CREATE TABLE avatar_usages (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     session_id INTEGER NOT NULL,
@@ -77,7 +91,7 @@ CREATE INDEX idx_avatar_usages_session ON avatar_usages(session_id);
 CREATE INDEX idx_avatar_usages_user ON avatar_usages(user_id);
 CREATE INDEX idx_avatar_usages_avatar ON avatar_usages(avatar_id);
 
--- 7. Tags (タグマスター)
+-- 8. Tags (タグマスター)
 CREATE TABLE tags (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL UNIQUE,
@@ -85,7 +99,7 @@ CREATE TABLE tags (
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
--- 8. Session Tags (セッションとタグの関連)
+-- 9. Session Tags (セッションとタグの関連)
 CREATE TABLE session_tags (
     session_id INTEGER NOT NULL,
     tag_id INTEGER NOT NULL,
@@ -94,7 +108,7 @@ CREATE TABLE session_tags (
     FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE
 );
 
--- 9. Memos (メモ)
+-- 10. Memos (メモ)
 CREATE TABLE memos (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     session_id INTEGER NOT NULL,
@@ -105,7 +119,7 @@ CREATE TABLE memos (
 );
 CREATE INDEX idx_memos_session ON memos(session_id);
 
--- 10. Log Files (ログファイルの解析状態を追跡)
+-- 11. Log Files (ログファイルの解析状態を追跡)
 CREATE TABLE IF NOT EXISTS log_files (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     file_path TEXT NOT NULL UNIQUE,

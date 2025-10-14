@@ -10,6 +10,16 @@ pub struct Player {
     pub last_seen_at: DateTime<Utc>,
 }
 
+#[derive(Debug, Clone)]
+pub struct SessionPlayer {
+    pub id: i64,
+    pub display_name: String,             // 現在の表示名
+    pub display_name_at_join: String,     // その時の表示名
+    pub user_id: String,
+    pub first_seen_at: DateTime<Utc>,
+    pub last_seen_at: DateTime<Utc>,
+}
+
 /// プレイヤーを作成または更新
 pub fn upsert_player(
     conn: &Connection,
@@ -54,12 +64,13 @@ pub fn add_player_to_session(
     conn: &Connection,
     session_id: i64,
     player_id: i64,
+    display_name_history_id: i64,
     joined_at: DateTime<Utc>,
 ) -> Result<()> {
     conn.execute(
-        "INSERT OR IGNORE INTO session_players (session_id, player_id, joined_at)
-         VALUES (?1, ?2, ?3)",
-        (session_id, player_id, joined_at.to_rfc3339()),
+        "INSERT OR IGNORE INTO session_players (session_id, player_id, joined_at, display_name_history_id)
+         VALUES (?1, ?2, ?3, ?4)",
+        (session_id, player_id, joined_at.to_rfc3339(), display_name_history_id),
     )?;
     Ok(())
 }
@@ -78,26 +89,28 @@ pub fn remove_player_from_session(
     Ok(())
 }
 
-/// セッションのプレイヤー一覧を取得
-pub fn get_players_in_session(conn: &Connection, session_id: i64) -> Result<Vec<Player>> {
+/// セッションのプレイヤー一覧を取得（その時の名前と現在の名前を含む）
+pub fn get_players_in_session(conn: &Connection, session_id: i64) -> Result<Vec<SessionPlayer>> {
     let mut stmt = conn.prepare(
-        "SELECT p.id, p.display_name, p.user_id, p.first_seen_at, p.last_seen_at
+        "SELECT p.id, p.display_name, pnh.display_name, p.user_id, p.first_seen_at, p.last_seen_at
          FROM players p
          INNER JOIN session_players sp ON p.id = sp.player_id
+         INNER JOIN player_name_history pnh ON sp.display_name_history_id = pnh.id
          WHERE sp.session_id = ?1
          ORDER BY sp.joined_at",
     )?;
 
     let players = stmt
         .query_map([session_id], |row| {
-            Ok(Player {
+            Ok(SessionPlayer {
                 id: row.get(0)?,
-                display_name: row.get(1)?,
-                user_id: row.get(2)?,
-                first_seen_at: DateTime::parse_from_rfc3339(&row.get::<_, String>(3)?)
+                display_name: row.get(1)?,              // 現在の名前
+                display_name_at_join: row.get(2)?,      // その時の名前
+                user_id: row.get(3)?,
+                first_seen_at: DateTime::parse_from_rfc3339(&row.get::<_, String>(4)?)
                     .unwrap()
                     .with_timezone(&Utc),
-                last_seen_at: DateTime::parse_from_rfc3339(&row.get::<_, String>(4)?)
+                last_seen_at: DateTime::parse_from_rfc3339(&row.get::<_, String>(5)?)
                     .unwrap()
                     .with_timezone(&Utc),
             })
