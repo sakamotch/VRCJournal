@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, onMounted, onUnmounted } from "vue";
 import { invoke } from "@tauri-apps/api/core";
+import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 
 interface LocalUser {
   id: number;
@@ -185,9 +186,24 @@ async function openUserPage(userId: string) {
   }
 }
 
-onMounted(() => {
+let unlistenFn: UnlistenFn | null = null;
+
+onMounted(async () => {
   loadUsers();
   loadSessions();
+
+  // Rustからのイベントをリッスン
+  unlistenFn = await listen("log-event-processed", () => {
+    // ログイベントが処理されたら、セッション一覧を更新
+    loadSessions();
+  });
+});
+
+onUnmounted(() => {
+  // クリーンアップ
+  if (unlistenFn) {
+    unlistenFn();
+  }
 });
 </script>
 

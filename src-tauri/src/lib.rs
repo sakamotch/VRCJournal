@@ -4,7 +4,7 @@ mod event_processor;
 mod log_watcher;
 
 use std::sync::{Arc, Mutex};
-use tauri::Manager;
+use tauri::{Emitter, Manager};
 use tauri_plugin_opener::OpenerExt;
 use event_processor::EventProcessor;
 
@@ -18,7 +18,10 @@ pub struct AppState {
 
 /// ログファイルの監視を開始
 #[tauri::command]
-async fn start_log_watching(state: tauri::State<'_, AppState>) -> Result<String, String> {
+async fn start_log_watching(
+    app: tauri::AppHandle,
+    state: tauri::State<'_, AppState>,
+) -> Result<String, String> {
     use std::collections::HashMap;
     use chrono::Utc;
 
@@ -90,6 +93,7 @@ async fn start_log_watching(state: tauri::State<'_, AppState>) -> Result<String,
     // バックグラウンドでイベントを処理
     let db_clone = Arc::clone(&state.db);
     let processor_clone = Arc::clone(&state.event_processor);
+    let app_handle = app.clone();
 
     std::thread::spawn(move || {
         loop {
@@ -110,6 +114,11 @@ async fn start_log_watching(state: tauri::State<'_, AppState>) -> Result<String,
                     if let Err(e) = db::operations::update_log_file_position(conn, &path_str, *position) {
                         eprintln!("Failed to update file position: {}", e);
                     }
+                }
+
+                // フロントエンドにイベントを通知
+                if let Err(e) = app_handle.emit("log-event-processed", ()) {
+                    eprintln!("Failed to emit event: {}", e);
                 }
             }
         }
