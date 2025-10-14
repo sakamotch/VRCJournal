@@ -76,6 +76,9 @@ async function loadSessions() {
       limit: 100,
     });
     sessions.value = result;
+
+    // セッションを更新したらプレイヤーリストのキャッシュをクリア
+    sessionPlayers.value.clear();
   } catch (error) {
     console.error("Failed to load sessions:", error);
     message.value = `セッション読み込みエラー: ${error}`;
