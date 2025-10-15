@@ -39,6 +39,11 @@ pub enum LogEvent {
         display_name: String,
         avatar_name: String,
     },
+    /// スクリーンショット撮影
+    ScreenshotTaken {
+        timestamp: DateTime<Utc>,
+        file_path: String,
+    },
 }
 
 impl LogEvent {
@@ -50,6 +55,7 @@ impl LogEvent {
             LogEvent::PlayerJoined { timestamp, .. } => timestamp,
             LogEvent::PlayerLeft { timestamp, .. } => timestamp,
             LogEvent::AvatarChanged { timestamp, .. } => timestamp,
+            LogEvent::ScreenshotTaken { timestamp, .. } => timestamp,
         }
     }
 }

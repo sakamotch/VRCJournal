@@ -84,7 +84,8 @@ async fn get_sessions(
         format!(
             "SELECT s.id, s.player_id, p.display_name as user_name, s.started_at, s.ended_at,
                     s.world_id, s.world_name, s.instance_id,
-                    (SELECT COUNT(*) FROM session_players WHERE session_id = s.id) as player_count
+                    (SELECT COUNT(*) FROM session_players WHERE session_id = s.id) as player_count,
+                    (SELECT COUNT(*) FROM screenshots WHERE session_id = s.id) as screenshot_count
              FROM sessions s
              JOIN players p ON s.player_id = p.id
              WHERE s.player_id = {} AND p.is_local = 1
@@ -96,7 +97,8 @@ async fn get_sessions(
         format!(
             "SELECT s.id, s.player_id, p.display_name as user_name, s.started_at, s.ended_at,
                     s.world_id, s.world_name, s.instance_id,
-                    (SELECT COUNT(*) FROM session_players WHERE session_id = s.id) as player_count
+                    (SELECT COUNT(*) FROM session_players WHERE session_id = s.id) as player_count,
+                    (SELECT COUNT(*) FROM screenshots WHERE session_id = s.id) as screenshot_count
              FROM sessions s
              JOIN players p ON s.player_id = p.id
              WHERE p.is_local = 1
@@ -120,6 +122,7 @@ async fn get_sessions(
             "worldName": row.get::<_, Option<String>>(6)?,
             "instanceId": row.get::<_, String>(7)?,
             "playerCount": row.get::<_, i64>(8)?,
+            "screenshotCount": row.get::<_, i64>(9)?,
         }))
     })
     .map_err(|e| format!("Failed to query sessions: {}", e))?
@@ -163,6 +166,67 @@ async fn get_session_by_id(
     .map_err(|e| format!("Failed to get session: {}", e))?;
 
     Ok(session)
+}
+
+/// セッションのスクリーンショット一覧を取得
+#[tauri::command]
+async fn get_session_screenshots(
+    state: tauri::State<'_, AppState>,
+    session_id: i64,
+) -> Result<serde_json::Value, String> {
+    let db = state.db.lock().unwrap();
+    let conn = db.connection();
+
+    let screenshots = db::operations::get_session_screenshots(conn, session_id)
+        .map_err(|e| format!("Failed to get screenshots: {}", e))?;
+
+    let result: Vec<serde_json::Value> = screenshots
+        .iter()
+        .map(|(id, file_path, taken_at)| {
+            serde_json::json!({
+                "id": id,
+                "filePath": file_path,
+                "takenAt": taken_at,
+            })
+        })
+        .collect();
+
+    Ok(serde_json::json!(result))
+}
+
+/// スクリーンショットのディレクトリをエクスプローラーで開く
+#[tauri::command]
+async fn open_screenshot_directory(file_path: String) -> Result<(), String> {
+    use std::path::Path;
+
+    let path = Path::new(&file_path);
+    let dir = path.parent().ok_or("Failed to get parent directory")?;
+
+    #[cfg(target_os = "windows")]
+    {
+        std::process::Command::new("explorer")
+            .arg(dir)
+            .spawn()
+            .map_err(|e| format!("Failed to open directory: {}", e))?;
+    }
+
+    #[cfg(target_os = "macos")]
+    {
+        std::process::Command::new("open")
+            .arg(dir)
+            .spawn()
+            .map_err(|e| format!("Failed to open directory: {}", e))?;
+    }
+
+    #[cfg(target_os = "linux")]
+    {
+        std::process::Command::new("xdg-open")
+            .arg(dir)
+            .spawn()
+            .map_err(|e| format!("Failed to open directory: {}", e))?;
+    }
+
+    Ok(())
 }
 
 /// データベースの統計情報を取得
@@ -386,6 +450,8 @@ pub fn run() {
             get_local_users,
             get_sessions,
             get_session_by_id,
+            get_session_screenshots,
+            open_screenshot_directory,
             get_database_stats,
             get_session_players,
             open_user_page

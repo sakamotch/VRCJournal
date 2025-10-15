@@ -2,6 +2,7 @@
 import { ref, onMounted, onUnmounted } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
+import { convertFileSrc } from '@tauri-apps/api/core';
 
 interface LocalUser {
   id: number;
@@ -21,6 +22,7 @@ interface Session {
   worldName: string | null;
   instanceId: string;
   playerCount: number;
+  screenshotCount: number;
 }
 
 interface Player {
@@ -32,6 +34,12 @@ interface Player {
   lastSeenAt: string;
 }
 
+interface Screenshot {
+  id: number;
+  filePath: string;
+  takenAt: string;
+}
+
 const isLoading = ref(false);
 const message = ref("");
 const localUsers = ref<LocalUser[]>([]);
@@ -39,6 +47,9 @@ const sessions = ref<Session[]>([]);
 const selectedUserId = ref<number | null>(null);
 const expandedSessions = ref<Set<number>>(new Set());
 const sessionPlayers = ref<Map<number, Player[]>>(new Map());
+const expandedScreenshots = ref<Set<number>>(new Set());
+const sessionScreenshots = ref<Map<number, Screenshot[]>>(new Map());
+const selectedScreenshot = ref<string | null>(null);
 
 async function loadUsers() {
   try {
@@ -142,6 +153,46 @@ async function toggleSessionPlayers(sessionId: number) {
       }
     }
   }
+}
+
+async function toggleSessionScreenshots(sessionId: number) {
+  if (expandedScreenshots.value.has(sessionId)) {
+    // 折りたたむ
+    expandedScreenshots.value.delete(sessionId);
+  } else {
+    // 展開する
+    expandedScreenshots.value.add(sessionId);
+
+    // スクリーンショットをまだ取得していない場合は取得
+    if (!sessionScreenshots.value.has(sessionId)) {
+      try {
+        const screenshots = await invoke<Screenshot[]>("get_session_screenshots", {
+          sessionId: sessionId,
+        });
+        sessionScreenshots.value.set(sessionId, screenshots);
+      } catch (error) {
+        console.error("Failed to load screenshots:", error);
+        message.value = `スクリーンショット読み込みエラー: ${error}`;
+      }
+    }
+  }
+}
+
+async function openScreenshotDirectory(filePath: string) {
+  try {
+    await invoke("open_screenshot_directory", { filePath });
+  } catch (error) {
+    console.error("Failed to open directory:", error);
+    message.value = `ディレクトリを開けませんでした: ${error}`;
+  }
+}
+
+function viewScreenshot(filePath: string) {
+  selectedScreenshot.value = filePath;
+}
+
+function closeScreenshotModal() {
+  selectedScreenshot.value = null;
 }
 
 async function openUserPage(userId: string) {
@@ -299,6 +350,15 @@ onUnmounted(() => {
                   👥 {{ session.playerCount }}人
                   {{ expandedSessions.has(session.id) ? '▼' : '▶' }}
                 </span>
+                <span
+                  v-if="session.screenshotCount > 0"
+                  class="screenshot-count clickable"
+                  @click="toggleSessionScreenshots(session.id)"
+                  :title="expandedScreenshots.has(session.id) ? '写真を非表示' : '写真を表示'"
+                >
+                  📷 {{ session.screenshotCount }}枚
+                  {{ expandedScreenshots.has(session.id) ? '▼' : '▶' }}
+                </span>
               </div>
             </div>
 
@@ -327,6 +387,47 @@ onUnmounted(() => {
               </div>
             </div>
 
+            <!-- スクリーンショットリスト -->
+            <div
+              v-if="expandedScreenshots.has(session.id)"
+              class="screenshot-list"
+            >
+              <h4>スクリーンショット</h4>
+              <div
+                v-if="sessionScreenshots.get(session.id) && sessionScreenshots.get(session.id)!.length > 0"
+                class="screenshot-grid"
+              >
+                <div
+                  v-for="screenshot in sessionScreenshots.get(session.id)"
+                  :key="screenshot.id"
+                  class="screenshot-item"
+                  @click="viewScreenshot(screenshot.filePath)"
+                >
+                  <img
+                    :src="convertFileSrc(screenshot.filePath)"
+                    :alt="`Screenshot ${screenshot.id}`"
+                    class="screenshot-thumbnail"
+                  />
+                  <div class="screenshot-time">
+                    {{ new Date(screenshot.takenAt).toLocaleTimeString('ja-JP') }}
+                  </div>
+                </div>
+              </div>
+              <div v-else-if="sessionScreenshots.get(session.id) && sessionScreenshots.get(session.id)!.length === 0" class="no-screenshots">
+                このセッションではスクリーンショットが撮影されていません
+              </div>
+              <div v-else class="loading-screenshots">
+                読み込み中...
+              </div>
+              <button
+                v-if="sessionScreenshots.get(session.id) && sessionScreenshots.get(session.id)!.length > 0"
+                @click="openScreenshotDirectory(sessionScreenshots.get(session.id)![0].filePath)"
+                class="open-folder-button"
+              >
+                📁 フォルダを開く
+              </button>
+            </div>
+
             <div class="session-details">
               <div class="detail-item">
                 <span class="label">Instance:</span>
@@ -339,6 +440,18 @@ onUnmounted(() => {
           </div>
         </div>
       </main>
+    </div>
+
+    <!-- 画像モーダル -->
+    <div v-if="selectedScreenshot" class="modal-overlay" @click="closeScreenshotModal">
+      <div class="modal-content" @click.stop>
+        <button class="modal-close" @click="closeScreenshotModal">×</button>
+        <img
+          :src="convertFileSrc(selectedScreenshot)"
+          alt="Screenshot"
+          class="modal-image"
+        />
+      </div>
     </div>
   </div>
 </template>
@@ -480,6 +593,10 @@ onUnmounted(() => {
   color: #e74c3c;
 }
 
+.screenshot-count {
+  color: #9b59b6;
+}
+
 .clickable {
   cursor: pointer;
   user-select: none;
@@ -544,6 +661,119 @@ onUnmounted(() => {
   padding: 1rem;
   color: #6c757d;
   font-size: 0.9rem;
+}
+
+.screenshot-list {
+  margin-top: 1rem;
+  padding: 1rem;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+}
+
+.screenshot-list h4 {
+  margin: 0 0 0.75rem 0;
+  font-size: 0.95rem;
+  color: #495057;
+}
+
+.screenshot-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.screenshot-item {
+  position: relative;
+  cursor: pointer;
+  border-radius: 4px;
+  overflow: hidden;
+  background-color: white;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.screenshot-item:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.screenshot-thumbnail {
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
+  display: block;
+}
+
+.screenshot-time {
+  padding: 0.25rem 0.5rem;
+  background-color: rgba(0,0,0,0.7);
+  color: white;
+  font-size: 0.75rem;
+  text-align: center;
+}
+
+.no-screenshots, .loading-screenshots {
+  text-align: center;
+  padding: 1rem;
+  color: #6c757d;
+  font-size: 0.9rem;
+}
+
+.open-folder-button {
+  padding: 0.4rem 0.8rem;
+  background-color: #9b59b6;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: background-color 0.2s;
+}
+
+.open-folder-button:hover {
+  background-color: #8e44ad;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0,0,0,0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  position: relative;
+  max-width: 90vw;
+  max-height: 90vh;
+}
+
+.modal-close {
+  position: absolute;
+  top: -40px;
+  right: 0;
+  background: none;
+  border: none;
+  color: white;
+  font-size: 2rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  line-height: 1;
+}
+
+.modal-close:hover {
+  color: #ccc;
+}
+
+.modal-image {
+  max-width: 90vw;
+  max-height: 90vh;
+  object-fit: contain;
 }
 
 .session-details {
@@ -652,6 +882,22 @@ onUnmounted(() => {
 
   .player-name {
     color: #e0e0e0;
+  }
+
+  .screenshot-list {
+    background-color: #1a1a1a;
+  }
+
+  .screenshot-list h4 {
+    color: #b0b0b0;
+  }
+
+  .screenshot-item {
+    background-color: #2a2a2a;
+  }
+
+  .screenshot-item:hover {
+    background-color: #3a3a3a;
   }
 }
 </style>

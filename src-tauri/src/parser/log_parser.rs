@@ -1,5 +1,5 @@
 use super::types::LogEvent;
-use chrono::{DateTime, NaiveDateTime, Utc};
+use chrono::{DateTime, Local, NaiveDateTime, TimeZone, Utc};
 use regex::Regex;
 
 pub struct VRChatLogParser {
@@ -9,6 +9,7 @@ pub struct VRChatLogParser {
     player_joined_regex: Regex,
     player_left_regex: Regex,
     avatar_changed_regex: Regex,
+    screenshot_regex: Regex,
 }
 
 impl VRChatLogParser {
@@ -42,6 +43,11 @@ impl VRChatLogParser {
             // 2025.10.13 11:02:36 Debug      -  [Behaviour] Switching DisplayName to avatar AvatarName
             avatar_changed_regex: Regex::new(
                 r"(\d{4}\.\d{2}\.\d{2} \d{2}:\d{2}:\d{2}) .* \[Behaviour\] Switching (.+?) to avatar (.+)"
+            ).unwrap(),
+
+            // 2025.10.15 15:48:41 Debug      -  [VRC Camera] Took screenshot to: D:\path\to\screenshot.png
+            screenshot_regex: Regex::new(
+                r"(\d{4}\.\d{2}\.\d{2} \d{2}:\d{2}:\d{2}) .* \[VRC Camera\] Took screenshot to: (.+)"
             ).unwrap(),
         }
     }
@@ -95,6 +101,13 @@ impl VRChatLogParser {
             });
         }
 
+        if let Some(caps) = self.screenshot_regex.captures(line) {
+            return Some(LogEvent::ScreenshotTaken {
+                timestamp: parse_timestamp(&caps[1])?,
+                file_path: caps[2].to_string(),
+            });
+        }
+
         None
     }
 }
@@ -106,10 +119,12 @@ impl Default for VRChatLogParser {
 }
 
 /// タイムスタンプをパース (2025.10.13 09:53:16)
+/// VRChatのログはローカル時刻で記録されているため、ローカルタイムゾーンとして解釈してUTCに変換
 fn parse_timestamp(s: &str) -> Option<DateTime<Utc>> {
     NaiveDateTime::parse_from_str(s, "%Y.%m.%d %H:%M:%S")
         .ok()
-        .map(|dt| dt.and_utc())
+        .and_then(|dt| Local.from_local_datetime(&dt).single())
+        .map(|local_dt| local_dt.with_timezone(&Utc))
 }
 
 #[cfg(test)]

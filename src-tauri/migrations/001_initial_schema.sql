@@ -128,3 +128,15 @@ CREATE TABLE IF NOT EXISTS log_files (
 );
 CREATE INDEX IF NOT EXISTS idx_log_files_file_path ON log_files(file_path);
 CREATE INDEX IF NOT EXISTS idx_log_files_last_modified ON log_files(last_modified_at);
+
+-- 11. Screenshots (スクリーンショット記録)
+CREATE TABLE IF NOT EXISTS screenshots (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    session_id INTEGER NOT NULL,
+    file_path TEXT NOT NULL,
+    taken_at TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (session_id) REFERENCES sessions(id) ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS idx_screenshots_session ON screenshots(session_id);
+CREATE INDEX IF NOT EXISTS idx_screenshots_taken_at ON screenshots(taken_at);

@@ -153,6 +153,21 @@ impl EventProcessor {
                 }
             }
 
+            LogEvent::ScreenshotTaken { timestamp, file_path } => {
+                if let Some(session_id) = self.current_session_id {
+                    operations::record_screenshot(
+                        conn,
+                        session_id,
+                        &file_path,
+                        &timestamp,
+                    )?;
+                    println!("Screenshot taken: {}", file_path);
+                } else {
+                    eprintln!("Warning: Screenshot taken without active session");
+                }
+                None  // スクリーンショットはリアルタイム通知不要（将来的にUI表示するかも）
+            }
+
             LogEvent::AvatarChanged { timestamp, display_name, avatar_name } => {
                 if let Some(session_id) = self.current_session_id {
                     // アバターを作成または更新
