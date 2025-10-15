@@ -38,6 +38,7 @@ interface Screenshot {
   id: number;
   filePath: string;
   takenAt: string;
+  exists: boolean;
 }
 
 const isLoading = ref(false);
@@ -401,13 +402,19 @@ onUnmounted(() => {
                   v-for="screenshot in sessionScreenshots.get(session.id)"
                   :key="screenshot.id"
                   class="screenshot-item"
-                  @click="viewScreenshot(screenshot.filePath)"
+                  :class="{ 'screenshot-deleted': !screenshot.exists }"
+                  @click="screenshot.exists && viewScreenshot(screenshot.filePath)"
                 >
                   <img
+                    v-if="screenshot.exists"
                     :src="convertFileSrc(screenshot.filePath)"
                     :alt="`Screenshot ${screenshot.id}`"
                     class="screenshot-thumbnail"
                   />
+                  <div v-else class="screenshot-deleted-placeholder">
+                    <div class="deleted-icon">🗑️</div>
+                    <div class="deleted-text">削除済み</div>
+                  </div>
                   <div class="screenshot-time">
                     {{ new Date(screenshot.takenAt).toLocaleTimeString('ja-JP') }}
                   </div>
@@ -697,11 +704,41 @@ onUnmounted(() => {
   box-shadow: 0 4px 8px rgba(0,0,0,0.2);
 }
 
+.screenshot-item.screenshot-deleted {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.screenshot-item.screenshot-deleted:hover {
+  transform: none;
+  box-shadow: none;
+}
+
 .screenshot-thumbnail {
   width: 100%;
   height: 120px;
   object-fit: cover;
   display: block;
+}
+
+.screenshot-deleted-placeholder {
+  width: 100%;
+  height: 120px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: #f0f0f0;
+}
+
+.deleted-icon {
+  font-size: 2rem;
+  margin-bottom: 0.25rem;
+}
+
+.deleted-text {
+  font-size: 0.8rem;
+  color: #6c757d;
 }
 
 .screenshot-time {
@@ -898,6 +935,14 @@ onUnmounted(() => {
 
   .screenshot-item:hover {
     background-color: #3a3a3a;
+  }
+
+  .screenshot-deleted-placeholder {
+    background-color: #2a2a2a;
+  }
+
+  .deleted-text {
+    color: #b0b0b0;
   }
 }
 </style>

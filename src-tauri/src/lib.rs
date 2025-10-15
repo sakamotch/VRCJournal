@@ -174,6 +174,8 @@ async fn get_session_screenshots(
     state: tauri::State<'_, AppState>,
     session_id: i64,
 ) -> Result<serde_json::Value, String> {
+    use std::path::Path;
+
     let db = state.db.lock().unwrap();
     let conn = db.connection();
 
@@ -183,10 +185,12 @@ async fn get_session_screenshots(
     let result: Vec<serde_json::Value> = screenshots
         .iter()
         .map(|(id, file_path, taken_at)| {
+            let exists = Path::new(file_path).exists();
             serde_json::json!({
                 "id": id,
                 "filePath": file_path,
                 "takenAt": taken_at,
+                "exists": exists,
             })
         })
         .collect();
