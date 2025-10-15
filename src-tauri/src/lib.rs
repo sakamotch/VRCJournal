@@ -426,10 +426,20 @@ pub fn run() {
                                             }
                                         }
 
-                                        // ファイル位置を更新
+                                        // ファイル位置とメタデータを更新
                                         let file_states = watcher.get_file_states();
                                         if let Some(position) = file_states.get(&file_path) {
                                             let path_str = file_path.to_string_lossy().to_string();
+
+                                            // ファイルサイズと更新日時も更新
+                                            if let Ok(metadata) = std::fs::metadata(&file_path) {
+                                                let file_size = metadata.len();
+                                                if let Ok(modified) = metadata.modified() {
+                                                    let modified_dt = chrono::DateTime::<Utc>::from(modified);
+                                                    let _ = db::operations::upsert_log_file(conn, &path_str, file_size, modified_dt);
+                                                }
+                                            }
+
                                             let _ = db::operations::update_log_file_position(conn, &path_str, *position);
                                         }
                                     }
