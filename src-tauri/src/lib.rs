@@ -328,9 +328,30 @@ pub fn run() {
             database.migrate()
                 .expect("Failed to run migrations");
 
+            // EventProcessorを初期化（DBから最新のローカルプレイヤーと進行中セッションを復元）
+            let mut event_processor = EventProcessor::new();
+            {
+                let conn = database.connection();
+                if let Ok(players) = db::operations::get_all_local_players(conn) {
+                    if let Some(latest_player) = players.first() {
+                        event_processor.set_current_local_player(latest_player.id);
+
+                        // 進行中のセッション（ended_atがNULL）を復元
+                        let session_result: Result<i64, _> = conn.query_row(
+                            "SELECT id FROM sessions WHERE player_id = ?1 AND ended_at IS NULL ORDER BY started_at DESC LIMIT 1",
+                            [latest_player.id],
+                            |row| row.get(0),
+                        );
+                        if let Ok(session_id) = session_result {
+                            event_processor.set_current_session(session_id);
+                        }
+                    }
+                }
+            }
+
             let app_state = AppState {
                 db: Arc::new(Mutex::new(database)),
-                event_processor: Arc::new(Mutex::new(EventProcessor::new())),
+                event_processor: Arc::new(Mutex::new(event_processor)),
             };
 
             app.manage(app_state.clone());

@@ -31,6 +31,16 @@ impl EventProcessor {
         }
     }
 
+    /// 現在のローカルプレイヤーIDを設定（起動時の状態復元用）
+    pub fn set_current_local_player(&mut self, player_id: i64) {
+        self.current_local_player_id = Some(player_id);
+    }
+
+    /// 現在のセッションIDを設定（起動時の状態復元用）
+    pub fn set_current_session(&mut self, session_id: i64) {
+        self.current_session_id = Some(session_id);
+    }
+
     /// LogEventを処理してデータベースに保存し、フロントエンドに通知すべきイベントを返す
     pub fn process_event(&mut self, conn: &Connection, event: LogEvent) -> Result<Option<ProcessedEvent>, rusqlite::Error> {
         let processed_event = match event {
