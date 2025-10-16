@@ -9,6 +9,15 @@ export function formatDateTime(dateStr: string): string {
   }
 }
 
+export function formatDate(dateStr: string): string {
+  try {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString("ja-JP", { year: "numeric", month: "2-digit", day: "2-digit" });
+  } catch {
+    return dateStr;
+  }
+}
+
 export function formatTime(dateStr: string): string {
   try {
     const date = new Date(dateStr);

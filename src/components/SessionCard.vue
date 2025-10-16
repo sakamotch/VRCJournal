@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import type { Session, Player, Screenshot } from "@/types";
-import { formatDuration, formatTime } from "@/utils/formatters";
+import { formatDuration, formatTime, formatDate } from "@/utils/formatters";
 import PlayerList from "./PlayerList.vue";
 import ScreenshotList from "./ScreenshotList.vue";
 import { invoke } from "@tauri-apps/api/core";
@@ -58,45 +58,46 @@ async function toggleScreenshots() {
 
 <template>
   <div class="session-card">
-    <div class="session-main">
+    <div class="session-header">
       <h3 class="world-name">
         {{ session.worldName || session.worldId }}
       </h3>
-      <div class="session-info">
-        <span class="user-name">{{ session.userName }}</span>
-        <span
-          class="time"
-          :title="session.status === 'interrupted' ? 'VRChatが予期せず終了した可能性があります' : ''"
-        >
-          {{ formatTime(session.startedAt) }}
-          <template v-if="session.endedAt">
-            〜 {{ formatTime(session.endedAt) }} ({{ formatDuration(session) }})
-          </template>
-          <template v-else-if="session.status === 'interrupted'">
-            〜 不明
-          </template>
-          <template v-else>
-            〜 進行中
-          </template>
-        </span>
-        <span
-          class="player-count clickable"
-          @click="togglePlayers"
-          :title="playersExpanded ? 'プレイヤーを非表示' : 'プレイヤーを表示'"
-        >
-          👥 {{ session.playerCount }}人
-          {{ playersExpanded ? '▼' : '▶' }}
-        </span>
-        <span
-          v-if="session.screenshotCount > 0"
-          class="screenshot-count clickable"
-          @click="toggleScreenshots"
-          :title="screenshotsExpanded ? '写真を非表示' : '写真を表示'"
-        >
-          📷 {{ session.screenshotCount }}枚
-          {{ screenshotsExpanded ? '▼' : '▶' }}
-        </span>
-      </div>
+      <span class="user-name">{{ session.userName }}</span>
+    </div>
+    <div class="session-info">
+      <span class="date">{{ formatDate(session.startedAt) }}</span>
+      <span
+        class="time"
+        :title="session.status === 'interrupted' ? 'VRChatが予期せず終了した可能性があります' : ''"
+      >
+        {{ formatTime(session.startedAt) }}
+        <template v-if="session.endedAt">
+          〜 {{ formatTime(session.endedAt) }} ({{ formatDuration(session) }})
+        </template>
+        <template v-else-if="session.status === 'interrupted'">
+          〜 不明
+        </template>
+        <template v-else>
+          〜 進行中
+        </template>
+      </span>
+      <span
+        class="player-count clickable"
+        @click="togglePlayers"
+        :title="playersExpanded ? 'プレイヤーを非表示' : 'プレイヤーを表示'"
+      >
+        👥 {{ session.playerCount }}人
+        {{ playersExpanded ? '▼' : '▶' }}
+      </span>
+      <span
+        v-if="session.screenshotCount > 0"
+        class="screenshot-count clickable"
+        @click="toggleScreenshots"
+        :title="screenshotsExpanded ? '写真を非表示' : '写真を表示'"
+      >
+        📷 {{ session.screenshotCount }}枚
+        {{ screenshotsExpanded ? '▼' : '▶' }}
+      </span>
     </div>
 
     <!-- プレイヤーリスト -->
@@ -146,14 +147,25 @@ async function toggleScreenshots() {
   box-shadow: var(--session-card-hover-shadow);
 }
 
-.session-main {
+.session-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
   margin-bottom: 0.5rem;
 }
 
 .world-name {
-  margin: 0 0 0.5rem 0;
+  margin: 0;
   font-size: 1.1rem;
   color: var(--text-primary);
+  flex: 1;
+}
+
+.user-name {
+  font-size: 0.8rem;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+  margin-left: 1rem;
 }
 
 .session-info {
@@ -164,9 +176,9 @@ async function toggleScreenshots() {
   color: var(--text-tertiary);
 }
 
-.user-name {
-  font-weight: 600;
-  color: var(--text-primary);
+.date {
+  color: var(--text-secondary);
+  font-weight: 500;
 }
 
 .time {
