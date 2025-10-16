@@ -21,6 +21,7 @@ pub struct SessionPlayer {
     pub user_id: String,
     pub first_seen_at: DateTime<Utc>,
     pub last_seen_at: DateTime<Utc>,
+    pub joined_at: DateTime<Utc>,        // セッションに参加した時刻
     pub left_at: Option<DateTime<Utc>>,   // セッションから退出した時刻
 }
 
@@ -120,6 +121,7 @@ pub fn upsert_local_player(
 }
 
 /// セッションにプレイヤーを追加
+/// 同じプレイヤーが複数回出入りする場合も、それぞれ別のレコードとして記録される
 pub fn add_player_to_session(
     conn: &Connection,
     session_id: i64,
@@ -128,7 +130,7 @@ pub fn add_player_to_session(
     joined_at: DateTime<Utc>,
 ) -> Result<()> {
     conn.execute(
-        "INSERT OR IGNORE INTO session_players (session_id, player_id, joined_at, display_name_history_id)
+        "INSERT INTO session_players (session_id, player_id, joined_at, display_name_history_id)
          VALUES (?1, ?2, ?3, ?4)",
         (session_id, player_id, joined_at.to_rfc3339(), display_name_history_id),
     )?;
@@ -136,6 +138,7 @@ pub fn add_player_to_session(
 }
 
 /// セッションからプレイヤーを退出させる
+/// 同じプレイヤーが複数回出入りする場合、最新の（left_atがNULLの）レコードのみを更新
 pub fn remove_player_from_session(
     conn: &Connection,
     session_id: i64,
@@ -143,7 +146,14 @@ pub fn remove_player_from_session(
     left_at: DateTime<Utc>,
 ) -> Result<()> {
     conn.execute(
-        "UPDATE session_players SET left_at = ?1 WHERE session_id = ?2 AND player_id = ?3",
+        "UPDATE session_players
+         SET left_at = ?1
+         WHERE id = (
+             SELECT id FROM session_players
+             WHERE session_id = ?2 AND player_id = ?3 AND left_at IS NULL
+             ORDER BY joined_at DESC
+             LIMIT 1
+         )",
         (left_at.to_rfc3339(), session_id, player_id),
     )?;
     Ok(())
@@ -152,7 +162,7 @@ pub fn remove_player_from_session(
 /// セッションのプレイヤー一覧を取得（その時の名前と現在の名前を含む）
 pub fn get_players_in_session(conn: &Connection, session_id: i64) -> Result<Vec<SessionPlayer>> {
     let mut stmt = conn.prepare(
-        "SELECT p.id, p.display_name, pnh.display_name, p.user_id, p.first_seen_at, p.last_seen_at, sp.left_at
+        "SELECT p.id, p.display_name, pnh.display_name, p.user_id, p.first_seen_at, p.last_seen_at, sp.joined_at, sp.left_at
          FROM players p
          INNER JOIN session_players sp ON p.id = sp.player_id
          INNER JOIN player_name_history pnh ON sp.display_name_history_id = pnh.id
@@ -173,7 +183,10 @@ pub fn get_players_in_session(conn: &Connection, session_id: i64) -> Result<Vec<
                 last_seen_at: DateTime::parse_from_rfc3339(&row.get::<_, String>(5)?)
                     .unwrap()
                     .with_timezone(&Utc),
-                left_at: row.get::<_, Option<String>>(6)?
+                joined_at: DateTime::parse_from_rfc3339(&row.get::<_, String>(6)?)
+                    .unwrap()
+                    .with_timezone(&Utc),
+                left_at: row.get::<_, Option<String>>(7)?
                     .map(|s| DateTime::parse_from_rfc3339(&s).unwrap().with_timezone(&Utc)),
             })
         })?

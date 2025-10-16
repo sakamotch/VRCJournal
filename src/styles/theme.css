@@ -1,0 +1,153 @@
+/* ライトテーマ（デフォルト） */
+:root {
+  /* 背景色 */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8f9fa;
+  --bg-tertiary: #e9ecef;
+  --bg-app: transparent;
+
+  /* テキスト色 */
+  --text-primary: #212529;
+  --text-secondary: #495057;
+  --text-tertiary: #6c757d;
+  --text-inverse: #ffffff;
+
+  /* ボーダー色 */
+  --border-color: #dee2e6;
+  --border-color-light: #e9ecef;
+
+  /* アクセントカラー */
+  --accent-primary: #3498db;
+  --accent-primary-hover: #2980b9;
+  --accent-primary-light: #e8f4f8;
+
+  /* ヘッダー */
+  --header-bg: #2c3e50;
+  --header-text: #ffffff;
+
+  /* サイドバー */
+  --sidebar-bg: #f8f9fa;
+  --sidebar-item-bg: #ffffff;
+  --sidebar-item-hover: #e9ecef;
+  --sidebar-item-active: #3498db;
+  --sidebar-border: #dee2e6;
+
+  /* セッションカード */
+  --card-bg: #ffffff;
+  --card-border: #dee2e6;
+  --card-shadow: rgba(0, 0, 0, 0.1);
+  --card-hover-shadow: rgba(0, 0, 0, 0.15);
+
+  /* プレイヤー */
+  --player-bg: #f8f9fa;
+  --player-item-bg: #ffffff;
+  --player-border: #dee2e6;
+  --player-stayed-border: #27ae60;
+  --player-stayed-bg: #f0f9f4;
+  --player-stayed-hover: #e1f5e8;
+  --player-hover: #e9ecef;
+
+  /* スクリーンショット */
+  --screenshot-bg: #f8f9fa;
+  --screenshot-border: #dee2e6;
+  --screenshot-hover: #e9ecef;
+
+  /* モーダル */
+  --modal-overlay: rgba(0, 0, 0, 0.7);
+  --modal-bg: #ffffff;
+
+  /* メッセージ */
+  --message-bg: #e8f4f8;
+  --message-border: #3498db;
+  --message-text: #212529;
+
+  /* 状態色 */
+  --status-active: #27ae60;
+  --status-interrupted: #f39c12;
+  --status-completed: #95a5a6;
+}
+
+/* ダークテーマ */
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* 背景色 */
+    --bg-primary: #1a1a1a;
+    --bg-secondary: #2a2a2a;
+    --bg-tertiary: #3a3a3a;
+    --bg-app: #1a1a1a;
+
+    /* テキスト色 */
+    --text-primary: #e0e0e0;
+    --text-secondary: #b0b0b0;
+    --text-tertiary: #808080;
+    --text-inverse: #1a1a1a;
+
+    /* ボーダー色 */
+    --border-color: #3a3a3a;
+    --border-color-light: #2a2a2a;
+
+    /* アクセントカラー */
+    --accent-primary: #4aa3df;
+    --accent-primary-hover: #3498db;
+    --accent-primary-light: #2a3f4f;
+
+    /* ヘッダー */
+    --header-bg: #1e2837;
+    --header-text: #e0e0e0;
+
+    /* サイドバー */
+    --sidebar-bg: #2a2a2a;
+    --sidebar-item-bg: #1a1a1a;
+    --sidebar-item-hover: #3a3a3a;
+    --sidebar-item-active: #4aa3df;
+    --sidebar-border: #3a3a3a;
+
+    /* セッションカード */
+    --card-bg: #2a2a2a;
+    --card-border: #3a3a3a;
+    --card-shadow: rgba(0, 0, 0, 0.3);
+    --card-hover-shadow: rgba(0, 0, 0, 0.5);
+
+    /* プレイヤー */
+    --player-bg: #1a1a1a;
+    --player-item-bg: #2a2a2a;
+    --player-border: #3a3a3a;
+    --player-stayed-border: #27ae60;
+    --player-stayed-bg: #1a3d26;
+    --player-stayed-hover: #255532;
+    --player-hover: #3a3a3a;
+
+    /* スクリーンショット */
+    --screenshot-bg: #1a1a1a;
+    --screenshot-border: #3a3a3a;
+    --screenshot-hover: #3a3a3a;
+
+    /* モーダル */
+    --modal-overlay: rgba(0, 0, 0, 0.85);
+    --modal-bg: #2a2a2a;
+
+    /* メッセージ */
+    --message-bg: #2a3f4f;
+    --message-border: #4aa3df;
+    --message-text: #e0e0e0;
+
+    /* 状態色 */
+    --status-active: #2ecc71;
+    --status-interrupted: #f1c40f;
+    --status-completed: #7f8c8d;
+  }
+}
+
+/* グローバルスタイル */
+body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background-color: var(--bg-app);
+  color: var(--text-primary);
+}
+
+#app {
+  margin: 0;
+  padding: 0;
+}

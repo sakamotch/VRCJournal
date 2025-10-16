@@ -59,19 +59,21 @@ CREATE INDEX idx_avatars_avatar_id ON avatars(avatar_id);
 CREATE INDEX idx_avatars_name ON avatars(avatar_name);
 
 -- 5. Session Players (セッションとプレイヤーの関連)
+-- 同じプレイヤーが同じセッションに複数回出入りすることを許可
 CREATE TABLE session_players (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     session_id INTEGER NOT NULL,
     player_id INTEGER NOT NULL,
     joined_at TEXT NOT NULL,               -- ISO 8601 / RFC3339形式
     left_at TEXT,                          -- ISO 8601 / RFC3339形式
     display_name_history_id INTEGER NOT NULL,
-    PRIMARY KEY (session_id, player_id),
     FOREIGN KEY (session_id) REFERENCES sessions(id) ON DELETE CASCADE,
     FOREIGN KEY (player_id) REFERENCES players(id) ON DELETE CASCADE,
     FOREIGN KEY (display_name_history_id) REFERENCES player_name_history(id) ON DELETE RESTRICT
 );
 CREATE INDEX idx_session_players_session ON session_players(session_id);
 CREATE INDEX idx_session_players_player ON session_players(player_id);
+CREATE INDEX idx_session_players_joined_at ON session_players(joined_at);
 
 -- 6. Avatar Usages (アバター使用履歴)
 -- セッション内での各プレイヤー（自分含む）のアバター変更を記録

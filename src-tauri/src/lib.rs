@@ -84,7 +84,7 @@ async fn get_sessions(
         format!(
             "SELECT s.id, s.player_id, p.display_name as user_name, s.started_at, s.ended_at,
                     s.world_id, s.world_name, s.instance_id, s.status,
-                    (SELECT COUNT(*) FROM session_players WHERE session_id = s.id) as player_count,
+                    (SELECT COUNT(DISTINCT player_id) FROM session_players WHERE session_id = s.id) as player_count,
                     (SELECT COUNT(*) FROM screenshots WHERE session_id = s.id) as screenshot_count
              FROM sessions s
              JOIN players p ON s.player_id = p.id
@@ -97,7 +97,7 @@ async fn get_sessions(
         format!(
             "SELECT s.id, s.player_id, p.display_name as user_name, s.started_at, s.ended_at,
                     s.world_id, s.world_name, s.instance_id, s.status,
-                    (SELECT COUNT(*) FROM session_players WHERE session_id = s.id) as player_count,
+                    (SELECT COUNT(DISTINCT player_id) FROM session_players WHERE session_id = s.id) as player_count,
                     (SELECT COUNT(*) FROM screenshots WHERE session_id = s.id) as screenshot_count
              FROM sessions s
              JOIN players p ON s.player_id = p.id
@@ -145,7 +145,7 @@ async fn get_session_by_id(
     let session = conn.query_row(
         "SELECT s.id, s.player_id, p.display_name as user_name, s.started_at, s.ended_at,
                 s.world_id, s.world_name, s.instance_id, s.status,
-                (SELECT COUNT(*) FROM session_players WHERE session_id = s.id) as player_count
+                (SELECT COUNT(DISTINCT player_id) FROM session_players WHERE session_id = s.id) as player_count
          FROM sessions s
          JOIN players p ON s.player_id = p.id
          WHERE s.id = ?1 AND p.is_local = 1",
@@ -286,6 +286,7 @@ async fn get_session_players(
                 "userId": p.user_id,
                 "firstSeenAt": p.first_seen_at.to_rfc3339(),
                 "lastSeenAt": p.last_seen_at.to_rfc3339(),
+                "joinedAt": p.joined_at.to_rfc3339(),
                 "leftAt": p.left_at.map(|dt| dt.to_rfc3339()),
             })
         }).collect::<Vec<_>>()
