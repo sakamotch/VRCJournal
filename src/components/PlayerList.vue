@@ -113,11 +113,7 @@ const emit = defineEmits<Emits>();
 }
 
 .player-item.player-stayed {
-  border-left: 3px solid var(--feedback-success);
-  background-color: var(--player-stayed-bg);
-}
-
-.player-item.player-stayed:hover {
-  background-color: var(--player-stayed-hover);
+  border-left: 3px solid var(--interactive-default);
+  padding-left: calc(0.75rem - 2px); /* ボーダー分を調整 */
 }
 </style>

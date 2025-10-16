@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { Screenshot } from "@/types";
 import { convertFileSrc } from '@tauri-apps/api/core';
+import { Folder, Trash2 } from 'lucide-vue-next';
 
 interface Props {
   screenshots: Screenshot[];
@@ -33,7 +34,7 @@ const emit = defineEmits<Emits>();
           class="screenshot-thumbnail"
         />
         <div v-else class="screenshot-deleted-placeholder">
-          <div class="deleted-icon">🗑️</div>
+          <Trash2 :size="32" class="deleted-icon" />
           <div class="deleted-text">削除済み</div>
         </div>
         <div class="screenshot-time">
@@ -49,7 +50,8 @@ const emit = defineEmits<Emits>();
       @click="emit('openDirectory', screenshots[0].filePath)"
       class="open-folder-button"
     >
-      📁 フォルダを開く
+      <Folder :size="16" />
+      フォルダを開く
     </button>
   </div>
 </template>
@@ -118,8 +120,8 @@ const emit = defineEmits<Emits>();
 }
 
 .deleted-icon {
-  font-size: 2rem;
-  margin-bottom: 0.25rem;
+  margin-bottom: 0.5rem;
+  color: var(--text-tertiary);
 }
 
 .deleted-text {
@@ -143,17 +145,22 @@ const emit = defineEmits<Emits>();
 }
 
 .open-folder-button {
-  padding: 0.4rem 0.8rem;
-  background-color: var(--color-purple-600);
-  color: var(--text-on-color);
-  border: none;
-  border-radius: 4px;
+  padding: 0.5rem 0.875rem;
+  background-color: var(--bg-elevated);
+  color: var(--text-primary);
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
   cursor: pointer;
-  font-size: 0.85rem;
-  transition: background-color 0.2s;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .open-folder-button:hover {
-  background-color: var(--color-purple-700);
+  background-color: var(--bg-hover);
+  border-color: var(--border-hover);
 }
 </style>

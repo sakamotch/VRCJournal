@@ -243,22 +243,24 @@ async function toggleScreenshots() {
 }
 
 .open-url-button {
-  padding: 0.4rem 0.8rem;
-  background-color: var(--interactive-default);
-  color: var(--text-on-color);
-  border: none;
-  border-radius: 4px;
+  padding: 0.5rem 0.875rem;
+  background-color: var(--bg-elevated);
+  color: var(--text-primary);
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
   cursor: pointer;
-  font-size: 0.85rem;
+  font-size: 0.875rem;
+  font-weight: 500;
   white-space: nowrap;
-  transition: background-color 0.2s;
+  transition: all 0.2s;
   display: flex;
   align-items: center;
-  gap: 0.375rem;
+  gap: 0.5rem;
 }
 
 .open-url-button:hover {
-  background-color: var(--interactive-hover);
+  background-color: var(--bg-hover);
+  border-color: var(--border-hover);
 }
 
 .label {

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from "vue";
+import { ref, computed, onMounted, onUnmounted, onBeforeUnmount } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import type { LocalUser, Session } from "@/types";
@@ -65,6 +65,13 @@ function selectUser(userId: number | null) {
 
 function navigateToView(view: NavigationView) {
   currentView.value = view;
+}
+
+function handleClickOutside(event: MouseEvent) {
+  const target = event.target as HTMLElement;
+  if (!target.closest('.user-selector')) {
+    showUserDropdown.value = false;
+  }
 }
 
 async function openInviteUrl(session: Session) {
@@ -154,6 +161,13 @@ onMounted(async () => {
         break;
     }
   });
+
+  // ドロップダウンの外クリック検知
+  document.addEventListener('click', handleClickOutside);
+});
+
+onBeforeUnmount(() => {
+  document.removeEventListener('click', handleClickOutside);
 });
 
 onUnmounted(() => {
@@ -196,7 +210,7 @@ onUnmounted(() => {
             </div>
           </div>
           <button class="settings-button" @click="showSettings = true" title="設定">
-            <SettingsIcon :size="20" />
+            <SettingsIcon :size="20" class="settings-icon" />
           </button>
         </div>
       </div>
@@ -280,11 +294,11 @@ onUnmounted(() => {
 .user-selector-button {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 0.75rem;
-  background-color: var(--bg-elevated);
-  color: var(--text-primary);
-  border: 1px solid var(--border-default);
+  gap: 0.375rem;
+  padding: 0.375rem 0.625rem;
+  background-color: transparent;
+  color: var(--header-text);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 6px;
   cursor: pointer;
   font-size: 0.875rem;
@@ -292,7 +306,8 @@ onUnmounted(() => {
 }
 
 .user-selector-button:hover {
-  background-color: var(--bg-hover);
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.25);
 }
 
 .user-name {
@@ -341,11 +356,12 @@ onUnmounted(() => {
 }
 
 .settings-button {
-  background: none;
-  border: none;
+  background-color: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
   cursor: pointer;
-  padding: 0.5rem;
-  transition: transform 0.2s;
+  padding: 0.375rem;
+  transition: all 0.2s;
   color: var(--header-text);
   display: flex;
   align-items: center;
@@ -353,6 +369,15 @@ onUnmounted(() => {
 }
 
 .settings-button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.settings-icon {
+  transition: transform 0.2s;
+}
+
+.settings-button:hover .settings-icon {
   transform: rotate(90deg);
 }
 
