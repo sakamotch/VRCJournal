@@ -5,6 +5,7 @@ import { formatDuration, formatTime, formatDate } from "@/utils/formatters";
 import PlayerList from "./PlayerList.vue";
 import ScreenshotList from "./ScreenshotList.vue";
 import { invoke } from "@tauri-apps/api/core";
+import { Calendar, Clock, Users, Camera, ChevronDown, ChevronRight, ExternalLink } from "lucide-vue-next";
 
 interface Props {
   session: Session;
@@ -65,11 +66,15 @@ async function toggleScreenshots() {
       <span class="user-name">{{ session.userName }}</span>
     </div>
     <div class="session-info">
-      <span class="date">{{ formatDate(session.startedAt) }}</span>
+      <span class="info-item date">
+        <Calendar :size="16" />
+        {{ formatDate(session.startedAt) }}
+      </span>
       <span
-        class="time"
+        class="info-item time"
         :title="session.status === 'interrupted' ? 'VRChatが予期せず終了した可能性があります' : ''"
       >
+        <Clock :size="16" />
         {{ formatTime(session.startedAt) }}
         <template v-if="session.endedAt">
           〜 {{ formatTime(session.endedAt) }} ({{ formatDuration(session) }})
@@ -82,21 +87,25 @@ async function toggleScreenshots() {
         </template>
       </span>
       <span
-        class="player-count clickable"
+        class="info-item player-count clickable"
         @click="togglePlayers"
         :title="playersExpanded ? 'プレイヤーを非表示' : 'プレイヤーを表示'"
       >
-        👥 {{ session.playerCount }}人
-        {{ playersExpanded ? '▼' : '▶' }}
+        <Users :size="16" />
+        {{ session.playerCount }}人
+        <ChevronDown v-if="playersExpanded" :size="14" />
+        <ChevronRight v-else :size="14" />
       </span>
       <span
         v-if="session.screenshotCount > 0"
-        class="screenshot-count clickable"
+        class="info-item screenshot-count clickable"
         @click="toggleScreenshots"
         :title="screenshotsExpanded ? '写真を非表示' : '写真を表示'"
       >
-        📷 {{ session.screenshotCount }}枚
-        {{ screenshotsExpanded ? '▼' : '▶' }}
+        <Camera :size="16" />
+        {{ session.screenshotCount }}枚
+        <ChevronDown v-if="screenshotsExpanded" :size="14" />
+        <ChevronRight v-else :size="14" />
       </span>
     </div>
 
@@ -128,7 +137,8 @@ async function toggleScreenshots() {
         <span class="value">{{ session.instanceId }}</span>
       </div>
       <button @click="emit('openInvite', session)" class="open-url-button">
-        🚀 ワールドを開く
+        <ExternalLink :size="16" />
+        ワールドを開く
       </button>
     </div>
   </div>
@@ -174,6 +184,12 @@ async function toggleScreenshots() {
   flex-wrap: wrap;
   font-size: 0.9rem;
   color: var(--text-tertiary);
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
 }
 
 .date {
@@ -236,6 +252,9 @@ async function toggleScreenshots() {
   font-size: 0.85rem;
   white-space: nowrap;
   transition: background-color 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
 }
 
 .open-url-button:hover {

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { Player, Session } from "@/types";
 import { formatPlayerName, formatTime, isPlayerStayedUntilEnd } from "@/utils/formatters";
+import { ExternalLink } from "lucide-vue-next";
 
 interface Props {
   players: Player[];
@@ -24,10 +25,11 @@ const emit = defineEmits<Emits>();
         :key="`${player.id}-${player.joinedAt}`"
         class="player-item"
         :class="{ 'player-stayed': isPlayerStayedUntilEnd(player, session) }"
+        @click="emit('openUserPage', player.userId)"
       >
-        <div class="player-info" @click="emit('openUserPage', player.userId)">
+        <div class="player-info">
           <span class="player-name">{{ formatPlayerName(player) }}</span>
-          <span class="player-icon">🔗</span>
+          <ExternalLink :size="14" class="player-icon" />
         </div>
         <div class="player-times">
           <span class="player-time">入室: {{ formatTime(player.joinedAt) }}</span>
@@ -67,6 +69,7 @@ const emit = defineEmits<Emits>();
   background-color: var(--player-item-bg);
   border-radius: 4px;
   transition: all 0.2s;
+  cursor: pointer;
 }
 
 .player-item:hover {
@@ -77,11 +80,6 @@ const emit = defineEmits<Emits>();
   display: flex;
   justify-content: space-between;
   align-items: center;
-  cursor: pointer;
-}
-
-.player-info:hover {
-  opacity: 0.8;
 }
 
 .player-times {
@@ -110,7 +108,7 @@ const emit = defineEmits<Emits>();
   transition: opacity 0.2s;
 }
 
-.player-info:hover .player-icon {
+.player-item:hover .player-icon {
   opacity: 1;
 }
 

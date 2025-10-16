@@ -7,6 +7,7 @@ import Sidebar from "@/components/Sidebar.vue";
 import SessionList from "@/components/SessionList.vue";
 import ScreenshotModal from "@/components/ScreenshotModal.vue";
 import Settings from "@/components/Settings.vue";
+import { Settings as SettingsIcon } from "lucide-vue-next";
 
 const isLoading = ref(false);
 const message = ref("");
@@ -148,7 +149,7 @@ onUnmounted(() => {
       <div class="header-content">
         <h1>VRCJournal</h1>
         <button class="settings-button" @click="showSettings = true" title="設定">
-          ⚙️
+          <SettingsIcon :size="20" />
         </button>
       </div>
     </header>
@@ -213,7 +214,6 @@ onUnmounted(() => {
 .settings-button {
   background: none;
   border: none;
-  font-size: 1.5rem;
   cursor: pointer;
   padding: 0.5rem;
   transition: transform 0.2s;
@@ -224,7 +224,7 @@ onUnmounted(() => {
 }
 
 .settings-button:hover {
-  transform: rotate(30deg);
+  transform: rotate(90deg);
 }
 
 .message {
