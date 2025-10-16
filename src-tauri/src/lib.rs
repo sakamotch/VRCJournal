@@ -83,7 +83,7 @@ async fn get_sessions(
     let query = if let Some(player_id) = local_user_id {
         format!(
             "SELECT s.id, s.player_id, p.display_name as user_name, s.started_at, s.ended_at,
-                    s.world_id, s.world_name, s.instance_id,
+                    s.world_id, s.world_name, s.instance_id, s.status,
                     (SELECT COUNT(*) FROM session_players WHERE session_id = s.id) as player_count,
                     (SELECT COUNT(*) FROM screenshots WHERE session_id = s.id) as screenshot_count
              FROM sessions s
@@ -96,7 +96,7 @@ async fn get_sessions(
     } else {
         format!(
             "SELECT s.id, s.player_id, p.display_name as user_name, s.started_at, s.ended_at,
-                    s.world_id, s.world_name, s.instance_id,
+                    s.world_id, s.world_name, s.instance_id, s.status,
                     (SELECT COUNT(*) FROM session_players WHERE session_id = s.id) as player_count,
                     (SELECT COUNT(*) FROM screenshots WHERE session_id = s.id) as screenshot_count
              FROM sessions s
@@ -121,8 +121,9 @@ async fn get_sessions(
             "worldId": row.get::<_, String>(5)?,
             "worldName": row.get::<_, Option<String>>(6)?,
             "instanceId": row.get::<_, String>(7)?,
-            "playerCount": row.get::<_, i64>(8)?,
-            "screenshotCount": row.get::<_, i64>(9)?,
+            "status": row.get::<_, String>(8)?,
+            "playerCount": row.get::<_, i64>(9)?,
+            "screenshotCount": row.get::<_, i64>(10)?,
         }))
     })
     .map_err(|e| format!("Failed to query sessions: {}", e))?
@@ -143,7 +144,7 @@ async fn get_session_by_id(
 
     let session = conn.query_row(
         "SELECT s.id, s.player_id, p.display_name as user_name, s.started_at, s.ended_at,
-                s.world_id, s.world_name, s.instance_id,
+                s.world_id, s.world_name, s.instance_id, s.status,
                 (SELECT COUNT(*) FROM session_players WHERE session_id = s.id) as player_count
          FROM sessions s
          JOIN players p ON s.player_id = p.id
@@ -159,7 +160,8 @@ async fn get_session_by_id(
                 "worldId": row.get::<_, String>(5)?,
                 "worldName": row.get::<_, Option<String>>(6)?,
                 "instanceId": row.get::<_, String>(7)?,
-                "playerCount": row.get::<_, i64>(8)?,
+                "status": row.get::<_, String>(8)?,
+                "playerCount": row.get::<_, i64>(9)?,
             }))
         }
     )
@@ -284,6 +286,7 @@ async fn get_session_players(
                 "userId": p.user_id,
                 "firstSeenAt": p.first_seen_at.to_rfc3339(),
                 "lastSeenAt": p.last_seen_at.to_rfc3339(),
+                "leftAt": p.left_at.map(|dt| dt.to_rfc3339()),
             })
         }).collect::<Vec<_>>()
     );
@@ -328,30 +331,9 @@ pub fn run() {
             database.migrate()
                 .expect("Failed to run migrations");
 
-            // EventProcessorを初期化（DBから最新のローカルプレイヤーと進行中セッションを復元）
-            let mut event_processor = EventProcessor::new();
-            {
-                let conn = database.connection();
-                if let Ok(players) = db::operations::get_all_local_players(conn) {
-                    if let Some(latest_player) = players.first() {
-                        event_processor.set_current_local_player(latest_player.id);
-
-                        // 進行中のセッション（ended_atがNULL）を復元
-                        let session_result: Result<i64, _> = conn.query_row(
-                            "SELECT id FROM sessions WHERE player_id = ?1 AND ended_at IS NULL ORDER BY started_at DESC LIMIT 1",
-                            [latest_player.id],
-                            |row| row.get(0),
-                        );
-                        if let Ok(session_id) = session_result {
-                            event_processor.set_current_session(session_id);
-                        }
-                    }
-                }
-            }
-
             let app_state = AppState {
                 db: Arc::new(Mutex::new(database)),
-                event_processor: Arc::new(Mutex::new(event_processor)),
+                event_processor: Arc::new(Mutex::new(EventProcessor::new())),
             };
 
             app.manage(app_state.clone());

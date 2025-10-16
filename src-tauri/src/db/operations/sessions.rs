@@ -10,6 +10,7 @@ pub struct Session {
     pub world_id: String,
     pub world_name: Option<String>,
     pub instance_id: String,
+    pub status: String,  // active, completed, interrupted
 }
 
 /// 新しいセッションを作成
@@ -35,10 +36,10 @@ pub fn create_session(
     Ok(conn.last_insert_rowid())
 }
 
-/// セッションの終了時刻を更新
+/// セッションの終了時刻を更新し、状態をcompletedに設定
 pub fn end_session(conn: &Connection, session_id: i64, ended_at: DateTime<Utc>) -> Result<()> {
     conn.execute(
-        "UPDATE sessions SET ended_at = ?1 WHERE id = ?2",
+        "UPDATE sessions SET ended_at = ?1, status = 'completed' WHERE id = ?2",
         (ended_at.to_rfc3339(), session_id),
     )?;
     Ok(())
@@ -50,7 +51,7 @@ pub fn get_latest_active_session(
     player_id: i64,
 ) -> Result<Option<Session>> {
     conn.query_row(
-        "SELECT id, player_id, started_at, ended_at, world_id, world_name, instance_id
+        "SELECT id, player_id, started_at, ended_at, world_id, world_name, instance_id, status
          FROM sessions
          WHERE player_id = ?1 AND ended_at IS NULL
          ORDER BY started_at DESC
@@ -69,6 +70,7 @@ pub fn get_latest_active_session(
                 world_id: row.get(4)?,
                 world_name: row.get(5)?,
                 instance_id: row.get(6)?,
+                status: row.get(7)?,
             })
         },
     )
@@ -83,7 +85,7 @@ pub fn get_sessions_by_player(
     offset: usize,
 ) -> Result<Vec<Session>> {
     let mut stmt = conn.prepare(
-        "SELECT id, player_id, started_at, ended_at, world_id, world_name, instance_id
+        "SELECT id, player_id, started_at, ended_at, world_id, world_name, instance_id, status
          FROM sessions
          WHERE player_id = ?1
          ORDER BY started_at DESC
@@ -104,6 +106,7 @@ pub fn get_sessions_by_player(
                 world_id: row.get(4)?,
                 world_name: row.get(5)?,
                 instance_id: row.get(6)?,
+                status: row.get(7)?,
             })
         })?
         .collect::<Result<Vec<_>>>()?;

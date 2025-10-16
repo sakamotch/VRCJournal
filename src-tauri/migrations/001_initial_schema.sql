@@ -38,6 +38,7 @@ CREATE TABLE sessions (
     world_id TEXT NOT NULL,
     world_name TEXT,
     instance_id TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'active', -- active: 進行中, completed: 正常終了, interrupted: 異常終了
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (player_id) REFERENCES players(id) ON DELETE CASCADE
 );

@@ -2,7 +2,6 @@ use crate::parser::LogEvent;
 use crate::db::operations;
 use rusqlite::Connection;
 use std::collections::HashMap;
-use chrono::{DateTime, Utc};
 
 /// プロセッサーが発行するイベント
 #[derive(Debug, Clone, serde::Serialize)]
@@ -31,16 +30,6 @@ impl EventProcessor {
         }
     }
 
-    /// 現在のローカルプレイヤーIDを設定（起動時の状態復元用）
-    pub fn set_current_local_player(&mut self, player_id: i64) {
-        self.current_local_player_id = Some(player_id);
-    }
-
-    /// 現在のセッションIDを設定（起動時の状態復元用）
-    pub fn set_current_session(&mut self, session_id: i64) {
-        self.current_session_id = Some(session_id);
-    }
-
     /// LogEventを処理してデータベースに保存し、フロントエンドに通知すべきイベントを返す
     pub fn process_event(&mut self, conn: &Connection, event: LogEvent) -> Result<Option<ProcessedEvent>, rusqlite::Error> {
         let processed_event = match event {
@@ -59,17 +48,14 @@ impl EventProcessor {
 
             LogEvent::JoiningWorld { timestamp, world_id, instance_id, world_name } => {
                 if let Some(local_player_id) = self.current_local_player_id {
-                    // 前のセッションがあれば終了
-                    let prev_event = if let Some(prev_session_id) = self.current_session_id {
-                        operations::end_session(conn, prev_session_id, timestamp)?;
-                        println!("Previous session ended: {}", prev_session_id);
-                        Some(ProcessedEvent::SessionEnded {
-                            session_id: prev_session_id,
-                            ended_at: timestamp.to_rfc3339(),
-                        })
-                    } else {
-                        None
-                    };
+                    // 前のセッションが終了していない場合、interrupted状態にする
+                    if let Some(previous_session_id) = self.current_session_id {
+                        conn.execute(
+                            "UPDATE sessions SET status = 'interrupted' WHERE id = ?1",
+                            [previous_session_id],
+                        )?;
+                        println!("Previous session {} marked as interrupted", previous_session_id);
+                    }
 
                     // 新しいセッションを作成
                     let world_name_opt = if world_name.is_empty() { None } else { Some(world_name.as_str()) };
@@ -85,8 +71,6 @@ impl EventProcessor {
                     self.player_ids.clear(); // 新しいセッションなのでプレイヤーマップをクリア
                     println!("Joined world: {} (session: {})", world_id, session_id);
 
-                    // 前のセッション終了があれば両方通知、なければ新規作成のみ
-                    // NOTE: ここでは新規セッション作成のみを返す。終了イベントは別途処理が必要
                     Some(ProcessedEvent::SessionCreated { session_id })
                 } else {
                     eprintln!("Warning: JoiningWorld event without authenticated user");
@@ -142,27 +126,6 @@ impl EventProcessor {
                 }
             }
 
-            LogEvent::PlayerLeft { timestamp, display_name, user_id } => {
-                if let Some(session_id) = self.current_session_id {
-                    if let Some(&player_id) = self.player_ids.get(&user_id) {
-                        // セッションからプレイヤーを退出
-                        operations::remove_player_from_session(
-                            conn,
-                            session_id,
-                            player_id,
-                            timestamp,
-                        )?;
-                        println!("Player left: {} ({})", display_name, user_id);
-                        Some(ProcessedEvent::PlayerLeft { session_id })
-                    } else {
-                        None
-                    }
-                } else {
-                    eprintln!("Warning: PlayerLeft event without active session");
-                    None
-                }
-            }
-
             LogEvent::ScreenshotTaken { timestamp, file_path } => {
                 if let Some(session_id) = self.current_session_id {
                     operations::record_screenshot(
@@ -176,6 +139,66 @@ impl EventProcessor {
                     eprintln!("Warning: Screenshot taken without active session");
                 }
                 None  // スクリーンショットはリアルタイム通知不要（将来的にUI表示するかも）
+            }
+
+            LogEvent::DestroyingPlayer { timestamp, display_name } => {
+                if let Some(session_id) = self.current_session_id {
+                    // 自分のdisplay_nameかチェック
+                    let is_local_player = if let Some(local_player_id) = self.current_local_player_id {
+                        conn.query_row(
+                            "SELECT display_name FROM players WHERE id = ?1 AND is_local = 1",
+                            [local_player_id],
+                            |row| row.get::<_, String>(0),
+                        ).ok() == Some(display_name.clone())
+                    } else {
+                        false
+                    };
+
+                    if is_local_player {
+                        // 自分が退出 = セッション終了
+                        // Destroying順序が不定なため、left_atがまだ設定されていない全プレイヤーを一括更新
+                        conn.execute(
+                            "UPDATE session_players
+                             SET left_at = ?1
+                             WHERE session_id = ?2
+                             AND left_at IS NULL",
+                            rusqlite::params![timestamp.to_rfc3339(), session_id],
+                        )?;
+
+                        operations::end_session(conn, session_id, timestamp)?;
+                        println!("Leaving instance: session {} ended, all remaining players marked as left", session_id);
+                        self.current_session_id = None;
+                        self.player_ids.clear();
+                        Some(ProcessedEvent::SessionEnded {
+                            session_id,
+                            ended_at: timestamp.to_rfc3339(),
+                        })
+                    } else {
+                        // 他のプレイヤーが退出
+                        // display_nameからplayer_idを取得してleft_atを更新
+                        if let Some((_user_id, &player_id)) = self.player_ids.iter()
+                            .find(|(user_id, _)| {
+                                conn.query_row(
+                                    "SELECT display_name FROM players WHERE user_id = ?1",
+                                    [user_id.as_str()],
+                                    |row| row.get::<_, String>(0),
+                                ).ok() == Some(display_name.clone())
+                            }) {
+                            operations::remove_player_from_session(
+                                conn,
+                                session_id,
+                                player_id,
+                                timestamp,
+                            )?;
+                            println!("Player {} left (destroying)", display_name);
+                            Some(ProcessedEvent::PlayerLeft { session_id })
+                        } else {
+                            None
+                        }
+                    }
+                } else {
+                    None
+                }
             }
 
             LogEvent::AvatarChanged { timestamp, display_name, avatar_name } => {

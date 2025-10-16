@@ -27,12 +27,6 @@ pub enum LogEvent {
         display_name: String,
         user_id: String,
     },
-    /// プレイヤー退出
-    PlayerLeft {
-        timestamp: DateTime<Utc>,
-        display_name: String,
-        user_id: String,
-    },
     /// アバター変更
     AvatarChanged {
         timestamp: DateTime<Utc>,
@@ -44,6 +38,11 @@ pub enum LogEvent {
         timestamp: DateTime<Utc>,
         file_path: String,
     },
+    /// プレイヤーのDisplayName破棄（退出の最終段階）
+    DestroyingPlayer {
+        timestamp: DateTime<Utc>,
+        display_name: String,
+    },
 }
 
 impl LogEvent {
@@ -53,9 +52,9 @@ impl LogEvent {
             LogEvent::JoiningWorld { timestamp, .. } => timestamp,
             LogEvent::EnteringRoom { timestamp, .. } => timestamp,
             LogEvent::PlayerJoined { timestamp, .. } => timestamp,
-            LogEvent::PlayerLeft { timestamp, .. } => timestamp,
             LogEvent::AvatarChanged { timestamp, .. } => timestamp,
             LogEvent::ScreenshotTaken { timestamp, .. } => timestamp,
+            LogEvent::DestroyingPlayer { timestamp, .. } => timestamp,
         }
     }
 }

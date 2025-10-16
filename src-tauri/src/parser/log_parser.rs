@@ -10,6 +10,7 @@ pub struct VRChatLogParser {
     player_left_regex: Regex,
     avatar_changed_regex: Regex,
     screenshot_regex: Regex,
+    leaving_instance_regex: Regex,
 }
 
 impl VRChatLogParser {
@@ -49,6 +50,11 @@ impl VRChatLogParser {
             screenshot_regex: Regex::new(
                 r"(\d{4}\.\d{2}\.\d{2} \d{2}:\d{2}:\d{2}) .* \[VRC Camera\] Took screenshot to: (.+)"
             ).unwrap(),
+
+            // 2025.10.15 15:49:00 Debug      -  [Behaviour] Destroying DisplayName
+            leaving_instance_regex: Regex::new(
+                r"(\d{4}\.\d{2}\.\d{2} \d{2}:\d{2}:\d{2}) .* \[Behaviour\] Destroying (.+)"
+            ).unwrap(),
         }
     }
 
@@ -85,14 +91,6 @@ impl VRChatLogParser {
             });
         }
 
-        if let Some(caps) = self.player_left_regex.captures(line) {
-            return Some(LogEvent::PlayerLeft {
-                timestamp: parse_timestamp(&caps[1])?,
-                display_name: caps[2].to_string(),
-                user_id: caps[3].to_string(),
-            });
-        }
-
         if let Some(caps) = self.avatar_changed_regex.captures(line) {
             return Some(LogEvent::AvatarChanged {
                 timestamp: parse_timestamp(&caps[1])?,
@@ -105,6 +103,13 @@ impl VRChatLogParser {
             return Some(LogEvent::ScreenshotTaken {
                 timestamp: parse_timestamp(&caps[1])?,
                 file_path: caps[2].to_string(),
+            });
+        }
+
+        if let Some(caps) = self.leaving_instance_regex.captures(line) {
+            return Some(LogEvent::DestroyingPlayer {
+                timestamp: parse_timestamp(&caps[1])?,
+                display_name: caps[2].to_string(),
             });
         }
 

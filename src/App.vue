@@ -21,6 +21,7 @@ interface Session {
   worldId: string;
   worldName: string | null;
   instanceId: string;
+  status: string; // 'active', 'completed', 'interrupted'
   playerCount: number;
   screenshotCount: number;
 }
@@ -32,6 +33,7 @@ interface Player {
   userId: string;
   firstSeenAt: string;
   lastSeenAt: string;
+  leftAt: string | null;
 }
 
 interface Screenshot {
@@ -91,12 +93,21 @@ function formatDateTime(dateStr: string): string {
   }
 }
 
-function formatDuration(startStr: string, endStr: string | null): string {
-  if (!endStr) return "進行中";
+function formatDuration(session: Session): string {
+  // 異常終了（interrupted）の場合
+  if (session.status === 'interrupted') {
+    return "不明";
+  }
 
+  // 進行中の場合
+  if (!session.endedAt) {
+    return "進行中";
+  }
+
+  // 通常の終了時間計算
   try {
-    const start = new Date(startStr);
-    const end = new Date(endStr);
+    const start = new Date(session.startedAt);
+    const end = new Date(session.endedAt);
     const diff = end.getTime() - start.getTime();
     const minutes = Math.floor(diff / 60000);
     const hours = Math.floor(minutes / 60);
@@ -223,6 +234,27 @@ function formatPlayerName(player: Player): string {
   return player.displayName;
 }
 
+function isPlayerStayedUntilEnd(player: Player, session: Session): boolean {
+  // セッションが進行中の場合はleftAtで判定
+  if (!session.endedAt) {
+    return player.leftAt === null;
+  }
+
+  // プレイヤーのleftAtがnullなら最後まで在席
+  if (!player.leftAt) {
+    return true;
+  }
+
+  // leftAtがセッション終了時刻と5秒以内なら最後まで在席
+  try {
+    const sessionEndTime = new Date(session.endedAt).getTime();
+    const playerLeftTime = new Date(player.leftAt).getTime();
+    return Math.abs(sessionEndTime - playerLeftTime) <= 5000;
+  } catch {
+    return false;
+  }
+}
+
 let unlistenFn: UnlistenFn | null = null;
 
 onMounted(async () => {
@@ -342,7 +374,12 @@ onUnmounted(() => {
               <div class="session-info">
                 <span class="user-name">{{ session.userName }}</span>
                 <span class="time">{{ formatDateTime(session.startedAt) }}</span>
-                <span class="duration">{{ formatDuration(session.startedAt, session.endedAt) }}</span>
+                <span
+                  class="duration"
+                  :title="session.status === 'interrupted' ? 'VRChatが予期せず終了した可能性があります' : ''"
+                >
+                  {{ formatDuration(session) }}
+                </span>
                 <span
                   class="player-count clickable"
                   @click="toggleSessionPlayers(session.id)"
@@ -377,6 +414,7 @@ onUnmounted(() => {
                   v-for="player in sessionPlayers.get(session.id)"
                   :key="player.id"
                   class="player-item"
+                  :class="{ 'player-stayed': isPlayerStayedUntilEnd(player, session) }"
                   @click="openUserPage(player.userId)"
                 >
                   <span class="player-name">{{ formatPlayerName(player) }}</span>
@@ -663,6 +701,15 @@ onUnmounted(() => {
   opacity: 1;
 }
 
+.player-item.player-stayed {
+  border-left: 3px solid #27ae60;
+  background-color: #f0f9f4;
+}
+
+.player-item.player-stayed:hover {
+  background-color: #e1f5e8;
+}
+
 .loading-players {
   text-align: center;
   padding: 1rem;
@@ -919,6 +966,15 @@ onUnmounted(() => {
 
   .player-name {
     color: #e0e0e0;
+  }
+
+  .player-item.player-stayed {
+    border-left-color: #2ecc71;
+    background-color: #1a3d26;
+  }
+
+  .player-item.player-stayed:hover {
+    background-color: #255532;
   }
 
   .screenshot-list {

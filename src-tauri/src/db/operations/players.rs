@@ -21,6 +21,7 @@ pub struct SessionPlayer {
     pub user_id: String,
     pub first_seen_at: DateTime<Utc>,
     pub last_seen_at: DateTime<Utc>,
+    pub left_at: Option<DateTime<Utc>>,   // セッションから退出した時刻
 }
 
 /// プレイヤーを作成または更新（一般プレイヤー用: is_local=0）
@@ -151,7 +152,7 @@ pub fn remove_player_from_session(
 /// セッションのプレイヤー一覧を取得（その時の名前と現在の名前を含む）
 pub fn get_players_in_session(conn: &Connection, session_id: i64) -> Result<Vec<SessionPlayer>> {
     let mut stmt = conn.prepare(
-        "SELECT p.id, p.display_name, pnh.display_name, p.user_id, p.first_seen_at, p.last_seen_at
+        "SELECT p.id, p.display_name, pnh.display_name, p.user_id, p.first_seen_at, p.last_seen_at, sp.left_at
          FROM players p
          INNER JOIN session_players sp ON p.id = sp.player_id
          INNER JOIN player_name_history pnh ON sp.display_name_history_id = pnh.id
@@ -172,6 +173,8 @@ pub fn get_players_in_session(conn: &Connection, session_id: i64) -> Result<Vec<
                 last_seen_at: DateTime::parse_from_rfc3339(&row.get::<_, String>(5)?)
                     .unwrap()
                     .with_timezone(&Utc),
+                left_at: row.get::<_, Option<String>>(6)?
+                    .map(|s| DateTime::parse_from_rfc3339(&s).unwrap().with_timezone(&Utc)),
             })
         })?
         .collect::<Result<Vec<_>>>()?;
