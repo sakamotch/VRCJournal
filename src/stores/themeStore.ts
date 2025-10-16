@@ -2,7 +2,7 @@ import { ref, watch } from 'vue';
 
 export type Theme = 'light' | 'dark' | 'system';
 
-const THEME_STORAGE_KEY = 'vrcjournal-theme';
+const THEME_STORAGE_KEY = 'VRCJournal-theme';
 
 const theme = ref<Theme>((localStorage.getItem(THEME_STORAGE_KEY) as Theme) || 'system');
 
