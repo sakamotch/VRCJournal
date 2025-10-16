@@ -33,19 +33,59 @@ impl EventProcessor {
         }
     }
 
-    /// データベースから最新のローカルプレイヤーを取得して状態を初期化
+    /// データベースから最新のローカルプレイヤーとセッション情報を取得して状態を初期化
     pub fn initialize_from_db(&mut self, conn: &Connection) -> Result<(), rusqlite::Error> {
-        // 最後に認証されたローカルプレイヤーを取得
-        let result = conn.query_row(
+        // 1. 最後に認証されたローカルプレイヤーを取得
+        let local_player_result = conn.query_row(
             "SELECT id FROM players WHERE is_local = 1 ORDER BY last_authenticated_at DESC LIMIT 1",
             [],
             |row| row.get::<_, i64>(0),
         );
 
-        match result {
+        match local_player_result {
             Ok(player_id) => {
                 self.current_local_player_id = Some(player_id);
                 println!("EventProcessor initialized with local player ID: {}", player_id);
+
+                // 2. 進行中のセッションを取得（そのプレイヤーの最新の in_progress セッション）
+                let session_result = conn.query_row(
+                    "SELECT id FROM sessions WHERE player_id = ?1 AND status = 'in_progress' ORDER BY started_at DESC LIMIT 1",
+                    [player_id],
+                    |row| row.get::<_, i64>(0),
+                );
+
+                match session_result {
+                    Ok(session_id) => {
+                        self.current_session_id = Some(session_id);
+                        println!("Found in-progress session: {}", session_id);
+
+                        // 3. セッションに参加中のプレイヤー（left_atがNULL）のマッピングを復元
+                        let mut stmt = conn.prepare(
+                            "SELECT p.user_id, sp.player_id
+                             FROM session_players sp
+                             JOIN players p ON sp.player_id = p.id
+                             WHERE sp.session_id = ?1 AND sp.left_at IS NULL"
+                        )?;
+
+                        let player_rows = stmt.query_map([session_id], |row| {
+                            Ok((
+                                row.get::<_, String>(0)?,  // user_id
+                                row.get::<_, i64>(1)?      // player_id
+                            ))
+                        })?;
+
+                        for row in player_rows {
+                            let (user_id, player_id) = row?;
+                            self.player_ids.insert(user_id.clone(), player_id);
+                        }
+
+                        println!("Restored {} players in current session", self.player_ids.len());
+                    }
+                    Err(rusqlite::Error::QueryReturnedNoRows) => {
+                        println!("No in-progress session found. Ready to start new session.");
+                    }
+                    Err(e) => return Err(e),
+                }
             }
             Err(rusqlite::Error::QueryReturnedNoRows) => {
                 println!("No local player found in database. Waiting for authentication event.");
