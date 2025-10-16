@@ -49,7 +49,7 @@ impl EventProcessor {
 
                 // 2. 進行中のセッションを取得（そのプレイヤーの最新の in_progress セッション）
                 let session_result = conn.query_row(
-                    "SELECT id FROM sessions WHERE player_id = ?1 AND status = 'in_progress' ORDER BY started_at DESC LIMIT 1",
+                    "SELECT id FROM sessions WHERE player_id = ?1 AND status = 'active' ORDER BY started_at DESC LIMIT 1",
                     [player_id],
                     |row| row.get::<_, i64>(0),
                 );
