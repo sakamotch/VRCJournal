@@ -1,31 +1,15 @@
 <script setup lang="ts">
+import EmptyState from '../common/EmptyState.vue';
+import { Camera } from 'lucide-vue-next';
 </script>
 
 <template>
-  <div class="photos-view">
-    <div class="placeholder">
-      <h2>フォト</h2>
-      <p>写真ギャラリー・アルバム機能を実装予定</p>
-    </div>
-  </div>
+  <EmptyState
+    title="フォト"
+    description="写真ギャラリー・アルバム機能を実装予定"
+    :icon="Camera"
+  />
 </template>
 
 <style scoped>
-.photos-view {
-  padding: 2rem;
-}
-
-.placeholder {
-  text-align: center;
-  color: var(--text-secondary);
-}
-
-.placeholder h2 {
-  margin: 0 0 1rem 0;
-  color: var(--text-primary);
-}
-
-.placeholder p {
-  margin: 0;
-}
 </style>

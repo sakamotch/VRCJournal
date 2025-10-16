@@ -45,8 +45,12 @@ const emit = defineEmits<Emits>();
 .player-list {
   margin-top: 1rem;
   padding: 1rem;
-  background-color: var(--bg-sunken);
-  border-radius: 4px;
+  background: linear-gradient(135deg,
+    var(--bg-sunken) 0%,
+    color-mix(in srgb, var(--bg-sunken) 98%, var(--color-indigo-500) 2%) 100%
+  );
+  border-radius: 8px;
+  border: 1px solid color-mix(in srgb, var(--border-subtle) 95%, var(--color-indigo-400) 5%);
 }
 
 .player-list h4 {
@@ -66,14 +70,47 @@ const emit = defineEmits<Emits>();
   flex-direction: column;
   gap: 0.25rem;
   padding: 0.5rem 0.75rem;
-  background-color: var(--player-item-bg);
-  border-radius: 4px;
-  transition: all 0.2s;
+  background: linear-gradient(135deg,
+    var(--player-item-bg) 0%,
+    color-mix(in srgb, var(--player-item-bg) 97%, var(--color-indigo-500) 3%) 100%
+  );
+  border-radius: 6px;
+  transition: all 0.3s ease;
   cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid transparent;
+}
+
+.player-item::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg,
+    color-mix(in srgb, var(--bg-hover) 92%, var(--color-indigo-400) 8%) 0%,
+    color-mix(in srgb, var(--bg-hover) 96%, var(--color-violet-400) 4%) 100%
+  );
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 0;
 }
 
 .player-item:hover {
-  background-color: var(--bg-hover);
+  border-color: color-mix(in srgb, var(--border-default) 80%, var(--color-indigo-400) 20%);
+  transform: translateX(2px);
+}
+
+.player-item:hover .player-name {
+  color: var(--interactive-default);
+}
+
+.player-item:hover::before {
+  opacity: 1;
+}
+
+.player-item > * {
+  position: relative;
+  z-index: 1;
 }
 
 .player-info {
@@ -113,7 +150,12 @@ const emit = defineEmits<Emits>();
 }
 
 .player-item.player-stayed {
-  border-left: 3px solid var(--interactive-default);
+  border-left: 3px solid transparent;
+  border-image: linear-gradient(180deg, var(--interactive-default) 0%, var(--color-violet-500) 100%) 1;
   padding-left: calc(0.75rem - 2px); /* ボーダー分を調整 */
+  background: linear-gradient(135deg,
+    color-mix(in srgb, var(--player-item-bg) 95%, var(--interactive-default) 5%) 0%,
+    color-mix(in srgb, var(--player-item-bg) 97%, var(--color-violet-500) 3%) 100%
+  );
 }
 </style>

@@ -23,17 +23,29 @@
   --color-gray-900: #27262b;
   --color-gray-950: #1a1a1d;
 
-  /* Soft Blue (柔らかいブルー) */
-  --color-blue-50: #f0f7ff;
-  --color-blue-100: #e0effe;
-  --color-blue-200: #bae0fd;
-  --color-blue-300: #7cc5fa;
-  --color-blue-400: #36a9f5;
-  --color-blue-500: #0c8ce9;
-  --color-blue-600: #0070c7;
-  --color-blue-700: #0159a2;
-  --color-blue-800: #054a85;
-  --color-blue-900: #0a3e6e;
+  /* Modern Blue (モダンブルー) */
+  --color-blue-50: #eff6ff;
+  --color-blue-100: #dbeafe;
+  --color-blue-200: #bfdbfe;
+  --color-blue-300: #93c5fd;
+  --color-blue-400: #60a5fa;
+  --color-blue-500: #3b82f6;
+  --color-blue-600: #2563eb;
+  --color-blue-700: #1d4ed8;
+  --color-blue-800: #1e40af;
+  --color-blue-900: #1e3a8a;
+
+  /* Indigo (インディゴ) */
+  --color-indigo-50: #eef2ff;
+  --color-indigo-100: #e0e7ff;
+  --color-indigo-200: #c7d2fe;
+  --color-indigo-300: #a5b4fc;
+  --color-indigo-400: #818cf8;
+  --color-indigo-500: #6366f1;
+  --color-indigo-600: #4f46e5;
+  --color-indigo-700: #4338ca;
+  --color-indigo-800: #3730a3;
+  --color-indigo-900: #312e81;
 
   /* Soft Green (柔らかいグリーン) */
   --color-green-50: #f0fdf4;
@@ -71,7 +83,19 @@
   --color-red-800: #991b1b;
   --color-red-900: #7f1d1d;
 
-  /* Soft Purple (柔らかいパープル) */
+  /* Violet (バイオレット) */
+  --color-violet-50: #f5f3ff;
+  --color-violet-100: #ede9fe;
+  --color-violet-200: #ddd6fe;
+  --color-violet-300: #c4b5fd;
+  --color-violet-400: #a78bfa;
+  --color-violet-500: #8b5cf6;
+  --color-violet-600: #7c3aed;
+  --color-violet-700: #6d28d9;
+  --color-violet-800: #5b21b6;
+  --color-violet-900: #4c1d95;
+
+  /* Purple (パープル) */
   --color-purple-50: #faf5ff;
   --color-purple-100: #f3e8ff;
   --color-purple-200: #e9d5ff;
@@ -105,6 +129,18 @@
   --alpha-white-48: rgba(255, 255, 255, 0.48);
   --alpha-white-64: rgba(255, 255, 255, 0.64);
   --alpha-white-80: rgba(255, 255, 255, 0.80);
+
+  /* Gradients */
+  --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --gradient-blue-purple: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --gradient-indigo: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  --gradient-ocean: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+  --gradient-sunset: linear-gradient(135deg, #f59e0b 0%, #ef4444 50%, #ec4899 100%);
+  --gradient-aurora: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+  --gradient-mesh:
+    radial-gradient(at 40% 20%, hsla(240, 100%, 70%, 0.3) 0px, transparent 50%),
+    radial-gradient(at 80% 0%, hsla(280, 100%, 70%, 0.2) 0px, transparent 50%),
+    radial-gradient(at 0% 50%, hsla(220, 100%, 70%, 0.2) 0px, transparent 50%);
 }
 
 /* ==========================================
@@ -225,7 +261,7 @@
 
 :root {
   /* Header */
-  --header-bg: var(--interactive-default);
+  --header-bg: var(--gradient-indigo);
   --header-text: var(--text-on-color);
 
   /* Sidebar */
@@ -258,7 +294,13 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --player-stayed-hover: #1f4131;
+    --header-bg: var(--gradient-ocean);
   }
+}
+
+/* Light Mode Explicit */
+[data-theme="light"] {
+  --header-bg: var(--gradient-indigo);
 }
 
 /* ==========================================
@@ -269,7 +311,11 @@ body {
   margin: 0;
   padding: 0;
   overflow: hidden;
-  background-color: var(--bg-base);
+  background: linear-gradient(135deg,
+    var(--bg-base) 0%,
+    color-mix(in srgb, var(--bg-base) 98%, var(--color-indigo-500) 2%) 50%,
+    color-mix(in srgb, var(--bg-base) 99%, var(--color-violet-500) 1%) 100%
+  );
   color: var(--text-primary);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }

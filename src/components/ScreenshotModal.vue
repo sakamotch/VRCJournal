@@ -33,39 +33,84 @@ const emit = defineEmits<Emits>();
   left: 0;
   width: 100vw;
   height: 100vh;
-  background-color: var(--bg-overlay);
+  background: radial-gradient(circle at center,
+    color-mix(in srgb, var(--bg-overlay) 100%, transparent 0%) 0%,
+    color-mix(in srgb, var(--bg-overlay) 92%, var(--color-indigo-900) 8%) 100%
+  );
+  backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .modal-content {
   position: relative;
   max-width: 90vw;
   max-height: 90vh;
-  background-color: var(--bg-elevated);
-  border-radius: 8px;
+  background: linear-gradient(135deg,
+    var(--bg-elevated) 0%,
+    color-mix(in srgb, var(--bg-elevated) 98%, var(--color-indigo-500) 2%) 100%
+  );
+  border-radius: 16px;
   overflow: hidden;
-  box-shadow: var(--shadow-xl);
+  box-shadow: 0 20px 80px rgba(0, 0, 0, 0.4),
+              0 0 0 1px color-mix(in srgb, var(--border-default) 70%, var(--color-indigo-400) 30%);
+  animation: zoomIn 0.3s ease;
+}
+
+@keyframes zoomIn {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 .modal-close {
   position: absolute;
-  top: -40px;
+  top: -50px;
   right: 0;
-  background: none;
-  border: none;
+  background: linear-gradient(135deg,
+    color-mix(in srgb, rgba(0, 0, 0, 0.3) 90%, var(--color-red-400) 10%) 0%,
+    color-mix(in srgb, rgba(0, 0, 0, 0.3) 95%, var(--color-red-500) 5%) 100%
+  );
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
   color: var(--text-on-color);
   font-size: 2rem;
   cursor: pointer;
   padding: 0.5rem;
   line-height: 1;
-  transition: opacity 0.2s;
+  width: 3rem;
+  height: 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
 }
 
 .modal-close:hover {
-  opacity: 0.7;
+  background: linear-gradient(135deg,
+    color-mix(in srgb, rgba(0, 0, 0, 0.5) 80%, var(--color-red-400) 20%) 0%,
+    color-mix(in srgb, rgba(0, 0, 0, 0.5) 90%, var(--color-red-500) 10%) 100%
+  );
+  transform: rotate(90deg);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
 }
 
 .modal-image {

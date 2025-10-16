@@ -38,9 +38,13 @@ const { theme, setTheme } = useTheme();
 .theme-selector {
   display: flex;
   gap: 0.25rem;
-  background-color: var(--bg-sunken);
+  background: linear-gradient(135deg,
+    var(--bg-sunken) 0%,
+    color-mix(in srgb, var(--bg-sunken) 97%, var(--color-indigo-500) 3%) 100%
+  );
   padding: 0.25rem;
-  border-radius: 6px;
+  border-radius: 8px;
+  border: 1px solid color-mix(in srgb, var(--border-subtle) 90%, var(--color-indigo-400) 10%);
 }
 
 .theme-button {
@@ -50,22 +54,54 @@ const { theme, setTheme } = useTheme();
   padding: 0.5rem 0.75rem;
   background-color: transparent;
   border: none;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
   color: var(--text-secondary);
   font-size: 0.875rem;
-  transition: all 0.2s;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.theme-button::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg,
+    color-mix(in srgb, var(--bg-hover) 93%, var(--color-indigo-400) 7%) 0%,
+    color-mix(in srgb, var(--bg-hover) 96%, var(--color-violet-400) 4%) 100%
+  );
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  border-radius: 6px;
 }
 
 .theme-button:hover {
-  background-color: var(--bg-hover);
-  color: var(--text-primary);
+  color: var(--interactive-default);
+}
+
+.theme-button:hover::before {
+  opacity: 1;
 }
 
 .theme-button.active {
-  background-color: var(--bg-surface);
-  color: var(--text-primary);
-  box-shadow: var(--shadow-xs);
+  background: linear-gradient(135deg,
+    color-mix(in srgb, var(--bg-surface) 88%, var(--color-indigo-400) 12%) 0%,
+    color-mix(in srgb, var(--bg-surface) 92%, var(--color-violet-400) 8%) 100%
+  );
+  color: var(--interactive-default);
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.15),
+              0 0 0 1px color-mix(in srgb, var(--border-default) 70%, var(--color-indigo-400) 30%);
+}
+
+.theme-button.active::before {
+  opacity: 0;
+}
+
+.theme-button > * {
+  position: relative;
+  z-index: 1;
 }
 
 .theme-button .icon {

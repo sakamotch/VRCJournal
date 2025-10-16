@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { Screenshot } from "@/types";
 import { convertFileSrc } from '@tauri-apps/api/core';
+import Button from "./common/Button.vue";
 import { Folder, Trash2 } from 'lucide-vue-next';
 
 interface Props {
@@ -45,14 +46,13 @@ const emit = defineEmits<Emits>();
     <div v-else class="no-screenshots">
       このセッションではスクリーンショットが撮影されていません
     </div>
-    <button
+    <Button
       v-if="screenshots.length > 0"
       @click="emit('openDirectory', screenshots[0].filePath)"
-      class="open-folder-button"
     >
       <Folder :size="16" />
-      フォルダを開く
-    </button>
+      <span>フォルダを開く</span>
+    </Button>
   </div>
 </template>
 
@@ -60,8 +60,12 @@ const emit = defineEmits<Emits>();
 .screenshot-list {
   margin-top: 1rem;
   padding: 1rem;
-  background-color: var(--bg-sunken);
-  border-radius: 4px;
+  background: linear-gradient(135deg,
+    var(--bg-sunken) 0%,
+    color-mix(in srgb, var(--bg-sunken) 98%, var(--color-indigo-500) 2%) 100%
+  );
+  border-radius: 8px;
+  border: 1px solid color-mix(in srgb, var(--border-subtle) 95%, var(--color-indigo-400) 5%);
 }
 
 .screenshot-list h4 {
@@ -80,16 +84,21 @@ const emit = defineEmits<Emits>();
 .screenshot-item {
   position: relative;
   cursor: pointer;
-  border-radius: 4px;
+  border-radius: 8px;
   overflow: hidden;
-  background-color: var(--bg-surface);
-  border: 1px solid var(--screenshot-border);
-  transition: transform 0.2s, border-color 0.2s;
+  background: linear-gradient(135deg,
+    var(--bg-surface) 0%,
+    color-mix(in srgb, var(--bg-surface) 97%, var(--color-indigo-500) 3%) 100%
+  );
+  border: 2px solid var(--screenshot-border);
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 .screenshot-item:hover {
-  transform: scale(1.05);
-  border-color: var(--screenshot-hover-border);
+  transform: scale(1.05) translateY(-2px);
+  border-color: color-mix(in srgb, var(--screenshot-hover-border) 60%, var(--color-indigo-400) 40%);
+  box-shadow: 0 8px 20px rgba(99, 102, 241, 0.2);
 }
 
 .screenshot-item.screenshot-deleted {
@@ -144,23 +153,4 @@ const emit = defineEmits<Emits>();
   font-size: 0.9rem;
 }
 
-.open-folder-button {
-  padding: 0.5rem 0.875rem;
-  background-color: var(--bg-elevated);
-  color: var(--text-primary);
-  border: 1px solid var(--border-default);
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 0.875rem;
-  font-weight: 500;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.open-folder-button:hover {
-  background-color: var(--bg-hover);
-  border-color: var(--border-hover);
-}
 </style>

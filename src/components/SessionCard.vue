@@ -4,6 +4,8 @@ import type { Session, Player, Screenshot } from "@/types";
 import { formatDuration, formatTime, formatDate } from "@/utils/formatters";
 import PlayerList from "./PlayerList.vue";
 import ScreenshotList from "./ScreenshotList.vue";
+import Button from "./common/Button.vue";
+import Card from "./common/Card.vue";
 import { invoke } from "@tauri-apps/api/core";
 import { Calendar, Clock, Users, Camera, ChevronDown, ChevronRight, ExternalLink } from "lucide-vue-next";
 
@@ -58,7 +60,7 @@ async function toggleScreenshots() {
 </script>
 
 <template>
-  <div class="session-card">
+  <Card class="session-card">
     <div class="session-header">
       <h3 class="world-name">
         {{ session.worldName || session.worldId }}
@@ -136,27 +138,15 @@ async function toggleScreenshots() {
         <span class="label">Instance:</span>
         <span class="value">{{ session.instanceId }}</span>
       </div>
-      <button @click="emit('openInvite', session)" class="open-url-button">
+      <Button @click="emit('openInvite', session)">
         <ExternalLink :size="16" />
-        ワールドを開く
-      </button>
+        <span>ワールドを開く</span>
+      </Button>
     </div>
-  </div>
+  </Card>
 </template>
 
 <style scoped>
-.session-card {
-  background-color: var(--session-card-bg);
-  border: 1px solid var(--session-card-border);
-  border-radius: 8px;
-  padding: 1rem;
-  transition: box-shadow 0.2s;
-}
-
-.session-card:hover {
-  box-shadow: var(--session-card-hover-shadow);
-}
-
 .session-header {
   display: flex;
   justify-content: space-between;
@@ -240,27 +230,6 @@ async function toggleScreenshots() {
   font-size: 0.85rem;
   color: var(--text-tertiary);
   flex: 1;
-}
-
-.open-url-button {
-  padding: 0.5rem 0.875rem;
-  background-color: var(--bg-elevated);
-  color: var(--text-primary);
-  border: 1px solid var(--border-default);
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 0.875rem;
-  font-weight: 500;
-  white-space: nowrap;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.open-url-button:hover {
-  background-color: var(--bg-hover);
-  border-color: var(--border-hover);
 }
 
 .label {

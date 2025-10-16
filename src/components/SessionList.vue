@@ -132,7 +132,14 @@ function formatDateHeader(date: Date): string {
 .date-header {
   font-size: 0.875rem;
   font-weight: 600;
-  color: var(--text-secondary);
+  background: linear-gradient(90deg,
+    transparent 0%,
+    color-mix(in srgb, var(--text-secondary) 100%, transparent 0%) 50%,
+    transparent 100%
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
   display: flex;
   align-items: center;
   gap: 1rem;
@@ -140,15 +147,23 @@ function formatDateHeader(date: Date): string {
   position: sticky;
   top: 0;
   z-index: 1;
-  background-color: var(--bg-base);
+  backdrop-filter: blur(8px);
+  background-color: color-mix(in srgb, var(--bg-base) 90%, transparent 10%);
 }
 
 .date-header::before,
 .date-header::after {
   content: '';
   flex: 1;
-  height: 1px;
-  background-color: var(--border-default);
+  height: 2px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    color-mix(in srgb, var(--border-default) 70%, var(--color-indigo-400) 30%) 30%,
+    color-mix(in srgb, var(--border-default) 50%, var(--color-violet-400) 50%) 50%,
+    color-mix(in srgb, var(--border-default) 70%, var(--color-indigo-400) 30%) 70%,
+    transparent 100%
+  );
+  border-radius: 1px;
 }
 
 .date-sessions {

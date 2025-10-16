@@ -1,31 +1,15 @@
 <script setup lang="ts">
+import EmptyState from '../common/EmptyState.vue';
+import { BarChart3 } from 'lucide-vue-next';
 </script>
 
 <template>
-  <div class="stats-view">
-    <div class="placeholder">
-      <h2>統計</h2>
-      <p>月次・年次レポート・グラフ表示機能を実装予定</p>
-    </div>
-  </div>
+  <EmptyState
+    title="統計"
+    description="月次・年次レポート・グラフ表示機能を実装予定"
+    :icon="BarChart3"
+  />
 </template>
 
 <style scoped>
-.stats-view {
-  padding: 2rem;
-}
-
-.placeholder {
-  text-align: center;
-  color: var(--text-secondary);
-}
-
-.placeholder h2 {
-  margin: 0 0 1rem 0;
-  color: var(--text-primary);
-}
-
-.placeholder p {
-  margin: 0;
-}
 </style>

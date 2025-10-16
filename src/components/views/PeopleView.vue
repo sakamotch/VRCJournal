@@ -1,31 +1,15 @@
 <script setup lang="ts">
+import EmptyState from '../common/EmptyState.vue';
+import { Users } from 'lucide-vue-next';
 </script>
 
 <template>
-  <div class="people-view">
-    <div class="placeholder">
-      <h2>人物</h2>
-      <p>よく会う人・人物メモ・統計機能を実装予定</p>
-    </div>
-  </div>
+  <EmptyState
+    title="人物"
+    description="よく会う人・人物メモ・統計機能を実装予定"
+    :icon="Users"
+  />
 </template>
 
 <style scoped>
-.people-view {
-  padding: 2rem;
-}
-
-.placeholder {
-  text-align: center;
-  color: var(--text-secondary);
-}
-
-.placeholder h2 {
-  margin: 0 0 1rem 0;
-  color: var(--text-primary);
-}
-
-.placeholder p {
-  margin: 0;
-}
 </style>

@@ -41,7 +41,10 @@ const navItems: { id: NavigationView; label: string; icon: any }[] = [
 <style scoped>
 .navigation {
   width: 72px;
-  background-color: var(--bg-surface);
+  background: linear-gradient(180deg,
+    var(--bg-surface) 0%,
+    color-mix(in srgb, var(--bg-surface) 97%, var(--color-indigo-500) 3%) 100%
+  );
   border-right: 1px solid var(--border-default);
   display: flex;
   flex-direction: column;
@@ -58,20 +61,45 @@ const navItems: { id: NavigationView; label: string; icon: any }[] = [
   border: none;
   cursor: pointer;
   color: var(--text-secondary);
-  transition: all 0.2s;
+  transition: all 0.3s ease;
   border-left: 3px solid transparent;
   position: relative;
 }
 
+.nav-item::before {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  background: linear-gradient(135deg,
+    transparent 0%,
+    color-mix(in srgb, transparent 90%, var(--color-indigo-400) 10%) 100%
+  );
+  border-radius: 8px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: -1;
+}
+
 .nav-item:hover {
-  background-color: var(--bg-hover);
   color: var(--text-primary);
 }
 
+.nav-item:hover::before {
+  opacity: 1;
+}
+
 .nav-item.active {
-  background-color: var(--bg-elevated);
-  color: var(--text-primary);
+  color: var(--interactive-default);
+  font-weight: 600;
   border-left-color: var(--interactive-default);
+}
+
+.nav-item.active::before {
+  background: linear-gradient(135deg,
+    color-mix(in srgb, var(--bg-elevated) 85%, var(--color-indigo-400) 15%) 0%,
+    color-mix(in srgb, var(--bg-elevated) 90%, var(--color-violet-400) 10%) 100%
+  );
+  opacity: 1;
 }
 
 .nav-icon {
