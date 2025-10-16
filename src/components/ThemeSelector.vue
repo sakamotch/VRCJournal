@@ -1,26 +1,35 @@
 <script setup lang="ts">
 import { useTheme, type Theme } from '@/stores/themeStore';
+import { Sun, Moon, Monitor } from 'lucide-vue-next';
 
 const { theme, setTheme } = useTheme();
-
-const themeOptions: { value: Theme; label: string; icon: string }[] = [
-  { value: 'light', label: 'ライト', icon: '☀️' },
-  { value: 'dark', label: 'ダーク', icon: '🌙' },
-  { value: 'system', label: 'システム設定', icon: '💻' },
-];
 </script>
 
 <template>
   <div class="theme-selector">
     <button
-      v-for="option in themeOptions"
-      :key="option.value"
-      :class="['theme-button', { active: theme === option.value }]"
-      @click="setTheme(option.value)"
-      :title="option.label"
+      :class="['theme-button', { active: theme === 'light' }]"
+      @click="setTheme('light')"
+      title="ライト"
     >
-      <span class="icon">{{ option.icon }}</span>
-      <span class="label">{{ option.label }}</span>
+      <Sun :size="18" class="icon" />
+      <span class="label">ライト</span>
+    </button>
+    <button
+      :class="['theme-button', { active: theme === 'dark' }]"
+      @click="setTheme('dark')"
+      title="ダーク"
+    >
+      <Moon :size="18" class="icon" />
+      <span class="label">ダーク</span>
+    </button>
+    <button
+      :class="['theme-button', { active: theme === 'system' }]"
+      @click="setTheme('system')"
+      title="システム設定"
+    >
+      <Monitor :size="18" class="icon" />
+      <span class="label">システム設定</span>
     </button>
   </div>
 </template>
@@ -60,7 +69,7 @@ const themeOptions: { value: Theme; label: string; icon: string }[] = [
 }
 
 .theme-button .icon {
-  font-size: 1rem;
+  flex-shrink: 0;
 }
 
 .theme-button .label {
