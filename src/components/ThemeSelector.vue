@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useTheme, type Theme } from '@/stores/themeStore';
+import { useTheme } from '@/stores/themeStore';
 import { Sun, Moon, Monitor } from 'lucide-vue-next';
 
 const { theme, setTheme } = useTheme();
