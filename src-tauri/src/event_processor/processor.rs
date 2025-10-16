@@ -2,6 +2,7 @@ use crate::parser::LogEvent;
 use crate::db::operations;
 use rusqlite::Connection;
 use std::collections::HashMap;
+use chrono::{DateTime, Utc};
 
 /// プロセッサーが発行するイベント
 #[derive(Debug, Clone, serde::Serialize)]
@@ -19,6 +20,7 @@ pub struct EventProcessor {
     current_local_player_id: Option<i64>,  // ローカルプレイヤー (is_local=1)
     current_session_id: Option<i64>,
     player_ids: HashMap<String, i64>, // user_id -> player_id のマッピング
+    pending_avatars: HashMap<String, (i64, DateTime<Utc>)>, // display_name -> (avatar_id, timestamp) のマッピング（PlayerJoined前のアバター情報）
 }
 
 impl EventProcessor {
@@ -27,6 +29,7 @@ impl EventProcessor {
             current_local_player_id: None,
             current_session_id: None,
             player_ids: HashMap::new(),
+            pending_avatars: HashMap::new(),
         }
     }
 
@@ -69,6 +72,7 @@ impl EventProcessor {
                     )?;
                     self.current_session_id = Some(session_id);
                     self.player_ids.clear(); // 新しいセッションなのでプレイヤーマップをクリア
+                    self.pending_avatars.clear(); // 保留中のアバター情報もクリア
                     println!("Joined world: {} (session: {})", world_id, session_id);
 
                     Some(ProcessedEvent::SessionCreated { session_id })
@@ -118,7 +122,21 @@ impl EventProcessor {
                     )?;
 
                     self.player_ids.insert(user_id.clone(), player_id);
-                    println!("Player joined: {} ({})", display_name, user_id);
+
+                    // 保留中のアバター情報があれば記録
+                    if let Some((avatar_id, avatar_timestamp)) = self.pending_avatars.remove(&display_name) {
+                        operations::record_avatar_usage(
+                            conn,
+                            session_id,
+                            player_id,
+                            avatar_id,
+                            avatar_timestamp,
+                        )?;
+                        println!("Player joined: {} ({}) with pending avatar", display_name, user_id);
+                    } else {
+                        println!("Player joined: {} ({})", display_name, user_id);
+                    }
+
                     Some(ProcessedEvent::PlayerJoined { session_id })
                 } else {
                     eprintln!("Warning: PlayerJoined event without active session");
@@ -253,6 +271,11 @@ impl EventProcessor {
                                 timestamp,
                             )?;
                             println!("Avatar changed (player): {} -> {}", display_name, avatar_name);
+                        } else {
+                            // プレイヤーがまだ登録されていない場合、保留中として保存
+                            // （OnPlayerJoinedイベントが後で来る）
+                            self.pending_avatars.insert(display_name.clone(), (avatar_id, timestamp));
+                            println!("Avatar changed (pending): {} -> {} (player not yet joined)", display_name, avatar_name);
                         }
                     }
                 } else {
