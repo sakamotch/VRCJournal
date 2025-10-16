@@ -58,7 +58,7 @@ const emit = defineEmits<Emits>();
 .screenshot-list {
   margin-top: 1rem;
   padding: 1rem;
-  background-color: var(--screenshot-bg);
+  background-color: var(--bg-sunken);
   border-radius: 4px;
 }
 
@@ -80,13 +80,14 @@ const emit = defineEmits<Emits>();
   cursor: pointer;
   border-radius: 4px;
   overflow: hidden;
-  background-color: var(--bg-primary);
-  transition: transform 0.2s, box-shadow 0.2s;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--screenshot-border);
+  transition: transform 0.2s, border-color 0.2s;
 }
 
 .screenshot-item:hover {
   transform: scale(1.05);
-  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  border-color: var(--screenshot-hover-border);
 }
 
 .screenshot-item.screenshot-deleted {
@@ -96,7 +97,7 @@ const emit = defineEmits<Emits>();
 
 .screenshot-item.screenshot-deleted:hover {
   transform: none;
-  box-shadow: none;
+  border-color: var(--screenshot-border);
 }
 
 .screenshot-thumbnail {
@@ -113,7 +114,7 @@ const emit = defineEmits<Emits>();
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background-color: var(--bg-tertiary);
+  background-color: var(--bg-hover);
 }
 
 .deleted-icon {
@@ -128,7 +129,7 @@ const emit = defineEmits<Emits>();
 
 .screenshot-time {
   padding: 0.25rem 0.5rem;
-  background-color: rgba(0,0,0,0.7);
+  background-color: var(--alpha-black-80);
   color: white;
   font-size: 0.75rem;
   text-align: center;
@@ -143,8 +144,8 @@ const emit = defineEmits<Emits>();
 
 .open-folder-button {
   padding: 0.4rem 0.8rem;
-  background-color: #9b59b6;
-  color: var(--text-inverse);
+  background-color: var(--color-purple-600);
+  color: var(--text-on-color);
   border: none;
   border-radius: 4px;
   cursor: pointer;
@@ -153,6 +154,6 @@ const emit = defineEmits<Emits>();
 }
 
 .open-folder-button:hover {
-  background-color: #8e44ad;
+  background-color: var(--color-purple-700);
 }
 </style>

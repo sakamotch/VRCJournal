@@ -66,7 +66,7 @@ async function toggleScreenshots() {
         <span class="user-name">{{ session.userName }}</span>
         <span class="time">{{ formatDateTime(session.startedAt) }}</span>
         <span
-          class="duration"
+          :class="['duration', { 'duration-interrupted': session.status === 'interrupted' }]"
           :title="session.status === 'interrupted' ? 'VRChatが予期せず終了した可能性があります' : ''"
         >
           {{ formatDuration(session) }}
@@ -127,15 +127,15 @@ async function toggleScreenshots() {
 
 <style scoped>
 .session-card {
-  background-color: var(--card-bg);
-  border: 1px solid var(--card-border);
+  background-color: var(--session-card-bg);
+  border: 1px solid var(--session-card-border);
   border-radius: 8px;
   padding: 1rem;
   transition: box-shadow 0.2s;
 }
 
 .session-card:hover {
-  box-shadow: 0 4px 8px var(--card-hover-shadow);
+  box-shadow: var(--session-card-hover-shadow);
 }
 
 .session-main {
@@ -158,19 +158,23 @@ async function toggleScreenshots() {
 
 .user-name {
   font-weight: 600;
-  color: var(--accent-primary);
+  color: var(--interactive-default);
 }
 
 .duration {
-  color: var(--status-active);
+  color: var(--feedback-success);
+}
+
+.duration-interrupted {
+  color: var(--feedback-warning);
 }
 
 .player-count {
-  color: #e74c3c;
+  color: var(--feedback-error);
 }
 
 .screenshot-count {
-  color: #9b59b6;
+  color: var(--color-purple-600);
 }
 
 .clickable {
@@ -180,7 +184,7 @@ async function toggleScreenshots() {
 }
 
 .clickable:hover {
-  color: #c0392b;
+  color: var(--text-secondary);
 }
 
 .loading {
@@ -193,7 +197,7 @@ async function toggleScreenshots() {
 .session-details {
   margin-top: 0.5rem;
   padding-top: 0.5rem;
-  border-top: 1px solid var(--border-color-light);
+  border-top: 1px solid var(--border-subtle);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -208,8 +212,8 @@ async function toggleScreenshots() {
 
 .open-url-button {
   padding: 0.4rem 0.8rem;
-  background-color: var(--accent-primary);
-  color: var(--text-inverse);
+  background-color: var(--interactive-default);
+  color: var(--text-on-color);
   border: none;
   border-radius: 4px;
   cursor: pointer;
@@ -219,7 +223,7 @@ async function toggleScreenshots() {
 }
 
 .open-url-button:hover {
-  background-color: var(--accent-primary-hover);
+  background-color: var(--interactive-hover);
 }
 
 .label {

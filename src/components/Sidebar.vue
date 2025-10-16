@@ -40,7 +40,7 @@ const emit = defineEmits<Emits>();
 .sidebar {
   width: 250px;
   background-color: var(--sidebar-bg);
-  border-right: 1px solid var(--sidebar-border);
+  border-right: 1px solid var(--border-default);
   padding: 1rem;
   overflow-y: auto;
 }
@@ -48,7 +48,7 @@ const emit = defineEmits<Emits>();
 .sidebar h2 {
   margin-top: 0;
   font-size: 1.1rem;
-  color: var(--text-secondary);
+  color: var(--sidebar-text-secondary);
 }
 
 .user-list {
@@ -60,10 +60,11 @@ const emit = defineEmits<Emits>();
 .user-list li {
   padding: 0.75rem;
   margin-bottom: 0.5rem;
-  background-color: var(--sidebar-item-bg);
+  background-color: var(--bg-elevated);
   border-radius: 4px;
   cursor: pointer;
   transition: background-color 0.2s;
+  color: var(--sidebar-text);
 }
 
 .user-list li:hover {
@@ -72,6 +73,6 @@ const emit = defineEmits<Emits>();
 
 .user-list li.active {
   background-color: var(--sidebar-item-active);
-  color: var(--text-inverse);
+  color: var(--interactive-default);
 }
 </style>

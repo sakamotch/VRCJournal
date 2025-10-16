@@ -43,7 +43,7 @@ const emit = defineEmits<Emits>();
 .player-list {
   margin-top: 1rem;
   padding: 1rem;
-  background-color: var(--player-bg);
+  background-color: var(--bg-sunken);
   border-radius: 4px;
 }
 
@@ -70,7 +70,7 @@ const emit = defineEmits<Emits>();
 }
 
 .player-item:hover {
-  background-color: var(--player-hover);
+  background-color: var(--bg-hover);
 }
 
 .player-info {
@@ -96,7 +96,7 @@ const emit = defineEmits<Emits>();
 }
 
 .player-time-active {
-  color: var(--status-active);
+  color: var(--feedback-success);
   font-weight: 500;
 }
 
@@ -115,7 +115,7 @@ const emit = defineEmits<Emits>();
 }
 
 .player-item.player-stayed {
-  border-left: 3px solid var(--player-stayed-border);
+  border-left: 3px solid var(--feedback-success);
   background-color: var(--player-stayed-bg);
 }
 

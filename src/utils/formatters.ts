@@ -21,7 +21,7 @@ export function formatTime(dateStr: string): string {
 export function formatDuration(session: Session): string {
   // 異常終了（interrupted）の場合
   if (session.status === 'interrupted') {
-    return "❓ 不明";
+    return "不明";
   }
 
   // 進行中の場合

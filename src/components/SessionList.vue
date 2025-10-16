@@ -20,12 +20,12 @@ const emit = defineEmits<Emits>();
 
 <template>
   <div class="session-list-container">
-    <h2>セッション履歴</h2>
+    <h2>インスタンス履歴</h2>
 
     <div v-if="isLoading" class="loading">読み込み中...</div>
 
     <div v-else-if="sessions.length === 0" class="empty">
-      セッションがありません
+      インスタンスがありません
     </div>
 
     <div v-else class="session-list">

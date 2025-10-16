@@ -33,7 +33,7 @@ const emit = defineEmits<Emits>();
   left: 0;
   width: 100vw;
   height: 100vh;
-  background-color: var(--modal-overlay);
+  background-color: var(--bg-overlay);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -44,9 +44,10 @@ const emit = defineEmits<Emits>();
   position: relative;
   max-width: 90vw;
   max-height: 90vh;
-  background-color: var(--modal-bg);
+  background-color: var(--bg-elevated);
   border-radius: 8px;
   overflow: hidden;
+  box-shadow: var(--shadow-xl);
 }
 
 .modal-close {
@@ -55,7 +56,7 @@ const emit = defineEmits<Emits>();
   right: 0;
   background: none;
   border: none;
-  color: white;
+  color: var(--text-on-color);
   font-size: 2rem;
   cursor: pointer;
   padding: 0.5rem;

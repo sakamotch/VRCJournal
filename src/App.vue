@@ -6,6 +6,7 @@ import type { LocalUser, Session } from "@/types";
 import Sidebar from "@/components/Sidebar.vue";
 import SessionList from "@/components/SessionList.vue";
 import ScreenshotModal from "@/components/ScreenshotModal.vue";
+import Settings from "@/components/Settings.vue";
 
 const isLoading = ref(false);
 const message = ref("");
@@ -13,6 +14,7 @@ const localUsers = ref<LocalUser[]>([]);
 const sessions = ref<Session[]>([]);
 const selectedUserId = ref<number | null>(null);
 const selectedScreenshot = ref<string | null>(null);
+const showSettings = ref(false);
 
 async function loadUsers() {
   try {
@@ -143,7 +145,12 @@ onUnmounted(() => {
 <template>
   <div class="app">
     <header class="header">
-      <h1>VRCJournal</h1>
+      <div class="header-content">
+        <h1>VRCJournal</h1>
+        <button class="settings-button" @click="showSettings = true" title="設定">
+          ⚙️
+        </button>
+      </div>
     </header>
 
     <div v-if="message" class="message">{{ message }}</div>
@@ -169,6 +176,11 @@ onUnmounted(() => {
       :file-path="selectedScreenshot"
       @close="closeScreenshotModal"
     />
+
+    <Settings
+      v-if="showSettings"
+      @close="showSettings = false"
+    />
   </div>
 </template>
 
@@ -183,12 +195,36 @@ onUnmounted(() => {
   padding: 1rem 1.5rem;
   background-color: var(--header-bg);
   color: var(--header-text);
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: var(--shadow-sm);
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
 }
 
 .header h1 {
   margin: 0;
   font-size: 1.5rem;
+}
+
+.settings-button {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  transition: transform 0.2s;
+  color: var(--header-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.settings-button:hover {
+  transform: rotate(30deg);
 }
 
 .message {

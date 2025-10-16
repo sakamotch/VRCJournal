@@ -1,150 +1,333 @@
-/* ライトテーマ（デフォルト） */
+/* ==========================================
+   VRCJournal Design Token System
+   3-Layer Architecture: Primitive → Alias → Semantic
+   ========================================== */
+
+/* ==========================================
+   Layer 1: Primitive Tokens (色のパレット)
+   実際の色値を定義。直接使用禁止。
+   ========================================== */
+
 :root {
-  /* 背景色 */
-  --bg-primary: #ffffff;
-  --bg-secondary: #f8f9fa;
-  --bg-tertiary: #e9ecef;
-  --bg-app: transparent;
+  /* Gray Scale */
+  --color-gray-0: #ffffff;
+  --color-gray-50: #fafafa;
+  --color-gray-100: #f5f5f5;
+  --color-gray-200: #eeeeee;
+  --color-gray-300: #e0e0e0;
+  --color-gray-400: #bdbdbd;
+  --color-gray-500: #9e9e9e;
+  --color-gray-600: #757575;
+  --color-gray-700: #616161;
+  --color-gray-800: #424242;
+  --color-gray-900: #212121;
+  --color-gray-950: #121212;
 
-  /* テキスト色 */
-  --text-primary: #212529;
-  --text-secondary: #495057;
-  --text-tertiary: #6c757d;
-  --text-inverse: #ffffff;
+  /* Blue */
+  --color-blue-50: #e3f2fd;
+  --color-blue-100: #bbdefb;
+  --color-blue-200: #90caf9;
+  --color-blue-300: #64b5f6;
+  --color-blue-400: #42a5f5;
+  --color-blue-500: #2196f3;
+  --color-blue-600: #1e88e5;
+  --color-blue-700: #1976d2;
+  --color-blue-800: #1565c0;
+  --color-blue-900: #0d47a1;
 
-  /* ボーダー色 */
-  --border-color: #dee2e6;
-  --border-color-light: #e9ecef;
+  /* Green */
+  --color-green-50: #e8f5e9;
+  --color-green-100: #c8e6c9;
+  --color-green-200: #a5d6a7;
+  --color-green-300: #81c784;
+  --color-green-400: #66bb6a;
+  --color-green-500: #4caf50;
+  --color-green-600: #43a047;
+  --color-green-700: #388e3c;
+  --color-green-800: #2e7d32;
+  --color-green-900: #1b5e20;
 
-  /* アクセントカラー */
-  --accent-primary: #3498db;
-  --accent-primary-hover: #2980b9;
-  --accent-primary-light: #e8f4f8;
+  /* Orange */
+  --color-orange-50: #fff3e0;
+  --color-orange-100: #ffe0b2;
+  --color-orange-200: #ffcc80;
+  --color-orange-300: #ffb74d;
+  --color-orange-400: #ffa726;
+  --color-orange-500: #ff9800;
+  --color-orange-600: #fb8c00;
+  --color-orange-700: #f57c00;
+  --color-orange-800: #ef6c00;
+  --color-orange-900: #e65100;
 
-  /* ヘッダー */
-  --header-bg: #2c3e50;
-  --header-text: #ffffff;
+  /* Red */
+  --color-red-50: #ffebee;
+  --color-red-100: #ffcdd2;
+  --color-red-200: #ef9a9a;
+  --color-red-300: #e57373;
+  --color-red-400: #ef5350;
+  --color-red-500: #f44336;
+  --color-red-600: #e53935;
+  --color-red-700: #d32f2f;
+  --color-red-800: #c62828;
+  --color-red-900: #b71c1c;
 
-  /* サイドバー */
-  --sidebar-bg: #f8f9fa;
-  --sidebar-item-bg: #ffffff;
-  --sidebar-item-hover: #e9ecef;
-  --sidebar-item-active: #3498db;
-  --sidebar-border: #dee2e6;
+  /* Purple */
+  --color-purple-50: #f3e5f5;
+  --color-purple-100: #e1bee7;
+  --color-purple-200: #ce93d8;
+  --color-purple-300: #ba68c8;
+  --color-purple-400: #ab47bc;
+  --color-purple-500: #9c27b0;
+  --color-purple-600: #8e24aa;
+  --color-purple-700: #7b1fa2;
+  --color-purple-800: #6a1b9a;
+  --color-purple-900: #4a148c;
 
-  /* セッションカード */
-  --card-bg: #ffffff;
-  --card-border: #dee2e6;
-  --card-shadow: rgba(0, 0, 0, 0.1);
-  --card-hover-shadow: rgba(0, 0, 0, 0.15);
+  /* Alpha */
+  --alpha-black-4: rgba(0, 0, 0, 0.04);
+  --alpha-black-8: rgba(0, 0, 0, 0.08);
+  --alpha-black-12: rgba(0, 0, 0, 0.12);
+  --alpha-black-16: rgba(0, 0, 0, 0.16);
+  --alpha-black-24: rgba(0, 0, 0, 0.24);
+  --alpha-black-32: rgba(0, 0, 0, 0.32);
+  --alpha-black-48: rgba(0, 0, 0, 0.48);
+  --alpha-black-64: rgba(0, 0, 0, 0.64);
+  --alpha-black-80: rgba(0, 0, 0, 0.80);
+  --alpha-black-88: rgba(0, 0, 0, 0.88);
 
-  /* プレイヤー */
-  --player-bg: #f8f9fa;
-  --player-item-bg: #ffffff;
-  --player-border: #dee2e6;
-  --player-stayed-border: #27ae60;
-  --player-stayed-bg: #f0f9f4;
-  --player-stayed-hover: #e1f5e8;
-  --player-hover: #e9ecef;
-
-  /* スクリーンショット */
-  --screenshot-bg: #f8f9fa;
-  --screenshot-border: #dee2e6;
-  --screenshot-hover: #e9ecef;
-
-  /* モーダル */
-  --modal-overlay: rgba(0, 0, 0, 0.7);
-  --modal-bg: #ffffff;
-
-  /* メッセージ */
-  --message-bg: #e8f4f8;
-  --message-border: #3498db;
-  --message-text: #212529;
-
-  /* 状態色 */
-  --status-active: #27ae60;
-  --status-interrupted: #f39c12;
-  --status-completed: #95a5a6;
+  --alpha-white-4: rgba(255, 255, 255, 0.04);
+  --alpha-white-8: rgba(255, 255, 255, 0.08);
+  --alpha-white-12: rgba(255, 255, 255, 0.12);
+  --alpha-white-16: rgba(255, 255, 255, 0.16);
+  --alpha-white-24: rgba(255, 255, 255, 0.24);
+  --alpha-white-32: rgba(255, 255, 255, 0.32);
+  --alpha-white-48: rgba(255, 255, 255, 0.48);
+  --alpha-white-64: rgba(255, 255, 255, 0.64);
+  --alpha-white-80: rgba(255, 255, 255, 0.80);
 }
 
-/* ダークテーマ */
+/* ==========================================
+   Layer 2: Alias Tokens (用途別トークン)
+   使用目的を示す抽象的な名前。
+   コンポーネントはこのレイヤーを使用。
+   ========================================== */
+
+/* Light Mode */
+:root {
+  /* Background */
+  --bg-base: var(--color-gray-50);
+  --bg-surface: var(--color-gray-0);
+  --bg-elevated: var(--color-gray-0);
+  --bg-sunken: var(--color-gray-100);
+  --bg-overlay: var(--alpha-black-48);
+  --bg-hover: var(--color-gray-100);
+  --bg-active: var(--color-gray-200);
+  --bg-selected: var(--color-blue-50);
+
+  /* Border */
+  --border-default: var(--color-gray-300);
+  --border-strong: var(--color-gray-400);
+  --border-subtle: var(--color-gray-200);
+  --border-focus: var(--color-blue-500);
+
+  /* Text */
+  --text-primary: var(--color-gray-900);
+  --text-secondary: var(--color-gray-700);
+  --text-tertiary: var(--color-gray-500);
+  --text-disabled: var(--color-gray-400);
+  --text-on-color: var(--color-gray-0);
+  --text-link: var(--color-blue-600);
+
+  /* Interactive */
+  --interactive-default: var(--color-blue-600);
+  --interactive-hover: var(--color-blue-700);
+  --interactive-active: var(--color-blue-800);
+  --interactive-disabled: var(--color-gray-300);
+  --interactive-subtle: var(--color-blue-50);
+
+  /* Feedback */
+  --feedback-success: var(--color-green-600);
+  --feedback-success-bg: var(--color-green-50);
+  --feedback-warning: var(--color-orange-600);
+  --feedback-warning-bg: var(--color-orange-50);
+  --feedback-error: var(--color-red-600);
+  --feedback-error-bg: var(--color-red-50);
+  --feedback-info: var(--color-blue-600);
+  --feedback-info-bg: var(--color-blue-50);
+
+  /* Shadow */
+  --shadow-xs: 0 1px 2px var(--alpha-black-8);
+  --shadow-sm: 0 2px 4px var(--alpha-black-8);
+  --shadow-md: 0 4px 8px var(--alpha-black-12);
+  --shadow-lg: 0 8px 16px var(--alpha-black-16);
+  --shadow-xl: 0 16px 32px var(--alpha-black-24);
+}
+
+/* Dark Mode (System Preference) */
 @media (prefers-color-scheme: dark) {
-  :root {
-    /* 背景色 */
-    --bg-primary: #1a1a1a;
-    --bg-secondary: #2a2a2a;
-    --bg-tertiary: #3a3a3a;
-    --bg-app: #1a1a1a;
+  :root:not([data-theme="light"]) {
+    /* Background */
+    --bg-base: var(--color-gray-950);
+    --bg-surface: var(--color-gray-900);
+    --bg-elevated: var(--color-gray-800);
+    --bg-sunken: var(--color-gray-950);
+    --bg-overlay: var(--alpha-black-88);
+    --bg-hover: var(--color-gray-800);
+    --bg-active: var(--color-gray-700);
+    --bg-selected: var(--color-blue-900);
 
-    /* テキスト色 */
-    --text-primary: #e0e0e0;
-    --text-secondary: #b0b0b0;
-    --text-tertiary: #808080;
-    --text-inverse: #1a1a1a;
+    /* Border */
+    --border-default: var(--color-gray-700);
+    --border-strong: var(--color-gray-600);
+    --border-subtle: var(--color-gray-800);
+    --border-focus: var(--color-blue-400);
 
-    /* ボーダー色 */
-    --border-color: #3a3a3a;
-    --border-color-light: #2a2a2a;
+    /* Text */
+    --text-primary: var(--color-gray-50);
+    --text-secondary: var(--color-gray-300);
+    --text-tertiary: var(--color-gray-500);
+    --text-disabled: var(--color-gray-600);
+    --text-on-color: var(--color-gray-0);
+    --text-link: var(--color-blue-400);
 
-    /* アクセントカラー */
-    --accent-primary: #4aa3df;
-    --accent-primary-hover: #3498db;
-    --accent-primary-light: #2a3f4f;
+    /* Interactive */
+    --interactive-default: var(--color-blue-500);
+    --interactive-hover: var(--color-blue-400);
+    --interactive-active: var(--color-blue-300);
+    --interactive-disabled: var(--color-gray-700);
+    --interactive-subtle: var(--color-blue-900);
 
-    /* ヘッダー */
-    --header-bg: #1e2837;
-    --header-text: #e0e0e0;
+    /* Feedback */
+    --feedback-success: var(--color-green-400);
+    --feedback-success-bg: var(--color-green-900);
+    --feedback-warning: var(--color-orange-400);
+    --feedback-warning-bg: var(--color-orange-900);
+    --feedback-error: var(--color-red-400);
+    --feedback-error-bg: var(--color-red-900);
+    --feedback-info: var(--color-blue-400);
+    --feedback-info-bg: var(--color-blue-900);
 
-    /* サイドバー */
-    --sidebar-bg: #2a2a2a;
-    --sidebar-item-bg: #1a1a1a;
-    --sidebar-item-hover: #3a3a3a;
-    --sidebar-item-active: #4aa3df;
-    --sidebar-border: #3a3a3a;
-
-    /* セッションカード */
-    --card-bg: #2a2a2a;
-    --card-border: #3a3a3a;
-    --card-shadow: rgba(0, 0, 0, 0.3);
-    --card-hover-shadow: rgba(0, 0, 0, 0.5);
-
-    /* プレイヤー */
-    --player-bg: #1a1a1a;
-    --player-item-bg: #2a2a2a;
-    --player-border: #3a3a3a;
-    --player-stayed-border: #27ae60;
-    --player-stayed-bg: #1a3d26;
-    --player-stayed-hover: #255532;
-    --player-hover: #3a3a3a;
-
-    /* スクリーンショット */
-    --screenshot-bg: #1a1a1a;
-    --screenshot-border: #3a3a3a;
-    --screenshot-hover: #3a3a3a;
-
-    /* モーダル */
-    --modal-overlay: rgba(0, 0, 0, 0.85);
-    --modal-bg: #2a2a2a;
-
-    /* メッセージ */
-    --message-bg: #2a3f4f;
-    --message-border: #4aa3df;
-    --message-text: #e0e0e0;
-
-    /* 状態色 */
-    --status-active: #2ecc71;
-    --status-interrupted: #f1c40f;
-    --status-completed: #7f8c8d;
+    /* Shadow */
+    --shadow-xs: 0 1px 2px var(--alpha-black-24);
+    --shadow-sm: 0 2px 4px var(--alpha-black-32);
+    --shadow-md: 0 4px 8px var(--alpha-black-48);
+    --shadow-lg: 0 8px 16px var(--alpha-black-64);
+    --shadow-xl: 0 16px 32px var(--alpha-black-80);
   }
 }
 
-/* グローバルスタイル */
+/* Dark Mode (Manual Override) */
+:root[data-theme="dark"] {
+  /* Background */
+  --bg-base: var(--color-gray-950);
+  --bg-surface: var(--color-gray-900);
+  --bg-elevated: var(--color-gray-800);
+  --bg-sunken: var(--color-gray-950);
+  --bg-overlay: var(--alpha-black-88);
+  --bg-hover: var(--color-gray-800);
+  --bg-active: var(--color-gray-700);
+  --bg-selected: var(--color-blue-900);
+
+  /* Border */
+  --border-default: var(--color-gray-700);
+  --border-strong: var(--color-gray-600);
+  --border-subtle: var(--color-gray-800);
+  --border-focus: var(--color-blue-400);
+
+  /* Text */
+  --text-primary: var(--color-gray-50);
+  --text-secondary: var(--color-gray-300);
+  --text-tertiary: var(--color-gray-500);
+  --text-disabled: var(--color-gray-600);
+  --text-on-color: var(--color-gray-0);
+  --text-link: var(--color-blue-400);
+
+  /* Interactive */
+  --interactive-default: var(--color-blue-500);
+  --interactive-hover: var(--color-blue-400);
+  --interactive-active: var(--color-blue-300);
+  --interactive-disabled: var(--color-gray-700);
+  --interactive-subtle: var(--color-blue-900);
+
+  /* Feedback */
+  --feedback-success: var(--color-green-400);
+  --feedback-success-bg: var(--color-green-900);
+  --feedback-warning: var(--color-orange-400);
+  --feedback-warning-bg: var(--color-orange-900);
+  --feedback-error: var(--color-red-400);
+  --feedback-error-bg: var(--color-red-900);
+  --feedback-info: var(--color-blue-400);
+  --feedback-info-bg: var(--color-blue-900);
+
+  /* Shadow */
+  --shadow-xs: 0 1px 2px var(--alpha-black-24);
+  --shadow-sm: 0 2px 4px var(--alpha-black-32);
+  --shadow-md: 0 4px 8px var(--alpha-black-48);
+  --shadow-lg: 0 8px 16px var(--alpha-black-64);
+  --shadow-xl: 0 16px 32px var(--alpha-black-80);
+}
+
+/* ==========================================
+   Layer 3: Semantic Tokens (コンポーネント固有)
+   特定コンポーネントでのみ使用する専用トークン。
+   必要に応じて追加。
+   ========================================== */
+
+:root {
+  /* Header */
+  --header-bg: var(--interactive-default);
+  --header-text: var(--text-on-color);
+
+  /* Sidebar */
+  --sidebar-bg: var(--bg-surface);
+  --sidebar-item-hover: var(--bg-hover);
+  --sidebar-item-active: var(--bg-selected);
+  --sidebar-text: var(--text-primary);
+  --sidebar-text-secondary: var(--text-secondary);
+
+  /* Session Card */
+  --session-card-bg: var(--bg-surface);
+  --session-card-border: var(--border-subtle);
+  --session-card-hover-shadow: var(--shadow-md);
+
+  /* Player */
+  --player-stayed-bg: var(--feedback-success-bg);
+  --player-stayed-hover: var(--color-green-100);
+  --player-item-bg: var(--bg-surface);
+
+  /* Screenshot */
+  --screenshot-border: var(--border-default);
+  --screenshot-hover-border: var(--border-strong);
+
+  /* Message */
+  --message-bg: var(--feedback-info-bg);
+  --message-border: var(--feedback-info);
+  --message-text: var(--text-primary);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    /* Player (dark mode adjustments) */
+    --player-stayed-hover: var(--color-green-800);
+  }
+}
+
+:root[data-theme="dark"] {
+  /* Player (dark mode adjustments) */
+  --player-stayed-hover: var(--color-green-800);
+}
+
+/* ==========================================
+   Global Styles
+   ========================================== */
+
 body {
   margin: 0;
   padding: 0;
   overflow: hidden;
-  background-color: var(--bg-app);
+  background-color: var(--bg-base);
   color: var(--text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
 #app {
