@@ -363,6 +363,16 @@ pub fn run() {
                         };
                         drop(db);
 
+                        // EventProcessorをデータベースから初期化
+                        {
+                            let db = app_state.db.lock().unwrap();
+                            let conn = db.connection();
+                            let mut processor = app_state.event_processor.lock().unwrap();
+                            if let Err(e) = processor.initialize_from_db(conn) {
+                                eprintln!("Failed to initialize EventProcessor from database: {}", e);
+                            }
+                        }
+
                         // 全てのログファイルを読み込み
                         match watcher.read_all_logs(file_positions) {
                             Ok(events) => {

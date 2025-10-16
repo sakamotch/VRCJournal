@@ -33,6 +33,29 @@ impl EventProcessor {
         }
     }
 
+    /// データベースから最新のローカルプレイヤーを取得して状態を初期化
+    pub fn initialize_from_db(&mut self, conn: &Connection) -> Result<(), rusqlite::Error> {
+        // 最後に認証されたローカルプレイヤーを取得
+        let result = conn.query_row(
+            "SELECT id FROM players WHERE is_local = 1 ORDER BY last_authenticated_at DESC LIMIT 1",
+            [],
+            |row| row.get::<_, i64>(0),
+        );
+
+        match result {
+            Ok(player_id) => {
+                self.current_local_player_id = Some(player_id);
+                println!("EventProcessor initialized with local player ID: {}", player_id);
+            }
+            Err(rusqlite::Error::QueryReturnedNoRows) => {
+                println!("No local player found in database. Waiting for authentication event.");
+            }
+            Err(e) => return Err(e),
+        }
+
+        Ok(())
+    }
+
     /// LogEventを処理してデータベースに保存し、フロントエンドに通知すべきイベントを返す
     pub fn process_event(&mut self, conn: &Connection, event: LogEvent) -> Result<Option<ProcessedEvent>, rusqlite::Error> {
         let processed_event = match event {
