@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import type { Session, Player, Screenshot } from "@/types";
-import { formatDateTime, formatDuration } from "@/utils/formatters";
+import { formatDuration, formatTime } from "@/utils/formatters";
 import PlayerList from "./PlayerList.vue";
 import ScreenshotList from "./ScreenshotList.vue";
 import { invoke } from "@tauri-apps/api/core";
@@ -64,12 +64,20 @@ async function toggleScreenshots() {
       </h3>
       <div class="session-info">
         <span class="user-name">{{ session.userName }}</span>
-        <span class="time">{{ formatDateTime(session.startedAt) }}</span>
         <span
-          :class="['duration', { 'duration-interrupted': session.status === 'interrupted' }]"
+          class="time"
           :title="session.status === 'interrupted' ? 'VRChatが予期せず終了した可能性があります' : ''"
         >
-          {{ formatDuration(session) }}
+          {{ formatTime(session.startedAt) }}
+          <template v-if="session.endedAt">
+            〜 {{ formatTime(session.endedAt) }} ({{ formatDuration(session) }})
+          </template>
+          <template v-else-if="session.status === 'interrupted'">
+            〜 不明
+          </template>
+          <template v-else>
+            〜 進行中
+          </template>
         </span>
         <span
           class="player-count clickable"
@@ -158,23 +166,19 @@ async function toggleScreenshots() {
 
 .user-name {
   font-weight: 600;
-  color: var(--interactive-default);
+  color: var(--text-primary);
 }
 
-.duration {
-  color: var(--feedback-success);
-}
-
-.duration-interrupted {
-  color: var(--feedback-warning);
+.time {
+  color: var(--text-tertiary);
 }
 
 .player-count {
-  color: var(--feedback-error);
+  color: var(--text-tertiary);
 }
 
 .screenshot-count {
-  color: var(--color-purple-600);
+  color: var(--text-tertiary);
 }
 
 .clickable {
@@ -184,7 +188,7 @@ async function toggleScreenshots() {
 }
 
 .clickable:hover {
-  color: var(--text-secondary);
+  color: var(--text-primary);
 }
 
 .loading {
