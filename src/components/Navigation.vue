@@ -40,28 +40,27 @@ const navItems: { id: NavigationView; label: string; icon: any }[] = [
 
 <style scoped>
 .navigation {
-  width: 200px;
+  width: 72px;
   background-color: var(--bg-surface);
   border-right: 1px solid var(--border-default);
   display: flex;
   flex-direction: column;
   padding: 1rem 0;
-  gap: 0.25rem;
+  gap: 0.5rem;
 }
 
 .nav-item {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem 1rem;
+  justify-content: center;
+  padding: 0.75rem;
   background: none;
   border: none;
   cursor: pointer;
   color: var(--text-secondary);
-  font-size: 0.875rem;
-  font-weight: 500;
   transition: all 0.2s;
   border-left: 3px solid transparent;
+  position: relative;
 }
 
 .nav-item:hover {
@@ -80,6 +79,6 @@ const navItems: { id: NavigationView; label: string; icon: any }[] = [
 }
 
 .nav-label {
-  white-space: nowrap;
+  display: none;
 }
 </style>
