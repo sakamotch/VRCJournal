@@ -1,33 +1,109 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { setLocale, type Locale } from '@/i18n';
-import Dropdown from './common/Dropdown.vue';
 
 const { t, locale } = useI18n();
 
-const languages = ref<Array<{ value: Locale; label: string }>>([
-  { value: 'ja', label: t('settings.languages.ja') },
-  { value: 'en', label: t('settings.languages.en') },
-]);
+const currentLocale = computed(() => locale.value);
 
-const currentLocale = ref<Locale>(locale.value as Locale);
-
-watch(currentLocale, (newLocale) => {
+function changeLocale(newLocale: Locale) {
   setLocale(newLocale);
-});
-
-watch(locale, () => {
-  languages.value = [
-    { value: 'ja', label: t('settings.languages.ja') },
-    { value: 'en', label: t('settings.languages.en') },
-  ];
-});
+}
 </script>
 
 <template>
-  <Dropdown
-    v-model="currentLocale"
-    :options="languages"
-  />
+  <div class="language-selector">
+    <button
+      :class="['language-button', { active: currentLocale === 'ja' }]"
+      @click="changeLocale('ja')"
+      :title="t('settings.languages.ja')"
+    >
+      <span class="label">{{ t('settings.languages.ja') }}</span>
+    </button>
+    <button
+      :class="['language-button', { active: currentLocale === 'en' }]"
+      @click="changeLocale('en')"
+      :title="t('settings.languages.en')"
+    >
+      <span class="label">{{ t('settings.languages.en') }}</span>
+    </button>
+  </div>
 </template>
+
+<style scoped>
+.language-selector {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem;
+  background: linear-gradient(135deg,
+    var(--bg-sunken) 0%,
+    color-mix(in srgb, var(--bg-sunken) 97%, var(--accent-primary) 3%) 100%
+  );
+  padding: 0.5rem;
+  border-radius: 8px;
+  border: 1px solid color-mix(in srgb, var(--border-subtle) 90%, var(--accent-primary-light) 10%);
+}
+
+.language-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background-color: transparent;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.language-button::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg,
+    color-mix(in srgb, var(--bg-hover) 93%, var(--accent-primary-light) 7%) 0%,
+    color-mix(in srgb, var(--bg-hover) 96%, var(--accent-secondary-light) 4%) 100%
+  );
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  border-radius: 6px;
+}
+
+.language-button:hover {
+  color: var(--interactive-default);
+}
+
+.language-button:hover::before {
+  opacity: 1;
+}
+
+.language-button.active {
+  background: linear-gradient(135deg,
+    color-mix(in srgb, var(--bg-surface) 88%, var(--accent-primary-light) 12%) 0%,
+    color-mix(in srgb, var(--bg-surface) 92%, var(--accent-secondary-light) 8%) 100%
+  );
+  color: var(--interactive-default);
+  font-weight: 600;
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--accent-primary) 15%, transparent),
+              0 0 0 1px color-mix(in srgb, var(--border-default) 70%, var(--accent-primary-light) 30%);
+}
+
+.language-button.active::before {
+  opacity: 0;
+}
+
+.language-button > * {
+  position: relative;
+  z-index: 1;
+}
+
+.language-button .label {
+  white-space: nowrap;
+}
+</style>

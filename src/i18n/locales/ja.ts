@@ -54,6 +54,8 @@ export default {
     ongoing: '進行中',
     unknown: '不明',
     interruptedWarning: 'VRChatが予期せず終了した可能性があります',
+    durationHours: '{hours}時間{minutes}分',
+    durationMinutes: '{minutes}分',
   },
   player: {
     title: 'プレイヤー',

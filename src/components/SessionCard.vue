@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import { useI18n } from "vue-i18n";
+import dayjs from "dayjs";
 import type { Session, Player, Screenshot } from "@/types";
-import { formatDuration, formatTime, formatDate } from "@/utils/formatters";
 import PlayerList from "./PlayerList.vue";
 import ScreenshotList from "./ScreenshotList.vue";
 import Button from "./common/Button.vue";
@@ -10,7 +10,7 @@ import Card from "./common/Card.vue";
 import { invoke } from "@tauri-apps/api/core";
 import { Calendar, Clock, Users, Camera, ChevronDown, ChevronRight, ExternalLink } from "lucide-vue-next";
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
 
 interface Props {
   session: Session;
@@ -30,6 +30,45 @@ const playersExpanded = ref(false);
 const screenshotsExpanded = ref(false);
 const players = ref<Player[] | null>(null);
 const screenshots = ref<Screenshot[] | null>(null);
+
+const sessionDate = computed(() => {
+  // locale.valueを依存関係に追加
+  locale.value;
+  return dayjs(props.session.startedAt).format('L');
+});
+
+const sessionStartTime = computed(() => {
+  locale.value;
+  return dayjs(props.session.startedAt).format('LT');
+});
+
+const sessionEndTime = computed(() => {
+  locale.value;
+  return props.session.endedAt ? dayjs(props.session.endedAt).format('LT') : '';
+});
+
+const sessionDuration = computed(() => {
+  if (props.session.status === 'interrupted') {
+    return t('session.unknown');
+  }
+  if (!props.session.endedAt) {
+    return t('session.ongoing');
+  }
+
+  const start = dayjs(props.session.startedAt);
+  const end = dayjs(props.session.endedAt);
+  const diff = end.diff(start);
+  const dur = dayjs.duration(diff);
+
+  const hours = Math.floor(dur.asHours());
+  const minutes = dur.minutes();
+
+  if (hours > 0) {
+    return t('session.durationHours', { hours, minutes });
+  } else {
+    return t('session.durationMinutes', { minutes });
+  }
+});
 
 async function togglePlayers() {
   playersExpanded.value = !playersExpanded.value;
@@ -73,22 +112,19 @@ async function toggleScreenshots() {
     <div class="session-info">
       <span class="info-item date">
         <Calendar :size="16" />
-        {{ formatDate(session.startedAt) }}
+        {{ sessionDate }}
       </span>
       <span
         class="info-item time"
         :title="session.status === 'interrupted' ? t('session.interruptedWarning') : ''"
       >
         <Clock :size="16" />
-        {{ formatTime(session.startedAt) }}
+        {{ sessionStartTime }}
         <template v-if="session.endedAt">
-          〜 {{ formatTime(session.endedAt) }} ({{ formatDuration(session) }})
-        </template>
-        <template v-else-if="session.status === 'interrupted'">
-          〜 {{ t('session.unknown') }}
+          〜 {{ sessionEndTime }} ({{ sessionDuration }})
         </template>
         <template v-else>
-          〜 {{ t('session.ongoing') }}
+          〜 {{ sessionDuration }}
         </template>
       </span>
       <span

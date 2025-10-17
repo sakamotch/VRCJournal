@@ -6,8 +6,8 @@ import { i18n, getInitialLocale, setLocale } from "./i18n";
 
 async function initializeApp() {
   const locale = await getInitialLocale();
+  configureDayjs();
   setLocale(locale);
-  await configureDayjs();
 
   const app = createApp(App);
   app.use(i18n);

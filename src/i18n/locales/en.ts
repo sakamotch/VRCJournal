@@ -54,6 +54,8 @@ export default {
     ongoing: 'Ongoing',
     unknown: 'Unknown',
     interruptedWarning: 'VRChat may have exited unexpectedly',
+    durationHours: '{hours}h {minutes}m',
+    durationMinutes: '{minutes}m',
   },
   player: {
     title: 'Player',

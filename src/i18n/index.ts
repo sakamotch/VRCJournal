@@ -22,7 +22,7 @@ async function detectSystemLocale(): Promise<Locale> {
     const systemLocale = await getSystemLocale();
     return systemLocale?.toLowerCase().startsWith('ja') ? 'ja' : 'en';
   } catch (error) {
-    console.warn('Failed to detect system locale:', error);
+    console.warn('Failed to detect system locale, defaulting to ja:', error);
     return 'ja';
   }
 }

@@ -5,7 +5,7 @@ import type { Session } from "@/types";
 import SessionCard from "./SessionCard.vue";
 import dayjs from "dayjs";
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
 
 interface Props {
   sessions: Session[];
@@ -23,6 +23,9 @@ const props = defineProps<Props>();
 const emit = defineEmits<Emits>();
 
 const sessionsByDate = computed(() => {
+  // locale.valueを依存関係に追加してロケール変更時に再計算
+  locale.value;
+
   const groups: { date: string; displayDate: string; sessions: Session[] }[] = [];
 
   props.sessions.forEach(session => {

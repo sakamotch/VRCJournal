@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { useI18n } from "vue-i18n";
+import dayjs from "dayjs";
 import type { Player, Session } from "@/types";
-import { formatPlayerName, formatTime, isPlayerStayedUntilEnd } from "@/utils/formatters";
+import { formatPlayerName, isPlayerStayedUntilEnd } from "@/utils/formatters";
 import { ExternalLink } from "lucide-vue-next";
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
 
 interface Props {
   players: Player[];
@@ -17,6 +18,12 @@ interface Emits {
 
 defineProps<Props>();
 const emit = defineEmits<Emits>();
+
+function formatPlayerTime(dateStr: string): string {
+  // locale.valueを依存関係に追加
+  locale.value;
+  return dayjs(dateStr).format('LT');
+}
 </script>
 
 <template>
@@ -35,8 +42,8 @@ const emit = defineEmits<Emits>();
           <ExternalLink :size="14" class="player-icon" />
         </div>
         <div class="player-times">
-          <span class="player-time">{{ t('session.joined') }}: {{ formatTime(player.joinedAt) }}</span>
-          <span class="player-time" v-if="player.leftAt">{{ t('session.left') }}: {{ formatTime(player.leftAt) }}</span>
+          <span class="player-time">{{ t('session.joined') }}: {{ formatPlayerTime(player.joinedAt) }}</span>
+          <span class="player-time" v-if="player.leftAt">{{ t('session.left') }}: {{ formatPlayerTime(player.leftAt) }}</span>
           <span class="player-time player-time-active" v-else>{{ t('session.inSession') }}</span>
         </div>
       </div>
