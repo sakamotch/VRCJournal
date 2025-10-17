@@ -1,6 +1,6 @@
 import { ref, watch } from 'vue';
 
-export type Theme = 'light' | 'dark' | 'system';
+export type Theme = 'light' | 'dark' | 'cyberpunk' | 'pastel' | 'aurora' | 'system';
 
 const THEME_STORAGE_KEY = 'VRCJournal-theme';
 

@@ -1,0 +1,32 @@
+/* ==========================================
+   VRCJournal Design Token System
+   Global Primitives
+
+   全テーマ共通の透明度値のみを定義
+   各テーマの色定義は themes/*.css 内に移動済み
+   ========================================== */
+
+:root {
+  /* Alpha Values (透明度 - 全テーマ共通) */
+  --alpha-black-4: rgba(0, 0, 0, 0.04);
+  --alpha-black-6: rgba(0, 0, 0, 0.06);
+  --alpha-black-8: rgba(0, 0, 0, 0.08);
+  --alpha-black-12: rgba(0, 0, 0, 0.12);
+  --alpha-black-16: rgba(0, 0, 0, 0.16);
+  --alpha-black-24: rgba(0, 0, 0, 0.24);
+  --alpha-black-32: rgba(0, 0, 0, 0.32);
+  --alpha-black-48: rgba(0, 0, 0, 0.48);
+  --alpha-black-64: rgba(0, 0, 0, 0.64);
+  --alpha-black-80: rgba(0, 0, 0, 0.80);
+  --alpha-black-88: rgba(0, 0, 0, 0.88);
+
+  --alpha-white-4: rgba(255, 255, 255, 0.04);
+  --alpha-white-8: rgba(255, 255, 255, 0.08);
+  --alpha-white-12: rgba(255, 255, 255, 0.12);
+  --alpha-white-16: rgba(255, 255, 255, 0.16);
+  --alpha-white-24: rgba(255, 255, 255, 0.24);
+  --alpha-white-32: rgba(255, 255, 255, 0.32);
+  --alpha-white-48: rgba(255, 255, 255, 0.48);
+  --alpha-white-64: rgba(255, 255, 255, 0.64);
+  --alpha-white-80: rgba(255, 255, 255, 0.80);
+}

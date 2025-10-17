@@ -14,16 +14,18 @@ const emit = defineEmits<Emits>();
 </script>
 
 <template>
-  <div v-if="filePath" class="modal-overlay" @click="emit('close')">
-    <div class="modal-content" @click.stop>
-      <button class="modal-close" @click="emit('close')">×</button>
-      <img
-        :src="convertFileSrc(filePath)"
-        alt="Screenshot"
-        class="modal-image"
-      />
+  <Transition name="modal">
+    <div v-if="filePath" class="modal-overlay" @click="emit('close')">
+      <div class="modal-content" @click.stop>
+        <button class="modal-close" @click="emit('close')">×</button>
+        <img
+          :src="convertFileSrc(filePath)"
+          alt="Screenshot"
+          class="modal-image"
+        />
+      </div>
     </div>
-  </div>
+  </Transition>
 </template>
 
 <style scoped>
@@ -42,16 +44,6 @@ const emit = defineEmits<Emits>();
   align-items: center;
   justify-content: center;
   z-index: 1000;
-  animation: fadeIn 0.2s ease;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
 }
 
 .modal-content {
@@ -66,10 +58,44 @@ const emit = defineEmits<Emits>();
   overflow: hidden;
   box-shadow: 0 20px 80px var(--scrim-heavy),
               0 0 0 1px color-mix(in srgb, var(--border-default) 70%, var(--accent-primary-light) 30%);
-  animation: zoomIn 0.3s ease;
 }
 
-@keyframes zoomIn {
+/* Transition classes */
+.modal-enter-active {
+  animation: modalFadeIn 0.2s ease;
+}
+
+.modal-enter-active .modal-content {
+  animation: modalZoomIn 0.3s ease;
+}
+
+.modal-leave-active {
+  animation: modalFadeOut 0.2s ease;
+}
+
+.modal-leave-active .modal-content {
+  animation: modalZoomOut 0.2s ease;
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes modalFadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes modalZoomIn {
   from {
     transform: scale(0.95);
     opacity: 0;
@@ -77,6 +103,17 @@ const emit = defineEmits<Emits>();
   to {
     transform: scale(1);
     opacity: 1;
+  }
+}
+
+@keyframes modalZoomOut {
+  from {
+    transform: scale(1);
+    opacity: 1;
+  }
+  to {
+    transform: scale(0.95);
+    opacity: 0;
   }
 }
 

@@ -58,7 +58,6 @@ const getIcon = (type: string) => {
     var(--bg-elevated) 100%
   );
   border: 1px solid var(--border-default);
-  border-left: 3px solid var(--notification-color);
   border-radius: 12px;
   box-shadow:
     0 12px 32px -8px var(--scrim-medium),
@@ -73,12 +72,25 @@ const getIcon = (type: string) => {
 .notification::before {
   content: '';
   position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--notification-color);
+  border-radius: 12px 0 0 12px;
+  pointer-events: none;
+}
+
+.notification::after {
+  content: '';
+  position: absolute;
   inset: 0;
   background: linear-gradient(135deg,
     color-mix(in srgb, var(--notification-color) 8%, transparent 92%) 0%,
     transparent 100%
   );
   pointer-events: none;
+  border-radius: 12px;
 }
 
 .notification-icon {

@@ -1,0 +1,196 @@
+/* ==========================================
+   VRCJournal Theme: Cyberpunk
+   サイバーパンクテーマ - ネオンピンク × サイバーブルー
+   ========================================== */
+
+:root[data-theme="cyberpunk"] {
+  /* ==========================================
+     Primitive Colors (このテーマ専用)
+     ========================================== */
+
+  /* Cool Gray Scale */
+  --color-cool-gray-950: #0f1117;
+  --color-cool-gray-900: #1a1b23;
+  --color-cool-gray-850: #1f2029;
+  --color-cool-gray-800: #24252f;
+  --color-cool-gray-750: #28292c;
+  --color-cool-gray-700: #2d2e38;
+  --color-cool-gray-600: #35363d;
+  --color-cool-gray-400: #4a4b56;
+  --color-cool-gray-0: #f8f9fb;
+
+  /* Neon Pink */
+  --color-neon-pink-300: #f0abfc;
+  --color-neon-pink-400: #e879f9;
+  --color-neon-pink-500: #d946ef;
+  --color-neon-pink-600: #c026d3;
+  --color-neon-pink-800: #86198f;
+  --color-neon-pink-900: #701a75;
+
+  /* Cyber Blue */
+  --color-cyber-blue-100: #cffafe;
+  --color-cyber-blue-300: #67e8f9;
+  --color-cyber-blue-400: #22d3ee;
+  --color-cyber-blue-500: #06b6d4;
+  --color-cyber-blue-600: #0891b2;
+  --color-cyber-blue-900: #164e63;
+
+  /* Aurora Green (for success feedback) */
+  --color-aurora-green-300: #6ee7b7;
+  --color-aurora-green-400: #34d399;
+  --color-aurora-green-900: #064e3b;
+
+  /* Orange */
+  --color-orange-400: #fb923c;
+  --color-orange-900: #7c2d12;
+
+  /* Red */
+  --color-red-300: #fca5a5;
+  --color-red-400: #f87171;
+  --color-red-500: #ef4444;
+  --color-red-900: #7f1d1d;
+
+  /* ==========================================
+     Alias Tokens (このテーマ専用)
+     ========================================== */
+
+  /* Overlay & Transparency */
+  --overlay-light: var(--alpha-white-4);
+  --overlay-light-medium: var(--alpha-white-8);
+  --overlay-medium: var(--alpha-white-12);
+  --overlay-medium-strong: var(--alpha-white-16);
+  --overlay-strong: var(--alpha-white-32);
+
+  --scrim-light: var(--alpha-black-16);
+  --scrim-medium: var(--alpha-black-24);
+  --scrim-strong: var(--alpha-black-48);
+  --scrim-heavy: var(--alpha-black-64);
+  --scrim-opaque: var(--alpha-black-80);
+
+  /* Gradients */
+  --gradient-cyberpunk: linear-gradient(135deg, var(--color-neon-pink-500) 0%, var(--color-cyber-blue-500) 100%);
+
+  /* ==========================================
+     Semantic Tokens
+     ========================================== */
+
+  /* Background */
+  --bg-base: var(--color-cool-gray-950);
+  --bg-surface: var(--color-cool-gray-900);
+  --bg-elevated: var(--color-cool-gray-850);
+  --bg-sunken: var(--color-cool-gray-950);
+  --bg-overlay: var(--alpha-black-80);
+  --bg-hover: var(--color-cool-gray-800);
+  --bg-active: var(--color-cool-gray-750);
+  --bg-selected: var(--color-neon-pink-900);
+
+  /* Border */
+  --border-default: var(--color-neon-pink-800);
+  --border-strong: var(--color-neon-pink-500);
+  --border-subtle: var(--color-cool-gray-700);
+  --border-focus: var(--color-cyber-blue-400);
+
+  /* Text */
+  --text-primary: var(--color-cyber-blue-100);
+  --text-secondary: var(--color-cyber-blue-300);
+  --text-tertiary: var(--color-neon-pink-300);
+  --text-disabled: var(--color-cool-gray-400);
+  --text-on-color: var(--color-cool-gray-0);
+  --text-link: var(--color-cyber-blue-400);
+
+  /* Interactive */
+  --interactive-default: var(--color-neon-pink-500);
+  --interactive-hover: var(--color-neon-pink-400);
+  --interactive-active: var(--color-neon-pink-300);
+  --interactive-disabled: var(--color-cool-gray-600);
+  --interactive-subtle: var(--color-neon-pink-900);
+
+  /* Accent Colors */
+  --accent-primary: var(--color-neon-pink-500);
+  --accent-primary-light: var(--color-neon-pink-400);
+  --accent-primary-dark: var(--color-neon-pink-600);
+  --accent-secondary: var(--color-cyber-blue-500);
+  --accent-secondary-light: var(--color-cyber-blue-400);
+  --accent-secondary-dark: var(--color-cyber-blue-600);
+
+  /* Feedback */
+  --feedback-success: var(--color-aurora-green-400);
+  --feedback-success-bg: var(--color-aurora-green-900);
+  --feedback-success-light: var(--color-aurora-green-300);
+  --feedback-warning: var(--color-orange-400);
+  --feedback-warning-bg: var(--color-orange-900);
+  --feedback-error: var(--color-red-400);
+  --feedback-error-bg: var(--color-red-900);
+  --feedback-error-light: var(--color-red-300);
+  --feedback-error-dark: var(--color-red-500);
+  --feedback-info: var(--color-cyber-blue-400);
+  --feedback-info-bg: var(--color-cyber-blue-900);
+
+  /* Shadow - stronger for neon effect */
+  --shadow-xs: 0 1px 2px var(--alpha-black-48);
+  --shadow-sm: 0 2px 4px var(--alpha-black-64);
+  --shadow-md: 0 4px 8px var(--alpha-black-80), 0 0 16px color-mix(in srgb, var(--color-neon-pink-500) 20%, transparent);
+  --shadow-lg: 0 8px 16px var(--alpha-black-88), 0 0 32px color-mix(in srgb, var(--color-neon-pink-500) 30%, transparent);
+  --shadow-xl: 0 16px 32px var(--alpha-black-88), 0 0 48px color-mix(in srgb, var(--color-neon-pink-500) 40%, transparent);
+
+  /* Header & Navigation */
+  --header-bg: var(--gradient-cyberpunk);
+  --header-text: var(--text-on-color);
+  --sidebar-bg: var(--bg-surface);
+  --sidebar-item-hover: var(--bg-hover);
+  --sidebar-item-active: var(--bg-selected);
+  --sidebar-text: var(--text-primary);
+  --sidebar-text-secondary: var(--text-secondary);
+
+  /* Component-specific */
+  --player-item-bg: var(--bg-surface);
+  --screenshot-border: var(--border-default);
+  --screenshot-hover-border: var(--border-strong);
+}
+
+/* ==========================================
+   Scrollbar Styles
+   ========================================== */
+
+:root[data-theme="cyberpunk"]::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+:root[data-theme="cyberpunk"]::-webkit-scrollbar-track {
+  background: var(--bg-sunken);
+  border-radius: 6px;
+  margin: 4px;
+}
+
+:root[data-theme="cyberpunk"]::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg,
+    color-mix(in srgb, var(--border-default) 60%, var(--color-neon-pink-500) 40%) 0%,
+    color-mix(in srgb, var(--border-default) 70%, var(--color-cyber-blue-500) 30%) 100%
+  );
+  border-radius: 6px;
+  border: 2px solid var(--bg-sunken);
+  transition: background 0.2s ease;
+  box-shadow: 0 0 8px color-mix(in srgb, var(--color-neon-pink-500) 30%, transparent);
+}
+
+:root[data-theme="cyberpunk"]::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg,
+    color-mix(in srgb, var(--border-strong) 50%, var(--color-neon-pink-500) 50%) 0%,
+    color-mix(in srgb, var(--border-strong) 60%, var(--color-cyber-blue-500) 40%) 100%
+  );
+  box-shadow: 0 0 12px color-mix(in srgb, var(--color-neon-pink-500) 50%, transparent);
+}
+
+:root[data-theme="cyberpunk"]::-webkit-scrollbar-thumb:active {
+  background: linear-gradient(135deg,
+    var(--color-neon-pink-500) 0%,
+    var(--color-cyber-blue-500) 100%
+  );
+  box-shadow: 0 0 16px color-mix(in srgb, var(--color-neon-pink-500) 70%, transparent);
+}
+
+:root[data-theme="cyberpunk"] {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--border-default) 60%, var(--color-neon-pink-500) 40%) var(--bg-sunken);
+}

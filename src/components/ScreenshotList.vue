@@ -47,7 +47,7 @@ function formatScreenshotTime(dateStr: string): string {
           <div class="deleted-text">削除済み</div>
         </div>
         <div class="screenshot-time">
-          {{ formatScreenshotTime(screenshot.takenAt) }}
+          <span class="screenshot-time-text">{{ formatScreenshotTime(screenshot.takenAt) }}</span>
         </div>
       </div>
     </div>
@@ -101,11 +101,35 @@ function formatScreenshotTime(dateStr: string): string {
   border: 2px solid var(--screenshot-border);
   transition: all 0.3s ease;
   box-shadow: var(--shadow-sm);
+  color: var(--text-primary);
+}
+
+.screenshot-item::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg,
+    color-mix(in srgb, var(--bg-hover) 92%, var(--accent-primary-light) 8%) 0%,
+    color-mix(in srgb, var(--bg-hover) 96%, var(--accent-secondary-light) 4%) 100%
+  );
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 0;
 }
 
 .screenshot-item:hover {
-  border-color: color-mix(in srgb, var(--screenshot-hover-border) 60%, var(--accent-primary-light) 40%);
+  border-color: color-mix(in srgb, var(--border-default) 80%, var(--accent-primary-light) 20%);
   box-shadow: 0 4px 12px color-mix(in srgb, var(--accent-primary) 15%, transparent);
+  color: var(--interactive-default);
+}
+
+.screenshot-item:hover::before {
+  opacity: 1;
+}
+
+.screenshot-item > * {
+  position: relative;
+  z-index: 1;
 }
 
 .screenshot-item.screenshot-deleted {
@@ -116,6 +140,10 @@ function formatScreenshotTime(dateStr: string): string {
 .screenshot-item.screenshot-deleted:hover {
   transform: none;
   border-color: var(--screenshot-border);
+}
+
+.screenshot-item.screenshot-deleted:hover::before {
+  opacity: 0;
 }
 
 .screenshot-thumbnail {
@@ -149,11 +177,41 @@ function formatScreenshotTime(dateStr: string): string {
 }
 
 .screenshot-time {
+  position: relative;
   padding: 0.25rem 0.5rem;
-  background-color: var(--scrim-opaque);
-  color: var(--text-on-color);
+  background: linear-gradient(135deg,
+    var(--player-item-bg) 0%,
+    color-mix(in srgb, var(--player-item-bg) 97%, var(--accent-primary) 3%) 100%
+  );
   font-size: 0.75rem;
+  font-weight: 500;
   text-align: center;
+  overflow: hidden;
+}
+
+.screenshot-time::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg,
+    color-mix(in srgb, var(--bg-hover) 92%, var(--accent-primary-light) 8%) 0%,
+    color-mix(in srgb, var(--bg-hover) 96%, var(--accent-secondary-light) 4%) 100%
+  );
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.screenshot-time-text {
+  position: relative;
+  color: var(--text-primary);
+}
+
+.screenshot-item:hover .screenshot-time::before {
+  opacity: 1;
+}
+
+.screenshot-item:hover .screenshot-time-text {
+  color: var(--interactive-default);
 }
 
 .no-screenshots {

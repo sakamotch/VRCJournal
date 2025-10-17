@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useTheme } from '@/stores/themeStore';
-import { Sun, Moon, Monitor } from 'lucide-vue-next';
+import { Sun, Moon, Monitor, Zap, Heart, Sparkles } from 'lucide-vue-next';
 
 const { theme, setTheme } = useTheme();
 </script>
@@ -24,6 +24,30 @@ const { theme, setTheme } = useTheme();
       <span class="label">ダーク</span>
     </button>
     <button
+      :class="['theme-button', { active: theme === 'cyberpunk' }]"
+      @click="setTheme('cyberpunk')"
+      title="サイバーパンク"
+    >
+      <Zap :size="18" class="icon" />
+      <span class="label">サイバーパンク</span>
+    </button>
+    <button
+      :class="['theme-button', { active: theme === 'pastel' }]"
+      @click="setTheme('pastel')"
+      title="パステルドリーム"
+    >
+      <Heart :size="18" class="icon" />
+      <span class="label">パステルドリーム</span>
+    </button>
+    <button
+      :class="['theme-button', { active: theme === 'aurora' }]"
+      @click="setTheme('aurora')"
+      title="オーロラ"
+    >
+      <Sparkles :size="18" class="icon" />
+      <span class="label">オーロラ</span>
+    </button>
+    <button
       :class="['theme-button', { active: theme === 'system' }]"
       @click="setTheme('system')"
       title="システム設定"
@@ -36,13 +60,14 @@ const { theme, setTheme } = useTheme();
 
 <style scoped>
 .theme-selector {
-  display: flex;
-  gap: 0.25rem;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem;
   background: linear-gradient(135deg,
     var(--bg-sunken) 0%,
     color-mix(in srgb, var(--bg-sunken) 97%, var(--accent-primary) 3%) 100%
   );
-  padding: 0.25rem;
+  padding: 0.5rem;
   border-radius: 8px;
   border: 1px solid color-mix(in srgb, var(--border-subtle) 90%, var(--accent-primary-light) 10%);
 }
