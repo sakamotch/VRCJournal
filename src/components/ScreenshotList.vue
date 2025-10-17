@@ -98,13 +98,13 @@ function formatScreenshotTime(dateStr: string): string {
     var(--player-item-bg) 0%,
     color-mix(in srgb, var(--player-item-bg) 97%, var(--accent-primary) 3%) 100%
   );
-  border: 2px solid var(--border-subtle);
+  border: 2px solid var(--screenshot-border);
   transition: all 0.3s ease;
   box-shadow: var(--shadow-sm);
 }
 
 .screenshot-item:hover {
-  border-color: color-mix(in srgb, var(--border-default) 80%, var(--accent-primary-light) 20%);
+  border-color: color-mix(in srgb, var(--screenshot-hover-border) 60%, var(--accent-primary-light) 40%);
   box-shadow: 0 4px 12px color-mix(in srgb, var(--accent-primary) 15%, transparent);
 }
 
@@ -115,7 +115,7 @@ function formatScreenshotTime(dateStr: string): string {
 
 .screenshot-item.screenshot-deleted:hover {
   transform: none;
-  border-color: var(--border-subtle);
+  border-color: var(--screenshot-border);
 }
 
 .screenshot-thumbnail {
