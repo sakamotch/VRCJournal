@@ -315,8 +315,6 @@ onUnmounted(() => {
 
 .user-selector-button:hover {
   border-color: var(--overlay-strong);
-  box-shadow: var(--shadow-md);
-  transform: translateY(-1px);
 }
 
 .user-selector-button:hover::before {
@@ -456,8 +454,6 @@ onUnmounted(() => {
 
 .settings-button:hover {
   border-color: var(--overlay-strong);
-  box-shadow: var(--shadow-md);
-  transform: translateY(-1px);
 }
 
 .settings-button:hover::before {
