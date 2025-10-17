@@ -97,7 +97,6 @@ const emit = defineEmits<Emits>();
 
 .player-item:hover {
   border-color: color-mix(in srgb, var(--border-default) 80%, var(--color-indigo-400) 20%);
-  transform: translateX(2px);
 }
 
 .player-item:hover .player-name {

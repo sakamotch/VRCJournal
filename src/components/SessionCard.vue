@@ -60,7 +60,7 @@ async function toggleScreenshots() {
 </script>
 
 <template>
-  <Card class="session-card">
+  <Card class="session-card" :hoverable="false">
     <div class="session-header">
       <h3 class="world-name">
         {{ session.worldName || session.worldId }}

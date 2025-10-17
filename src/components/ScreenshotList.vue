@@ -104,9 +104,8 @@ function formatScreenshotTime(dateStr: string): string {
 }
 
 .screenshot-item:hover {
-  transform: scale(1.05) translateY(-2px);
   border-color: color-mix(in srgb, var(--screenshot-hover-border) 60%, var(--color-indigo-400) 40%);
-  box-shadow: 0 8px 20px rgba(99, 102, 241, 0.2);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
 }
 
 .screenshot-item.screenshot-deleted {
