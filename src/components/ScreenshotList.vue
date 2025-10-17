@@ -69,8 +69,8 @@ function formatScreenshotTime(dateStr: string): string {
   margin-top: 1rem;
   padding: 1rem;
   background: linear-gradient(135deg,
-    var(--bg-sunken) 0%,
-    color-mix(in srgb, var(--bg-sunken) 98%, var(--color-indigo-500) 2%) 100%
+    var(--bg-base) 0%,
+    color-mix(in srgb, var(--bg-base) 98%, var(--color-indigo-500) 2%) 100%
   );
   border-radius: 8px;
   border: 1px solid color-mix(in srgb, var(--border-subtle) 95%, var(--color-indigo-400) 5%);
@@ -95,8 +95,8 @@ function formatScreenshotTime(dateStr: string): string {
   border-radius: 8px;
   overflow: hidden;
   background: linear-gradient(135deg,
-    var(--bg-surface) 0%,
-    color-mix(in srgb, var(--bg-surface) 97%, var(--color-indigo-500) 3%) 100%
+    var(--bg-elevated) 0%,
+    color-mix(in srgb, var(--bg-elevated) 97%, var(--color-indigo-500) 3%) 100%
   );
   border: 2px solid var(--screenshot-border);
   transition: all 0.3s ease;
@@ -148,7 +148,7 @@ function formatScreenshotTime(dateStr: string): string {
 .screenshot-time {
   padding: 0.25rem 0.5rem;
   background-color: var(--alpha-black-80);
-  color: white;
+  color: var(--text-on-color);
   font-size: 0.75rem;
   text-align: center;
 }

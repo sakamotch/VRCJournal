@@ -163,7 +163,7 @@ async function toggleScreenshots() {
 
 .user-name {
   font-size: 0.8rem;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   white-space: nowrap;
   margin-left: 1rem;
 }
@@ -188,15 +188,15 @@ async function toggleScreenshots() {
 }
 
 .time {
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
 }
 
 .player-count {
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
 }
 
 .screenshot-count {
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
 }
 
 .clickable {

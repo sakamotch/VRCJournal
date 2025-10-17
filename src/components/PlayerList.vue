@@ -46,8 +46,8 @@ const emit = defineEmits<Emits>();
   margin-top: 1rem;
   padding: 1rem;
   background: linear-gradient(135deg,
-    var(--bg-sunken) 0%,
-    color-mix(in srgb, var(--bg-sunken) 98%, var(--color-indigo-500) 2%) 100%
+    var(--bg-base) 0%,
+    color-mix(in srgb, var(--bg-base) 98%, var(--color-indigo-500) 2%) 100%
   );
   border-radius: 8px;
   border: 1px solid color-mix(in srgb, var(--border-subtle) 95%, var(--color-indigo-400) 5%);
