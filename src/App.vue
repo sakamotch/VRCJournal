@@ -17,7 +17,7 @@ import { Settings as SettingsIcon, ChevronDown } from "lucide-vue-next";
 import { useNotifications } from "@/composables/useNotifications";
 
 const { t } = useI18n();
-const { success, error: showError, info } = useNotifications();
+const { success, error: showError } = useNotifications();
 const isLoading = ref(false);
 const localUsers = ref<LocalUser[]>([]);
 const sessions = ref<Session[]>([]);

@@ -52,10 +52,10 @@ const { theme, setTheme } = useTheme();
     <button
       :class="['theme-button', { active: theme === 'system' }]"
       @click="setTheme('system')"
-      title="System"
+      :title="t('settings.themes.system')"
     >
       <Monitor :size="18" class="icon" />
-      <span class="label">System</span>
+      <span class="label">{{ t('settings.themes.system') }}</span>
     </button>
   </div>
 </template>

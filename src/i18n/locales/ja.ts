@@ -27,6 +27,7 @@ export default {
       cyberpunk: 'サイバーパンク',
       pastel: 'パステルドリーム',
       aurora: 'オーロラ',
+      system: 'システム設定',
     },
     languages: {
       ja: '日本語',

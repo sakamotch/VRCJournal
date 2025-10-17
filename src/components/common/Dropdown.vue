@@ -36,11 +36,11 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="dropdown" ref="dropdownRef">
-    <div class="dropdown-trigger" @click="emit('update:modelValue', !modelValue)">
+    <div class="dropdown-trigger" @click="emit('update:modelValue', !props.modelValue)">
       <slot name="trigger" />
     </div>
     <Transition name="dropdown">
-      <div v-if="modelValue" :class="['dropdown-menu', `align-${align}`]">
+      <div v-if="props.modelValue" :class="['dropdown-menu', `align-${props.align}`]">
         <slot />
       </div>
     </Transition>

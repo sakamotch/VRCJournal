@@ -1,13 +1,13 @@
 use super::path::{get_all_log_files, get_vrchat_log_path};
 use crate::parser::log_parser::VRChatLogParser;
 use crate::parser::types::LogEvent;
-use notify::{Config, Event, EventKind, RecommendedWatcher, RecursiveMode, Watcher};
 use std::collections::HashMap;
-use std::fs::File;
+use std::fs::{self, File};
 use std::io::{Read, Seek, SeekFrom};
 use std::path::PathBuf;
 use std::sync::mpsc::{channel, Receiver, Sender};
 use std::sync::{Arc, Mutex};
+use std::time::Duration;
 
 pub struct LogWatcher {
     log_dir: PathBuf,
@@ -88,59 +88,46 @@ impl LogWatcher {
         Ok((events, final_position))
     }
 
-    /// ディレクトリ監視を開始（ファイルの変更と新規作成を検知）
+    /// ディレクトリ監視を開始（独自ポーリングでファイルサイズをチェック）
     pub fn start_watching(&self) -> Result<(), String> {
-        let (tx, rx) = channel();
-
         let log_dir = self.log_dir.clone();
         let file_states = Arc::clone(&self.file_states);
         let parser = VRChatLogParser::new();
         let event_tx = self.event_tx.clone();
 
-        // ディレクトリ監視用のスレッドを起動
+        // ファイルサイズを記録するマップ（ポーリング用）
+        let file_sizes: Arc<Mutex<HashMap<PathBuf, u64>>> = Arc::new(Mutex::new(HashMap::new()));
+
+        // 既存のファイルサイズを初期化
+        if let Ok(log_files) = get_all_log_files() {
+            let mut sizes = file_sizes.lock().unwrap();
+            for file in log_files {
+                if let Ok(metadata) = fs::metadata(&file) {
+                    sizes.insert(file.clone(), metadata.len());
+                }
+            }
+        }
+
+        // ポーリングスレッドを起動
         std::thread::spawn(move || {
-            let mut watcher = RecommendedWatcher::new(
-                move |res: Result<Event, notify::Error>| {
-                    if let Ok(event) = res {
-                        let _ = tx.send(event);
-                    }
-                },
-                Config::default(),
-            )
-            .expect("Failed to create watcher");
+            loop {
+                // ディレクトリ内のログファイルをチェック
+                if let Ok(log_files) = get_all_log_files() {
+                    let mut sizes = file_sizes.lock().unwrap();
 
-            // ディレクトリ全体を監視
-            watcher
-                .watch(&log_dir, RecursiveMode::NonRecursive)
-                .expect("Failed to watch log directory");
+                    for file_path in log_files {
+                        if let Ok(metadata) = fs::metadata(&file_path) {
+                            let current_size = metadata.len();
+                            let previous_size = sizes.get(&file_path).copied().unwrap_or(0);
 
-            // イベントを処理
-            for event in rx {
-                match event.kind {
-                    EventKind::Modify(_) => {
-                        // ファイルの変更を検知
-                        for path in &event.paths {
-                            if Self::is_log_file(path) {
+                            // 新規ファイルの検知
+                            if previous_size == 0 && current_size > 0 {
+                                println!("New log file detected: {:?}", file_path);
+                                file_states.lock().unwrap().insert(file_path.clone(), 0);
+                                sizes.insert(file_path.clone(), current_size);
+
                                 if let Err(e) = Self::handle_file_change(
-                                    path,
-                                    &file_states,
-                                    &parser,
-                                    &event_tx,
-                                ) {
-                                    eprintln!("Error handling file change: {}", e);
-                                }
-                            }
-                        }
-                    }
-                    EventKind::Create(_) => {
-                        // 新規ファイルの作成を検知
-                        for path in &event.paths {
-                            if Self::is_log_file(path) {
-                                println!("New log file detected: {:?}", path);
-                                // 新規ファイルは最初から読む
-                                file_states.lock().unwrap().insert(path.clone(), 0);
-                                if let Err(e) = Self::handle_file_change(
-                                    path,
+                                    &file_path,
                                     &file_states,
                                     &parser,
                                     &event_tx,
@@ -148,10 +135,40 @@ impl LogWatcher {
                                     eprintln!("Error handling new file: {}", e);
                                 }
                             }
+                            // ファイルサイズの変更を検知
+                            else if current_size > previous_size {
+                                sizes.insert(file_path.clone(), current_size);
+
+                                if let Err(e) = Self::handle_file_change(
+                                    &file_path,
+                                    &file_states,
+                                    &parser,
+                                    &event_tx,
+                                ) {
+                                    eprintln!("Error handling file change: {}", e);
+                                }
+                            }
+                            // ファイルサイズが減った場合（ログローテーション等）
+                            else if current_size < previous_size {
+                                println!("File size decreased, resetting position: {:?}", file_path);
+                                file_states.lock().unwrap().insert(file_path.clone(), 0);
+                                sizes.insert(file_path.clone(), current_size);
+
+                                if let Err(e) = Self::handle_file_change(
+                                    &file_path,
+                                    &file_states,
+                                    &parser,
+                                    &event_tx,
+                                ) {
+                                    eprintln!("Error handling file reset: {}", e);
+                                }
+                            }
                         }
                     }
-                    _ => {}
                 }
+
+                // 500ミリ秒ごとにチェック
+                std::thread::sleep(Duration::from_millis(500));
             }
         });
 

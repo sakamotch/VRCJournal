@@ -27,6 +27,7 @@ export default {
       cyberpunk: 'Cyberpunk',
       pastel: 'Pastel Dream',
       aurora: 'Aurora',
+      system: 'System',
     },
     languages: {
       ja: '日本語',
