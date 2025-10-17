@@ -2,6 +2,10 @@
 import { computed } from "vue";
 import type { Session } from "@/types";
 import SessionCard from "./SessionCard.vue";
+import dayjs from "dayjs";
+import "dayjs/locale/ja";
+
+dayjs.locale("ja");
 
 interface Props {
   sessions: Session[];
@@ -23,12 +27,8 @@ const sessionsByDate = computed(() => {
   const groups: { date: string; displayDate: string; sessions: Session[] }[] = [];
 
   props.sessions.forEach(session => {
-    const date = new Date(session.startedAt);
-    const dateKey = date.toLocaleDateString("ja-JP", {
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit"
-    });
+    const date = dayjs(session.startedAt);
+    const dateKey = date.format("YYYY/MM/DD");
 
     const displayDate = formatDateHeader(date);
 
@@ -43,26 +43,16 @@ const sessionsByDate = computed(() => {
   return groups;
 });
 
-function formatDateHeader(date: Date): string {
-  const today = new Date();
-  const yesterday = new Date(today);
-  yesterday.setDate(yesterday.getDate() - 1);
+function formatDateHeader(date: dayjs.Dayjs): string {
+  const today = dayjs();
+  const yesterday = dayjs().subtract(1, "day");
 
-  const dateStr = date.toLocaleDateString("ja-JP");
-  const todayStr = today.toLocaleDateString("ja-JP");
-  const yesterdayStr = yesterday.toLocaleDateString("ja-JP");
-
-  if (dateStr === todayStr) {
-    return `今日 - ${date.toLocaleDateString("ja-JP", { year: "numeric", month: "long", day: "numeric" })}`;
-  } else if (dateStr === yesterdayStr) {
-    return `昨日 - ${date.toLocaleDateString("ja-JP", { year: "numeric", month: "long", day: "numeric" })}`;
+  if (date.isSame(today, "day")) {
+    return `今日 - ${date.format("YYYY年M月D日")}`;
+  } else if (date.isSame(yesterday, "day")) {
+    return `昨日 - ${date.format("YYYY年M月D日")}`;
   } else {
-    return date.toLocaleDateString("ja-JP", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-      weekday: "short"
-    });
+    return date.format("YYYY年M月D日 (ddd)");
   }
 }
 </script>

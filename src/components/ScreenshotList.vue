@@ -3,6 +3,10 @@ import type { Screenshot } from "@/types";
 import { convertFileSrc } from '@tauri-apps/api/core';
 import Button from "./common/Button.vue";
 import { Folder, Trash2 } from 'lucide-vue-next';
+import dayjs from "dayjs";
+import "dayjs/locale/ja";
+
+dayjs.locale("ja");
 
 interface Props {
   screenshots: Screenshot[];
@@ -15,6 +19,10 @@ interface Emits {
 
 defineProps<Props>();
 const emit = defineEmits<Emits>();
+
+function formatScreenshotTime(dateStr: string): string {
+  return dayjs(dateStr).format("HH:mm:ss");
+}
 </script>
 
 <template>
@@ -39,7 +47,7 @@ const emit = defineEmits<Emits>();
           <div class="deleted-text">削除済み</div>
         </div>
         <div class="screenshot-time">
-          {{ new Date(screenshot.takenAt).toLocaleTimeString('ja-JP') }}
+          {{ formatScreenshotTime(screenshot.takenAt) }}
         </div>
       </div>
     </div>

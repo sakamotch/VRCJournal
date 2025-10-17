@@ -1,9 +1,17 @@
 import type { Session, Player } from "@/types";
+import dayjs from "dayjs";
+import "dayjs/locale/ja";
+import relativeTime from "dayjs/plugin/relativeTime";
+import duration from "dayjs/plugin/duration";
+
+// プラグイン設定
+dayjs.extend(relativeTime);
+dayjs.extend(duration);
+dayjs.locale("ja");
 
 export function formatDateTime(dateStr: string): string {
   try {
-    const date = new Date(dateStr);
-    return date.toLocaleString("ja-JP");
+    return dayjs(dateStr).format("YYYY/MM/DD HH:mm:ss");
   } catch {
     return dateStr;
   }
@@ -11,8 +19,7 @@ export function formatDateTime(dateStr: string): string {
 
 export function formatDate(dateStr: string): string {
   try {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString("ja-JP", { year: "numeric", month: "2-digit", day: "2-digit" });
+    return dayjs(dateStr).format("YYYY/MM/DD");
   } catch {
     return dateStr;
   }
@@ -20,8 +27,7 @@ export function formatDate(dateStr: string): string {
 
 export function formatTime(dateStr: string): string {
   try {
-    const date = new Date(dateStr);
-    return date.toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit" });
+    return dayjs(dateStr).format("HH:mm");
   } catch {
     return dateStr;
   }
@@ -40,20 +46,30 @@ export function formatDuration(session: Session): string {
 
   // 通常の終了時間計算
   try {
-    const start = new Date(session.startedAt);
-    const end = new Date(session.endedAt);
-    const diff = end.getTime() - start.getTime();
-    const minutes = Math.floor(diff / 60000);
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
+    const start = dayjs(session.startedAt);
+    const end = dayjs(session.endedAt);
+    const diff = end.diff(start);
+    const dur = dayjs.duration(diff);
+
+    const hours = Math.floor(dur.asHours());
+    const minutes = dur.minutes();
 
     if (hours > 0) {
-      return `${hours}時間${mins}分`;
+      return `${hours}時間${minutes}分`;
     } else {
-      return `${mins}分`;
+      return `${minutes}分`;
     }
   } catch {
     return "-";
+  }
+}
+
+// 相対時刻表示（例: "2時間前"）
+export function formatRelativeTime(dateStr: string): string {
+  try {
+    return dayjs(dateStr).fromNow();
+  } catch {
+    return dateStr;
   }
 }
 
@@ -78,9 +94,9 @@ export function isPlayerStayedUntilEnd(player: Player, session: Session): boolea
 
   // leftAtがセッション終了時刻と1秒以内なら最後まで在席
   try {
-    const sessionEndTime = new Date(session.endedAt).getTime();
-    const playerLeftTime = new Date(player.leftAt).getTime();
-    return Math.abs(sessionEndTime - playerLeftTime) <= 1000;
+    const sessionEndTime = dayjs(session.endedAt);
+    const playerLeftTime = dayjs(player.leftAt);
+    return Math.abs(sessionEndTime.diff(playerLeftTime)) <= 1000;
   } catch {
     return false;
   }
