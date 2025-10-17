@@ -54,15 +54,15 @@ const getIcon = (type: string) => {
   gap: 0.875rem;
   padding: 1rem 1.25rem;
   background: linear-gradient(135deg,
-    color-mix(in srgb, var(--bg-elevated) 96%, var(--color-indigo-500) 4%) 0%,
+    color-mix(in srgb, var(--bg-elevated) 96%, var(--accent-primary) 4%) 0%,
     var(--bg-elevated) 100%
   );
   border: 1px solid var(--border-default);
   border-left: 3px solid var(--notification-color);
   border-radius: 12px;
   box-shadow:
-    0 12px 32px -8px var(--alpha-black-24),
-    0 4px 12px -2px var(--alpha-black-16),
+    0 12px 32px -8px var(--scrim-medium),
+    0 4px 12px -2px var(--scrim-light),
     0 0 0 1px color-mix(in srgb, var(--border-default) 70%, var(--notification-color) 30%);
   backdrop-filter: blur(12px) saturate(150%);
   pointer-events: auto;

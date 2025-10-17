@@ -20,7 +20,7 @@ withDefaults(defineProps<Props>(), {
 .card {
   background: linear-gradient(135deg,
     var(--bg-surface) 0%,
-    color-mix(in srgb, var(--bg-surface) 95%, var(--color-indigo-500) 5%) 100%
+    color-mix(in srgb, var(--bg-surface) 95%, var(--accent-primary) 5%) 100%
   );
   border: 1px solid var(--border-subtle);
   border-radius: 12px;
@@ -39,7 +39,7 @@ withDefaults(defineProps<Props>(), {
   height: 2px;
   background: linear-gradient(90deg,
     transparent 0%,
-    var(--color-indigo-400) 50%,
+    var(--accent-primary-light) 50%,
     transparent 100%
   );
   opacity: 0;
@@ -47,9 +47,9 @@ withDefaults(defineProps<Props>(), {
 }
 
 .card.hoverable:hover {
-  box-shadow: 0 8px 24px color-mix(in srgb, var(--color-indigo-500) 15%, transparent);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--accent-primary) 15%, transparent);
   transform: translateY(-2px);
-  border-color: color-mix(in srgb, var(--border-default) 70%, var(--color-indigo-400) 30%);
+  border-color: color-mix(in srgb, var(--border-default) 70%, var(--accent-primary-light) 30%);
 }
 
 .card.hoverable:hover::before {

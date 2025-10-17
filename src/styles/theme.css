@@ -180,6 +180,18 @@
   --bg-active: var(--color-warm-gray-200);
   --bg-selected: var(--color-indigo-50);
 
+  /* Overlay & Transparency */
+  --overlay-light: var(--alpha-white-4);
+  --overlay-light-medium: var(--alpha-white-8);
+  --overlay-medium: var(--alpha-white-12);
+  --overlay-medium-strong: var(--alpha-white-16);
+  --overlay-strong: var(--alpha-white-32);
+  --scrim-light: var(--alpha-black-16);
+  --scrim-medium: var(--alpha-black-24);
+  --scrim-strong: var(--alpha-black-48);
+  --scrim-heavy: var(--alpha-black-64);
+  --scrim-opaque: var(--alpha-black-80);
+
   /* Border */
   --border-default: var(--color-warm-gray-300);
   --border-strong: var(--color-warm-gray-500);
@@ -201,13 +213,24 @@
   --interactive-disabled: var(--color-warm-gray-300);
   --interactive-subtle: var(--color-indigo-50);
 
+  /* Accent Colors (for color-mix and gradients) */
+  --accent-primary: var(--color-indigo-500);
+  --accent-primary-light: var(--color-indigo-400);
+  --accent-primary-dark: var(--color-indigo-600);
+  --accent-secondary: var(--color-violet-500);
+  --accent-secondary-light: var(--color-violet-400);
+  --accent-secondary-dark: var(--color-violet-600);
+
   /* Feedback */
   --feedback-success: var(--color-green-600);
   --feedback-success-bg: var(--color-green-50);
+  --feedback-success-light: var(--color-green-400);
   --feedback-warning: var(--color-orange-600);
   --feedback-warning-bg: var(--color-orange-50);
   --feedback-error: var(--color-red-600);
   --feedback-error-bg: var(--color-red-50);
+  --feedback-error-light: var(--color-red-400);
+  --feedback-error-dark: var(--color-red-500);
   --feedback-info: var(--color-indigo-600);
   --feedback-info-bg: var(--color-indigo-50);
 
@@ -232,6 +255,18 @@
     --bg-active: var(--color-cool-gray-550);
     --bg-selected: var(--color-indigo-900);
 
+    /* Overlay & Transparency (same as light mode) */
+    --overlay-light: var(--alpha-white-4);
+    --overlay-light-medium: var(--alpha-white-8);
+    --overlay-medium: var(--alpha-white-12);
+    --overlay-medium-strong: var(--alpha-white-16);
+    --overlay-strong: var(--alpha-white-32);
+    --scrim-light: var(--alpha-black-16);
+    --scrim-medium: var(--alpha-black-24);
+    --scrim-strong: var(--alpha-black-48);
+    --scrim-heavy: var(--alpha-black-64);
+    --scrim-opaque: var(--alpha-black-80);
+
     /* Border */
     --border-default: var(--color-cool-gray-500);
     --border-strong: var(--color-cool-gray-200);
@@ -253,13 +288,24 @@
     --interactive-disabled: var(--color-cool-gray-500);
     --interactive-subtle: var(--color-indigo-900);
 
+    /* Accent Colors (for color-mix and gradients) */
+    --accent-primary: var(--color-indigo-500);
+    --accent-primary-light: var(--color-indigo-400);
+    --accent-primary-dark: var(--color-indigo-600);
+    --accent-secondary: var(--color-violet-500);
+    --accent-secondary-light: var(--color-violet-400);
+    --accent-secondary-dark: var(--color-violet-600);
+
     /* Feedback */
     --feedback-success: var(--color-green-400);
     --feedback-success-bg: var(--color-green-900);
+    --feedback-success-light: var(--color-green-400);
     --feedback-warning: var(--color-orange-400);
     --feedback-warning-bg: var(--color-orange-900);
     --feedback-error: var(--color-red-400);
     --feedback-error-bg: var(--color-red-900);
+    --feedback-error-light: var(--color-red-400);
+    --feedback-error-dark: var(--color-red-500);
     --feedback-info: var(--color-indigo-400);
     --feedback-info-bg: var(--color-indigo-900);
 

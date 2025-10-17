@@ -35,7 +35,7 @@ const emit = defineEmits<Emits>();
   height: 100vh;
   background: radial-gradient(circle at center,
     color-mix(in srgb, var(--bg-overlay) 100%, transparent 0%) 0%,
-    color-mix(in srgb, var(--bg-overlay) 92%, var(--color-indigo-900) 8%) 100%
+    color-mix(in srgb, var(--bg-overlay) 92%, var(--interactive-subtle) 8%) 100%
   );
   backdrop-filter: blur(8px);
   display: flex;
@@ -60,12 +60,12 @@ const emit = defineEmits<Emits>();
   max-height: 90vh;
   background: linear-gradient(135deg,
     var(--bg-elevated) 0%,
-    color-mix(in srgb, var(--bg-elevated) 98%, var(--color-indigo-500) 2%) 100%
+    color-mix(in srgb, var(--bg-elevated) 98%, var(--accent-primary) 2%) 100%
   );
   border-radius: 16px;
   overflow: hidden;
-  box-shadow: 0 20px 80px var(--alpha-black-48),
-              0 0 0 1px color-mix(in srgb, var(--border-default) 70%, var(--color-indigo-400) 30%);
+  box-shadow: 0 20px 80px var(--scrim-heavy),
+              0 0 0 1px color-mix(in srgb, var(--border-default) 70%, var(--accent-primary-light) 30%);
   animation: zoomIn 0.3s ease;
 }
 
@@ -85,11 +85,11 @@ const emit = defineEmits<Emits>();
   top: -50px;
   right: 0;
   background: linear-gradient(135deg,
-    color-mix(in srgb, var(--alpha-black-32) 90%, var(--color-red-400) 10%) 0%,
-    color-mix(in srgb, var(--alpha-black-32) 95%, var(--color-red-500) 5%) 100%
+    color-mix(in srgb, var(--scrim-strong) 90%, var(--feedback-error-light) 10%) 0%,
+    color-mix(in srgb, var(--scrim-strong) 95%, var(--feedback-error-dark) 5%) 100%
   );
   backdrop-filter: blur(8px);
-  border: 1px solid var(--alpha-white-12);
+  border: 1px solid var(--overlay-medium);
   border-radius: 50%;
   color: var(--text-on-color);
   font-size: 2rem;
@@ -106,11 +106,11 @@ const emit = defineEmits<Emits>();
 
 .modal-close:hover {
   background: linear-gradient(135deg,
-    color-mix(in srgb, var(--alpha-black-48) 80%, var(--color-red-400) 20%) 0%,
-    color-mix(in srgb, var(--alpha-black-48) 90%, var(--color-red-500) 10%) 100%
+    color-mix(in srgb, var(--scrim-heavy) 80%, var(--feedback-error-light) 20%) 0%,
+    color-mix(in srgb, var(--scrim-heavy) 90%, var(--feedback-error-dark) 10%) 100%
   );
   transform: rotate(90deg);
-  box-shadow: 0 4px 12px color-mix(in srgb, var(--color-red-500) 30%, transparent);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--feedback-error-dark) 30%, transparent);
 }
 
 .modal-image {

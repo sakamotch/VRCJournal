@@ -28,7 +28,7 @@ defineProps<Props>();
   justify-content: center;
   background: radial-gradient(circle at center,
     color-mix(in srgb, var(--bg-base) 100%, transparent 0%) 0%,
-    color-mix(in srgb, var(--bg-base) 98%, var(--color-indigo-500) 2%) 100%
+    color-mix(in srgb, var(--bg-base) 98%, var(--accent-primary) 2%) 100%
   );
 }
 
@@ -36,12 +36,12 @@ defineProps<Props>();
   text-align: center;
   padding: 3rem;
   background: linear-gradient(135deg,
-    color-mix(in srgb, var(--bg-surface) 95%, var(--color-indigo-400) 5%) 0%,
-    color-mix(in srgb, var(--bg-surface) 98%, var(--color-violet-400) 2%) 100%
+    color-mix(in srgb, var(--bg-surface) 95%, var(--accent-primary-light) 5%) 0%,
+    color-mix(in srgb, var(--bg-surface) 98%, var(--accent-secondary-light) 2%) 100%
   );
   border-radius: 16px;
-  border: 1px solid color-mix(in srgb, var(--border-default) 85%, var(--color-indigo-400) 15%);
-  box-shadow: 0 8px 32px color-mix(in srgb, var(--color-indigo-500) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--border-default) 85%, var(--accent-primary-light) 15%);
+  box-shadow: 0 8px 32px color-mix(in srgb, var(--accent-primary) 10%, transparent);
   max-width: 500px;
   animation: fadeInScale 0.5s ease;
 }
@@ -66,7 +66,7 @@ defineProps<Props>();
   margin: 0 0 1rem 0;
   background: linear-gradient(135deg,
     var(--text-primary) 0%,
-    color-mix(in srgb, var(--text-primary) 80%, var(--color-indigo-400) 20%) 100%
+    color-mix(in srgb, var(--text-primary) 80%, var(--accent-primary-light) 20%) 100%
   );
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;

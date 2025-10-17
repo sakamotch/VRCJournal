@@ -40,11 +40,11 @@ const { theme, setTheme } = useTheme();
   gap: 0.25rem;
   background: linear-gradient(135deg,
     var(--bg-sunken) 0%,
-    color-mix(in srgb, var(--bg-sunken) 97%, var(--color-indigo-500) 3%) 100%
+    color-mix(in srgb, var(--bg-sunken) 97%, var(--accent-primary) 3%) 100%
   );
   padding: 0.25rem;
   border-radius: 8px;
-  border: 1px solid color-mix(in srgb, var(--border-subtle) 90%, var(--color-indigo-400) 10%);
+  border: 1px solid color-mix(in srgb, var(--border-subtle) 90%, var(--accent-primary-light) 10%);
 }
 
 .theme-button {
@@ -68,8 +68,8 @@ const { theme, setTheme } = useTheme();
   position: absolute;
   inset: 0;
   background: linear-gradient(135deg,
-    color-mix(in srgb, var(--bg-hover) 93%, var(--color-indigo-400) 7%) 0%,
-    color-mix(in srgb, var(--bg-hover) 96%, var(--color-violet-400) 4%) 100%
+    color-mix(in srgb, var(--bg-hover) 93%, var(--accent-primary-light) 7%) 0%,
+    color-mix(in srgb, var(--bg-hover) 96%, var(--accent-secondary-light) 4%) 100%
   );
   opacity: 0;
   transition: opacity 0.3s ease;
@@ -86,13 +86,13 @@ const { theme, setTheme } = useTheme();
 
 .theme-button.active {
   background: linear-gradient(135deg,
-    color-mix(in srgb, var(--bg-surface) 88%, var(--color-indigo-400) 12%) 0%,
-    color-mix(in srgb, var(--bg-surface) 92%, var(--color-violet-400) 8%) 100%
+    color-mix(in srgb, var(--bg-surface) 88%, var(--accent-primary-light) 12%) 0%,
+    color-mix(in srgb, var(--bg-surface) 92%, var(--accent-secondary-light) 8%) 100%
   );
   color: var(--interactive-default);
   font-weight: 600;
-  box-shadow: 0 2px 8px color-mix(in srgb, var(--color-indigo-500) 15%, transparent),
-              0 0 0 1px color-mix(in srgb, var(--border-default) 70%, var(--color-indigo-400) 30%);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--accent-primary) 15%, transparent),
+              0 0 0 1px color-mix(in srgb, var(--border-default) 70%, var(--accent-primary-light) 30%);
 }
 
 .theme-button.active::before {

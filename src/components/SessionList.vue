@@ -148,9 +148,9 @@ function formatDateHeader(date: dayjs.Dayjs): string {
   height: 2px;
   background: linear-gradient(90deg,
     transparent 0%,
-    color-mix(in srgb, var(--border-default) 70%, var(--color-indigo-400) 30%) 30%,
-    color-mix(in srgb, var(--border-default) 50%, var(--color-violet-400) 50%) 50%,
-    color-mix(in srgb, var(--border-default) 70%, var(--color-indigo-400) 30%) 70%,
+    color-mix(in srgb, var(--border-default) 70%, var(--accent-primary-light) 30%) 30%,
+    color-mix(in srgb, var(--border-default) 50%, var(--accent-secondary-light) 50%) 50%,
+    color-mix(in srgb, var(--border-default) 70%, var(--accent-primary-light) 30%) 70%,
     transparent 100%
   );
   border-radius: 1px;

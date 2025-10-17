@@ -63,12 +63,12 @@ onBeforeUnmount(() => {
   min-width: 200px;
   background: linear-gradient(135deg,
     var(--bg-surface) 0%,
-    color-mix(in srgb, var(--bg-surface) 98%, var(--color-indigo-500) 2%) 100%
+    color-mix(in srgb, var(--bg-surface) 98%, var(--accent-primary) 2%) 100%
   );
-  border: 1px solid color-mix(in srgb, var(--border-default) 80%, var(--color-indigo-400) 20%);
+  border: 1px solid color-mix(in srgb, var(--border-default) 80%, var(--accent-primary-light) 20%);
   border-radius: 10px;
   box-shadow: var(--shadow-xl),
-              0 0 0 1px color-mix(in srgb, var(--border-default) 70%, var(--color-indigo-400) 30%);
+              0 0 0 1px color-mix(in srgb, var(--border-default) 70%, var(--accent-primary-light) 30%);
   padding: 0.5rem;
   display: flex;
   flex-direction: column;

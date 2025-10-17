@@ -46,7 +46,7 @@ const emit = defineEmits<Emits>();
   height: 100vh;
   background: radial-gradient(circle at center,
     color-mix(in srgb, var(--bg-overlay) 100%, transparent 0%) 0%,
-    color-mix(in srgb, var(--bg-overlay) 95%, var(--color-indigo-900) 5%) 100%
+    color-mix(in srgb, var(--bg-overlay) 95%, var(--interactive-subtle) 5%) 100%
   );
   backdrop-filter: blur(4px);
   display: flex;
@@ -60,11 +60,11 @@ const emit = defineEmits<Emits>();
   max-height: 80vh;
   background: linear-gradient(135deg,
     var(--bg-surface) 0%,
-    color-mix(in srgb, var(--bg-surface) 98%, var(--color-indigo-500) 2%) 100%
+    color-mix(in srgb, var(--bg-surface) 98%, var(--accent-primary) 2%) 100%
   );
   border-radius: 16px;
-  box-shadow: 0 20px 60px var(--alpha-black-32),
-              0 0 0 1px color-mix(in srgb, var(--border-default) 80%, var(--color-indigo-400) 20%);
+  box-shadow: 0 20px 60px var(--scrim-strong),
+              0 0 0 1px color-mix(in srgb, var(--border-default) 80%, var(--accent-primary-light) 20%);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -78,9 +78,9 @@ const emit = defineEmits<Emits>();
   border-bottom: 2px solid transparent;
   border-image: linear-gradient(90deg,
     transparent 0%,
-    color-mix(in srgb, var(--border-default) 70%, var(--color-indigo-400) 30%) 30%,
-    color-mix(in srgb, var(--border-default) 50%, var(--color-violet-400) 50%) 50%,
-    color-mix(in srgb, var(--border-default) 70%, var(--color-indigo-400) 30%) 70%,
+    color-mix(in srgb, var(--border-default) 70%, var(--accent-primary-light) 30%) 30%,
+    color-mix(in srgb, var(--border-default) 50%, var(--accent-secondary-light) 50%) 50%,
+    color-mix(in srgb, var(--border-default) 70%, var(--accent-primary-light) 30%) 70%,
     transparent 100%
   ) 1;
 }
@@ -114,8 +114,8 @@ const emit = defineEmits<Emits>();
   position: absolute;
   inset: 0;
   background: linear-gradient(135deg,
-    color-mix(in srgb, var(--bg-hover) 90%, var(--color-red-400) 10%) 0%,
-    color-mix(in srgb, var(--bg-hover) 95%, var(--color-red-500) 5%) 100%
+    color-mix(in srgb, var(--bg-hover) 90%, var(--feedback-error-light) 10%) 0%,
+    color-mix(in srgb, var(--bg-hover) 95%, var(--feedback-error-dark) 5%) 100%
   );
   opacity: 0;
   transition: opacity 0.3s ease;

@@ -287,11 +287,11 @@ onUnmounted(() => {
   gap: 0.375rem;
   padding: 0.375rem 0.625rem;
   background: linear-gradient(135deg,
-    var(--alpha-white-4) 0%,
-    var(--alpha-white-8) 100%
+    var(--overlay-light) 0%,
+    var(--overlay-light-medium) 100%
   );
   color: var(--header-text);
-  border: 1px solid var(--alpha-white-16);
+  border: 1px solid var(--overlay-medium-strong);
   border-radius: 8px;
   cursor: pointer;
   font-size: 0.875rem;
@@ -306,15 +306,15 @@ onUnmounted(() => {
   position: absolute;
   inset: 0;
   background: linear-gradient(135deg,
-    var(--alpha-white-16) 0%,
-    var(--alpha-white-12) 100%
+    var(--overlay-medium-strong) 0%,
+    var(--overlay-medium) 100%
   );
   opacity: 0;
   transition: opacity 0.3s ease;
 }
 
 .user-selector-button:hover {
-  border-color: var(--alpha-white-32);
+  border-color: var(--overlay-strong);
   box-shadow: var(--shadow-md);
   transform: translateY(-1px);
 }
@@ -342,12 +342,12 @@ onUnmounted(() => {
   min-width: 200px;
   background: linear-gradient(135deg,
     var(--bg-surface) 0%,
-    color-mix(in srgb, var(--bg-surface) 98%, var(--color-indigo-500) 2%) 100%
+    color-mix(in srgb, var(--bg-surface) 98%, var(--accent-primary) 2%) 100%
   );
-  border: 1px solid color-mix(in srgb, var(--border-default) 80%, var(--color-indigo-400) 20%);
+  border: 1px solid color-mix(in srgb, var(--border-default) 80%, var(--accent-primary-light) 20%);
   border-radius: 10px;
   box-shadow: var(--shadow-xl),
-              0 0 0 1px color-mix(in srgb, var(--border-default) 70%, var(--color-indigo-400) 30%);
+              0 0 0 1px color-mix(in srgb, var(--border-default) 70%, var(--accent-primary-light) 30%);
   padding: 0.5rem;
   display: flex;
   flex-direction: column;
@@ -388,8 +388,8 @@ onUnmounted(() => {
   position: absolute;
   inset: 0;
   background: linear-gradient(135deg,
-    color-mix(in srgb, var(--bg-hover) 92%, var(--color-indigo-400) 8%) 0%,
-    color-mix(in srgb, var(--bg-hover) 96%, var(--color-violet-400) 4%) 100%
+    color-mix(in srgb, var(--bg-hover) 92%, var(--accent-primary-light) 8%) 0%,
+    color-mix(in srgb, var(--bg-hover) 96%, var(--accent-secondary-light) 4%) 100%
   );
   opacity: 0;
   transition: opacity 0.3s ease;
@@ -406,12 +406,12 @@ onUnmounted(() => {
 
 .user-option.active {
   background: linear-gradient(135deg,
-    color-mix(in srgb, var(--bg-elevated) 88%, var(--color-indigo-400) 12%) 0%,
-    color-mix(in srgb, var(--bg-elevated) 92%, var(--color-violet-400) 8%) 100%
+    color-mix(in srgb, var(--bg-elevated) 88%, var(--accent-primary-light) 12%) 0%,
+    color-mix(in srgb, var(--bg-elevated) 92%, var(--accent-secondary-light) 8%) 100%
   );
   color: var(--interactive-default);
   font-weight: 600;
-  box-shadow: 0 2px 6px color-mix(in srgb, var(--color-indigo-500) 10%, transparent);
+  box-shadow: 0 2px 6px color-mix(in srgb, var(--accent-primary) 10%, transparent);
 }
 
 .user-option.active::before {
@@ -425,10 +425,10 @@ onUnmounted(() => {
 
 .settings-button {
   background: linear-gradient(135deg,
-    var(--alpha-white-4) 0%,
-    var(--alpha-white-8) 100%
+    var(--overlay-light) 0%,
+    var(--overlay-light-medium) 100%
   );
-  border: 1px solid var(--alpha-white-16);
+  border: 1px solid var(--overlay-medium-strong);
   border-radius: 8px;
   cursor: pointer;
   padding: 0.375rem;
@@ -447,15 +447,15 @@ onUnmounted(() => {
   position: absolute;
   inset: 0;
   background: linear-gradient(135deg,
-    var(--alpha-white-16) 0%,
-    var(--alpha-white-12) 100%
+    var(--overlay-medium-strong) 0%,
+    var(--overlay-medium) 100%
   );
   opacity: 0;
   transition: opacity 0.3s ease;
 }
 
 .settings-button:hover {
-  border-color: var(--alpha-white-32);
+  border-color: var(--overlay-strong);
   box-shadow: var(--shadow-md);
   transform: translateY(-1px);
 }

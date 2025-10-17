@@ -70,10 +70,10 @@ function formatScreenshotTime(dateStr: string): string {
   padding: 1rem;
   background: linear-gradient(135deg,
     var(--bg-base) 0%,
-    color-mix(in srgb, var(--bg-base) 98%, var(--color-indigo-500) 2%) 100%
+    color-mix(in srgb, var(--bg-base) 98%, var(--accent-primary) 2%) 100%
   );
   border-radius: 8px;
-  border: 1px solid color-mix(in srgb, var(--border-subtle) 95%, var(--color-indigo-400) 5%);
+  border: 1px solid color-mix(in srgb, var(--border-subtle) 95%, var(--accent-primary-light) 5%);
 }
 
 .screenshot-list h4 {
@@ -96,7 +96,7 @@ function formatScreenshotTime(dateStr: string): string {
   overflow: hidden;
   background: linear-gradient(135deg,
     var(--bg-elevated) 0%,
-    color-mix(in srgb, var(--bg-elevated) 97%, var(--color-indigo-500) 3%) 100%
+    color-mix(in srgb, var(--bg-elevated) 97%, var(--accent-primary) 3%) 100%
   );
   border: 2px solid var(--screenshot-border);
   transition: all 0.3s ease;
@@ -104,8 +104,8 @@ function formatScreenshotTime(dateStr: string): string {
 }
 
 .screenshot-item:hover {
-  border-color: color-mix(in srgb, var(--screenshot-hover-border) 60%, var(--color-indigo-400) 40%);
-  box-shadow: 0 4px 12px color-mix(in srgb, var(--color-indigo-500) 15%, transparent);
+  border-color: color-mix(in srgb, var(--screenshot-hover-border) 60%, var(--accent-primary-light) 40%);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--accent-primary) 15%, transparent);
 }
 
 .screenshot-item.screenshot-deleted {
@@ -147,7 +147,7 @@ function formatScreenshotTime(dateStr: string): string {
 
 .screenshot-time {
   padding: 0.25rem 0.5rem;
-  background-color: var(--alpha-black-80);
+  background-color: var(--scrim-opaque);
   color: var(--text-on-color);
   font-size: 0.75rem;
   text-align: center;

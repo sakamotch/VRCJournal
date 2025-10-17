@@ -36,8 +36,8 @@ withDefaults(defineProps<Props>(), {
   position: absolute;
   inset: 0;
   background: linear-gradient(135deg,
-    color-mix(in srgb, var(--bg-hover) 90%, var(--color-indigo-400) 10%) 0%,
-    color-mix(in srgb, var(--bg-hover) 95%, var(--color-violet-400) 5%) 100%
+    color-mix(in srgb, var(--bg-hover) 90%, var(--accent-primary-light) 10%) 0%,
+    color-mix(in srgb, var(--bg-hover) 95%, var(--accent-secondary-light) 5%) 100%
   );
   opacity: 0;
   transition: opacity 0.3s ease;
@@ -61,29 +61,29 @@ withDefaults(defineProps<Props>(), {
 }
 
 .btn-primary:hover {
-  box-shadow: 0 4px 12px color-mix(in srgb, var(--color-indigo-500) 30%, transparent);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--accent-primary) 30%, transparent);
   transform: translateY(-1px);
 }
 
 .btn-primary::before {
   background: linear-gradient(135deg,
-    color-mix(in srgb, var(--color-indigo-600) 100%, transparent 0%) 0%,
-    color-mix(in srgb, var(--color-violet-600) 100%, transparent 0%) 100%
+    color-mix(in srgb, var(--accent-primary-dark) 100%, transparent 0%) 0%,
+    color-mix(in srgb, var(--accent-secondary-dark) 100%, transparent 0%) 100%
   );
 }
 
 .btn-secondary {
   background: linear-gradient(135deg,
     var(--bg-elevated) 0%,
-    color-mix(in srgb, var(--bg-elevated) 97%, var(--color-indigo-500) 3%) 100%
+    color-mix(in srgb, var(--bg-elevated) 97%, var(--accent-primary) 3%) 100%
   );
   color: var(--text-primary);
 }
 
 .btn-secondary:hover {
-  border-color: color-mix(in srgb, var(--border-default) 70%, var(--color-indigo-400) 30%);
+  border-color: color-mix(in srgb, var(--border-default) 70%, var(--accent-primary-light) 30%);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px color-mix(in srgb, var(--color-indigo-500) 10%, transparent);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--accent-primary) 10%, transparent);
   color: var(--interactive-default);
 }
 
