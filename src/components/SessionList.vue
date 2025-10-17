@@ -1,8 +1,11 @@
 <script setup lang="ts">
 import { computed } from "vue";
+import { useI18n } from "vue-i18n";
 import type { Session } from "@/types";
 import SessionCard from "./SessionCard.vue";
 import dayjs from "dayjs";
+
+const { t } = useI18n();
 
 interface Props {
   sessions: Session[];
@@ -19,7 +22,6 @@ interface Emits {
 const props = defineProps<Props>();
 const emit = defineEmits<Emits>();
 
-// セッションを日付ごとにグループ化
 const sessionsByDate = computed(() => {
   const groups: { date: string; displayDate: string; sessions: Session[] }[] = [];
 
@@ -45,23 +47,23 @@ function formatDateHeader(date: dayjs.Dayjs): string {
   const yesterday = dayjs().subtract(1, "day");
 
   if (date.isSame(today, "day")) {
-    return `今日 - ${date.format("YYYY年M月D日")}`;
+    return `${t('common.today')} - ${date.format("LL")}`;
   } else if (date.isSame(yesterday, "day")) {
-    return `昨日 - ${date.format("YYYY年M月D日")}`;
+    return `${t('common.yesterday')} - ${date.format("LL")}`;
   } else {
-    return date.format("YYYY年M月D日 (ddd)");
+    return date.format("LL (ddd)");
   }
 }
 </script>
 
 <template>
   <div class="session-list-container">
-    <h2>インスタンス履歴</h2>
+    <h2>{{ t('session.title') }}</h2>
 
-    <div v-if="isLoading" class="loading">読み込み中...</div>
+    <div v-if="isLoading" class="loading">{{ t('common.loading') }}</div>
 
     <div v-else-if="sessions.length === 0" class="empty">
-      インスタンスがありません
+      {{ t('session.noSessions') }}
     </div>
 
     <div v-else class="session-list">

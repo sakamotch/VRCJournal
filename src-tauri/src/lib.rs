@@ -311,6 +311,7 @@ async fn open_user_page(app: tauri::AppHandle, user_id: String) -> Result<String
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_os::init())
         .setup(|app| {
             use std::collections::HashMap;
             use chrono::Utc;

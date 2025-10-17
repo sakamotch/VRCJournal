@@ -1,7 +1,10 @@
 <script setup lang="ts">
+import { useI18n } from "vue-i18n";
 import type { Player, Session } from "@/types";
 import { formatPlayerName, formatTime, isPlayerStayedUntilEnd } from "@/utils/formatters";
 import { ExternalLink } from "lucide-vue-next";
+
+const { t } = useI18n();
 
 interface Props {
   players: Player[];
@@ -18,7 +21,7 @@ const emit = defineEmits<Emits>();
 
 <template>
   <div class="player-list">
-    <h4>Join履歴</h4>
+    <h4>{{ t('session.joinHistory') }}</h4>
     <div class="player-items">
       <div
         v-for="player in players"
@@ -32,9 +35,9 @@ const emit = defineEmits<Emits>();
           <ExternalLink :size="14" class="player-icon" />
         </div>
         <div class="player-times">
-          <span class="player-time">入室: {{ formatTime(player.joinedAt) }}</span>
-          <span class="player-time" v-if="player.leftAt">退室: {{ formatTime(player.leftAt) }}</span>
-          <span class="player-time player-time-active" v-else>在室中</span>
+          <span class="player-time">{{ t('session.joined') }}: {{ formatTime(player.joinedAt) }}</span>
+          <span class="player-time" v-if="player.leftAt">{{ t('session.left') }}: {{ formatTime(player.leftAt) }}</span>
+          <span class="player-time player-time-active" v-else>{{ t('session.inSession') }}</span>
         </div>
       </div>
     </div>

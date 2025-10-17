@@ -1,7 +1,9 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n';
 import { useTheme } from '@/stores/themeStore';
 import { Sun, Moon, Monitor, Zap, Heart, Sparkles } from 'lucide-vue-next';
 
+const { t } = useI18n();
 const { theme, setTheme } = useTheme();
 </script>
 
@@ -10,50 +12,50 @@ const { theme, setTheme } = useTheme();
     <button
       :class="['theme-button', { active: theme === 'light' }]"
       @click="setTheme('light')"
-      title="ライト"
+      :title="t('settings.themes.light')"
     >
       <Sun :size="18" class="icon" />
-      <span class="label">ライト</span>
+      <span class="label">{{ t('settings.themes.light') }}</span>
     </button>
     <button
       :class="['theme-button', { active: theme === 'dark' }]"
       @click="setTheme('dark')"
-      title="ダーク"
+      :title="t('settings.themes.dark')"
     >
       <Moon :size="18" class="icon" />
-      <span class="label">ダーク</span>
+      <span class="label">{{ t('settings.themes.dark') }}</span>
     </button>
     <button
       :class="['theme-button', { active: theme === 'cyberpunk' }]"
       @click="setTheme('cyberpunk')"
-      title="サイバーパンク"
+      :title="t('settings.themes.cyberpunk')"
     >
       <Zap :size="18" class="icon" />
-      <span class="label">サイバーパンク</span>
+      <span class="label">{{ t('settings.themes.cyberpunk') }}</span>
     </button>
     <button
       :class="['theme-button', { active: theme === 'pastel' }]"
       @click="setTheme('pastel')"
-      title="パステルドリーム"
+      :title="t('settings.themes.pastel')"
     >
       <Heart :size="18" class="icon" />
-      <span class="label">パステルドリーム</span>
+      <span class="label">{{ t('settings.themes.pastel') }}</span>
     </button>
     <button
       :class="['theme-button', { active: theme === 'aurora' }]"
       @click="setTheme('aurora')"
-      title="オーロラ"
+      :title="t('settings.themes.aurora')"
     >
       <Sparkles :size="18" class="icon" />
-      <span class="label">オーロラ</span>
+      <span class="label">{{ t('settings.themes.aurora') }}</span>
     </button>
     <button
       :class="['theme-button', { active: theme === 'system' }]"
       @click="setTheme('system')"
-      title="システム設定"
+      title="System"
     >
       <Monitor :size="18" class="icon" />
-      <span class="label">システム設定</span>
+      <span class="label">System</span>
     </button>
   </div>
 </template>

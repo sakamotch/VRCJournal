@@ -1,6 +1,10 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n';
 import ThemeSelector from './ThemeSelector.vue';
+import LanguageSelector from './LanguageSelector.vue';
 import Modal from './common/Modal.vue';
+
+const { t } = useI18n();
 
 interface Props {
   show: boolean;
@@ -15,12 +19,17 @@ const emit = defineEmits<Emits>();
 </script>
 
 <template>
-  <Modal :show="show" title="設定" @close="emit('close')">
+  <Modal :show="show" :title="t('settings.title')" @close="emit('close')">
     <div class="setting-section">
-      <h3>外観</h3>
+      <h3>{{ t('settings.theme') }}</h3>
       <div class="setting-item">
-        <label>テーマ</label>
         <ThemeSelector />
+      </div>
+    </div>
+    <div class="setting-section">
+      <h3>{{ t('settings.language') }}</h3>
+      <div class="setting-item">
+        <LanguageSelector />
       </div>
     </div>
   </Modal>

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from "vue";
+import { useI18n } from "vue-i18n";
 import type { Session, Player, Screenshot } from "@/types";
 import { formatDuration, formatTime, formatDate } from "@/utils/formatters";
 import PlayerList from "./PlayerList.vue";
@@ -8,6 +9,8 @@ import Button from "./common/Button.vue";
 import Card from "./common/Card.vue";
 import { invoke } from "@tauri-apps/api/core";
 import { Calendar, Clock, Users, Camera, ChevronDown, ChevronRight, ExternalLink } from "lucide-vue-next";
+
+const { t } = useI18n();
 
 interface Props {
   session: Session;
@@ -74,7 +77,7 @@ async function toggleScreenshots() {
       </span>
       <span
         class="info-item time"
-        :title="session.status === 'interrupted' ? 'VRChatが予期せず終了した可能性があります' : ''"
+        :title="session.status === 'interrupted' ? t('session.interruptedWarning') : ''"
       >
         <Clock :size="16" />
         {{ formatTime(session.startedAt) }}
@@ -82,19 +85,19 @@ async function toggleScreenshots() {
           〜 {{ formatTime(session.endedAt) }} ({{ formatDuration(session) }})
         </template>
         <template v-else-if="session.status === 'interrupted'">
-          〜 不明
+          〜 {{ t('session.unknown') }}
         </template>
         <template v-else>
-          〜 進行中
+          〜 {{ t('session.ongoing') }}
         </template>
       </span>
       <span
         class="info-item player-count clickable"
         @click="togglePlayers"
-        :title="playersExpanded ? 'プレイヤーを非表示' : 'プレイヤーを表示'"
+        :title="playersExpanded ? t('session.hidePlayers') : t('session.showPlayers')"
       >
         <Users :size="16" />
-        {{ session.playerCount }}人
+        {{ t('session.playerCount', { count: session.playerCount }) }}
         <ChevronDown v-if="playersExpanded" :size="14" />
         <ChevronRight v-else :size="14" />
       </span>
@@ -102,10 +105,10 @@ async function toggleScreenshots() {
         v-if="session.screenshotCount > 0"
         class="info-item screenshot-count clickable"
         @click="toggleScreenshots"
-        :title="screenshotsExpanded ? '写真を非表示' : '写真を表示'"
+        :title="screenshotsExpanded ? t('session.hidePhotos') : t('session.showPhotos')"
       >
         <Camera :size="16" />
-        {{ session.screenshotCount }}枚
+        {{ t('session.photoCount', { count: session.screenshotCount }) }}
         <ChevronDown v-if="screenshotsExpanded" :size="14" />
         <ChevronRight v-else :size="14" />
       </span>
@@ -119,7 +122,7 @@ async function toggleScreenshots() {
       @open-user-page="(userId) => emit('openUserPage', userId)"
     />
     <div v-else-if="playersExpanded" class="loading">
-      読み込み中...
+      {{ t('session.loading') }}
     </div>
 
     <!-- スクリーンショットリスト -->
@@ -130,7 +133,7 @@ async function toggleScreenshots() {
       @open-directory="(filePath) => emit('openDirectory', filePath)"
     />
     <div v-else-if="screenshotsExpanded" class="loading">
-      読み込み中...
+      {{ t('session.loading') }}
     </div>
 
     <div class="session-details">
@@ -140,7 +143,7 @@ async function toggleScreenshots() {
       </div>
       <Button @click="emit('openInvite', session)">
         <ExternalLink :size="16" />
-        <span>ワールドを開く</span>
+        <span>{{ t('session.openWorld') }}</span>
       </Button>
     </div>
   </Card>

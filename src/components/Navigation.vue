@@ -1,5 +1,9 @@
 <script setup lang="ts">
+import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { Calendar, Globe, Users, Camera, BarChart3 } from 'lucide-vue-next';
+
+const { t } = useI18n();
 
 export type NavigationView = 'timeline' | 'worlds' | 'people' | 'photos' | 'stats';
 
@@ -14,13 +18,13 @@ interface Emits {
 defineProps<Props>();
 const emit = defineEmits<Emits>();
 
-const navItems: { id: NavigationView; label: string; icon: any }[] = [
-  { id: 'timeline', label: 'タイムライン', icon: Calendar },
-  { id: 'worlds', label: 'ワールド', icon: Globe },
-  { id: 'people', label: '人物', icon: Users },
-  { id: 'photos', label: 'フォト', icon: Camera },
-  { id: 'stats', label: '統計', icon: BarChart3 },
-];
+const navItems = computed(() => [
+  { id: 'timeline' as NavigationView, label: t('navigation.sessions'), icon: Calendar },
+  { id: 'worlds' as NavigationView, label: t('navigation.worlds'), icon: Globe },
+  { id: 'people' as NavigationView, label: t('navigation.people'), icon: Users },
+  { id: 'photos' as NavigationView, label: t('navigation.photos'), icon: Camera },
+  { id: 'stats' as NavigationView, label: t('navigation.stats'), icon: BarChart3 },
+]);
 </script>
 
 <template>

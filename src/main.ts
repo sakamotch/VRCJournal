@@ -2,7 +2,16 @@ import { createApp } from "vue";
 import App from "./App.vue";
 import "./styles/theme.css";
 import { configureDayjs } from "./utils/dayjs-config";
+import { i18n, getInitialLocale, setLocale } from "./i18n";
 
-configureDayjs().then(() => {
-  createApp(App).mount("#app");
-});
+async function initializeApp() {
+  const locale = await getInitialLocale();
+  setLocale(locale);
+  await configureDayjs();
+
+  const app = createApp(App);
+  app.use(i18n);
+  app.mount("#app");
+}
+
+initializeApp();

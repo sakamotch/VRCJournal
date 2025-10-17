@@ -1,12 +1,15 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n';
 import EmptyState from '../common/EmptyState.vue';
 import { Users } from 'lucide-vue-next';
+
+const { t } = useI18n();
 </script>
 
 <template>
   <EmptyState
-    title="人物"
-    description="よく会う人・人物メモ・統計機能を実装予定"
+    :title="t('player.title')"
+    :description="t('player.description')"
     :icon="Users"
   />
 </template>

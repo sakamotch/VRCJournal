@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, onBeforeUnmount } from "vue";
+import { useI18n } from "vue-i18n";
 import { invoke } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import type { LocalUser, Session } from "@/types";
@@ -15,6 +16,7 @@ import NotificationContainer from "@/components/NotificationContainer.vue";
 import { Settings as SettingsIcon, ChevronDown } from "lucide-vue-next";
 import { useNotifications } from "@/composables/useNotifications";
 
+const { t } = useI18n();
 const { success, error: showError, info } = useNotifications();
 const isLoading = ref(false);
 const localUsers = ref<LocalUser[]>([]);
@@ -31,7 +33,7 @@ const selectedUser = computed(() => {
 });
 
 const selectedUserName = computed(() => {
-  return selectedUser.value?.displayName || "全アカウント";
+  return selectedUser.value?.displayName || t('user.allAccounts');
 });
 
 async function loadUsers() {
@@ -53,7 +55,7 @@ async function loadSessions() {
     sessions.value = result;
   } catch (err) {
     console.error("Failed to load sessions:", err);
-    showError(`セッション読み込みエラー: ${err}`);
+    showError(`${t('error.sessionLoad')}: ${err}`);
   } finally {
     isLoading.value = false;
   }
@@ -83,9 +85,9 @@ async function openInviteUrl(session: Session) {
       instanceId: session.instanceId,
     });
 
-    success(`招待URLを開きました: ${url}`);
+    success(`${t('notification.inviteOpened')}: ${url}`);
   } catch (err) {
-    showError(`エラー: ${err}`);
+    showError(`${t('common.error')}: ${err}`);
   }
 }
 
@@ -94,7 +96,7 @@ async function openScreenshotDirectory(filePath: string) {
     await invoke("open_screenshot_directory", { filePath });
   } catch (err) {
     console.error("Failed to open directory:", err);
-    showError(`ディレクトリを開けませんでした: ${err}`);
+    showError(`${t('error.openDirectory')}: ${err}`);
   }
 }
 
@@ -112,9 +114,9 @@ async function openUserPage(userId: string) {
       userId: userId,
     });
 
-    success(`ユーザーページを開きました: ${url}`);
+    success(`${t('notification.userPageOpened')}: ${url}`);
   } catch (err) {
-    showError(`エラー: ${err}`);
+    showError(`${t('common.error')}: ${err}`);
   }
 }
 
@@ -187,7 +189,7 @@ onUnmounted(() => {
                 :class="['user-option', { active: selectedUserId === null }]"
                 @click="selectUser(null)"
               >
-                <span>全アカウント</span>
+                <span>{{ t('user.allAccounts') }}</span>
               </button>
               <button
                 v-for="user in localUsers"
@@ -199,7 +201,7 @@ onUnmounted(() => {
               </button>
             </div>
           </div>
-          <button class="settings-button" @click="showSettings = true" title="設定">
+          <button class="settings-button" @click="showSettings = true" :title="t('settings.title')">
             <SettingsIcon :size="20" class="settings-icon" />
           </button>
         </div>

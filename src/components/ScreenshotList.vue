@@ -1,9 +1,12 @@
 <script setup lang="ts">
+import { useI18n } from "vue-i18n";
 import type { Screenshot } from "@/types";
 import { convertFileSrc } from '@tauri-apps/api/core';
 import Button from "./common/Button.vue";
 import { Folder, Trash2 } from 'lucide-vue-next';
 import dayjs from "dayjs";
+
+const { t } = useI18n();
 
 interface Props {
   screenshots: Screenshot[];
@@ -24,7 +27,7 @@ function formatScreenshotTime(dateStr: string): string {
 
 <template>
   <div class="screenshot-list">
-    <h4>スクリーンショット</h4>
+    <h4>{{ t('session.screenshots') }}</h4>
     <div v-if="screenshots.length > 0" class="screenshot-grid">
       <div
         v-for="screenshot in screenshots"
@@ -41,7 +44,7 @@ function formatScreenshotTime(dateStr: string): string {
         />
         <div v-else class="screenshot-deleted-placeholder">
           <Trash2 :size="32" class="deleted-icon" />
-          <div class="deleted-text">削除済み</div>
+          <div class="deleted-text">{{ t('screenshot.deleted') }}</div>
         </div>
         <div class="screenshot-time">
           <span class="screenshot-time-text">{{ formatScreenshotTime(screenshot.takenAt) }}</span>
@@ -49,14 +52,14 @@ function formatScreenshotTime(dateStr: string): string {
       </div>
     </div>
     <div v-else class="no-screenshots">
-      このセッションではスクリーンショットが撮影されていません
+      {{ t('screenshot.noScreenshots') }}
     </div>
     <Button
       v-if="screenshots.length > 0"
       @click="emit('openDirectory', screenshots[0].filePath)"
     >
       <Folder :size="16" />
-      <span>フォルダを開く</span>
+      <span>{{ t('common.openFolder') }}</span>
     </Button>
   </div>
 </template>
