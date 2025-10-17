@@ -100,12 +100,12 @@ function formatScreenshotTime(dateStr: string): string {
   );
   border: 2px solid var(--screenshot-border);
   transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--shadow-sm);
 }
 
 .screenshot-item:hover {
   border-color: color-mix(in srgb, var(--screenshot-hover-border) 60%, var(--color-indigo-400) 40%);
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--color-indigo-500) 15%, transparent);
 }
 
 .screenshot-item.screenshot-deleted {

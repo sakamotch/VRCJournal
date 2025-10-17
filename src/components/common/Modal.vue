@@ -63,7 +63,7 @@ const emit = defineEmits<Emits>();
     color-mix(in srgb, var(--bg-surface) 98%, var(--color-indigo-500) 2%) 100%
   );
   border-radius: 16px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3),
+  box-shadow: 0 20px 60px var(--alpha-black-32),
               0 0 0 1px color-mix(in srgb, var(--border-default) 80%, var(--color-indigo-400) 20%);
   display: flex;
   flex-direction: column;

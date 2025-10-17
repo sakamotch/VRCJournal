@@ -41,7 +41,7 @@ defineProps<Props>();
   );
   border-radius: 16px;
   border: 1px solid color-mix(in srgb, var(--border-default) 85%, var(--color-indigo-400) 15%);
-  box-shadow: 0 8px 32px rgba(99, 102, 241, 0.1);
+  box-shadow: 0 8px 32px color-mix(in srgb, var(--color-indigo-500) 10%, transparent);
   max-width: 500px;
   animation: fadeInScale 0.5s ease;
 }

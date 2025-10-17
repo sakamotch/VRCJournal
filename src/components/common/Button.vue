@@ -61,7 +61,7 @@ withDefaults(defineProps<Props>(), {
 }
 
 .btn-primary:hover {
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--color-indigo-500) 30%, transparent);
   transform: translateY(-1px);
 }
 
@@ -83,7 +83,7 @@ withDefaults(defineProps<Props>(), {
 .btn-secondary:hover {
   border-color: color-mix(in srgb, var(--border-default) 70%, var(--color-indigo-400) 30%);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.1);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--color-indigo-500) 10%, transparent);
   color: var(--interactive-default);
 }
 

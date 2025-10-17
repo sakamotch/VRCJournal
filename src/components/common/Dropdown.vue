@@ -67,7 +67,7 @@ onBeforeUnmount(() => {
   );
   border: 1px solid color-mix(in srgb, var(--border-default) 80%, var(--color-indigo-400) 20%);
   border-radius: 10px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2),
+  box-shadow: var(--shadow-xl),
               0 0 0 1px color-mix(in srgb, var(--border-default) 70%, var(--color-indigo-400) 30%);
   padding: 0.5rem;
   display: flex;

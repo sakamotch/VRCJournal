@@ -91,7 +91,7 @@ const { theme, setTheme } = useTheme();
   );
   color: var(--interactive-default);
   font-weight: 600;
-  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.15),
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--color-indigo-500) 15%, transparent),
               0 0 0 1px color-mix(in srgb, var(--border-default) 70%, var(--color-indigo-400) 30%);
 }
 

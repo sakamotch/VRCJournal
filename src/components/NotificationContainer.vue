@@ -61,8 +61,8 @@ const getIcon = (type: string) => {
   border-left: 3px solid var(--notification-color);
   border-radius: 12px;
   box-shadow:
-    0 12px 32px -8px rgba(0, 0, 0, 0.2),
-    0 4px 12px -2px rgba(0, 0, 0, 0.12),
+    0 12px 32px -8px var(--alpha-black-24),
+    0 4px 12px -2px var(--alpha-black-16),
     0 0 0 1px color-mix(in srgb, var(--border-default) 70%, var(--notification-color) 30%);
   backdrop-filter: blur(12px) saturate(150%);
   pointer-events: auto;

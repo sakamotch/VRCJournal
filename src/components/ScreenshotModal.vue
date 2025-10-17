@@ -64,7 +64,7 @@ const emit = defineEmits<Emits>();
   );
   border-radius: 16px;
   overflow: hidden;
-  box-shadow: 0 20px 80px rgba(0, 0, 0, 0.4),
+  box-shadow: 0 20px 80px var(--alpha-black-48),
               0 0 0 1px color-mix(in srgb, var(--border-default) 70%, var(--color-indigo-400) 30%);
   animation: zoomIn 0.3s ease;
 }
@@ -85,11 +85,11 @@ const emit = defineEmits<Emits>();
   top: -50px;
   right: 0;
   background: linear-gradient(135deg,
-    color-mix(in srgb, rgba(0, 0, 0, 0.3) 90%, var(--color-red-400) 10%) 0%,
-    color-mix(in srgb, rgba(0, 0, 0, 0.3) 95%, var(--color-red-500) 5%) 100%
+    color-mix(in srgb, var(--alpha-black-32) 90%, var(--color-red-400) 10%) 0%,
+    color-mix(in srgb, var(--alpha-black-32) 95%, var(--color-red-500) 5%) 100%
   );
   backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--alpha-white-12);
   border-radius: 50%;
   color: var(--text-on-color);
   font-size: 2rem;
@@ -106,11 +106,11 @@ const emit = defineEmits<Emits>();
 
 .modal-close:hover {
   background: linear-gradient(135deg,
-    color-mix(in srgb, rgba(0, 0, 0, 0.5) 80%, var(--color-red-400) 20%) 0%,
-    color-mix(in srgb, rgba(0, 0, 0, 0.5) 90%, var(--color-red-500) 10%) 100%
+    color-mix(in srgb, var(--alpha-black-48) 80%, var(--color-red-400) 20%) 0%,
+    color-mix(in srgb, var(--alpha-black-48) 90%, var(--color-red-500) 10%) 100%
   );
   transform: rotate(90deg);
-  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--color-red-500) 30%, transparent);
 }
 
 .modal-image {

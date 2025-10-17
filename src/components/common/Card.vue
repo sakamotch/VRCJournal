@@ -47,7 +47,7 @@ withDefaults(defineProps<Props>(), {
 }
 
 .card.hoverable:hover {
-  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.15);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--color-indigo-500) 15%, transparent);
   transform: translateY(-2px);
   border-color: color-mix(in srgb, var(--border-default) 70%, var(--color-indigo-400) 30%);
 }
