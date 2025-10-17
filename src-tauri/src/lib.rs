@@ -415,6 +415,11 @@ pub fn run() {
                                     return;
                                 }
 
+                                // フロントエンドに初期化完了を通知
+                                if let Err(e) = app_handle.emit("backend-ready", ()) {
+                                    eprintln!("Failed to emit backend-ready: {}", e);
+                                }
+
                                 // バックグラウンドでイベントを処理
                                 let db_clone = Arc::clone(&app_state.db);
                                 let processor_clone = Arc::clone(&app_state.event_processor);

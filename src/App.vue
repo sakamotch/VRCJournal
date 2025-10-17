@@ -18,6 +18,7 @@ import { useNotifications } from "@/composables/useNotifications";
 
 const { t } = useI18n();
 const { success, error: showError } = useNotifications();
+const isBackendReady = ref(false); // バックエンドの初期化完了フラグ
 const isLoading = ref(false);
 const localUsers = ref<LocalUser[]>([]);
 const sessions = ref<Session[]>([]);
@@ -121,10 +122,15 @@ async function openUserPage(userId: string) {
 }
 
 let unlistenFn: UnlistenFn | null = null;
+let unlistenReadyFn: UnlistenFn | null = null;
 
 onMounted(async () => {
-  loadUsers();
-  loadSessions();
+  // バックエンドの初期化完了を待ってからデータを取得
+  unlistenReadyFn = await listen("backend-ready", async () => {
+    isBackendReady.value = true;
+    await loadUsers();
+    await loadSessions();
+  });
 
   unlistenFn = await listen<any>("log-event", (event) => {
     const processedEvent = event.payload;
@@ -165,6 +171,9 @@ onBeforeUnmount(() => {
 onUnmounted(() => {
   if (unlistenFn) {
     unlistenFn();
+  }
+  if (unlistenReadyFn) {
+    unlistenReadyFn();
   }
 });
 </script>
@@ -218,7 +227,7 @@ onUnmounted(() => {
         <SessionList
           v-if="currentView === 'timeline'"
           :sessions="sessions"
-          :is-loading="isLoading"
+          :is-loading="isLoading || !isBackendReady"
           @open-invite="openInviteUrl"
           @open-user-page="openUserPage"
           @view-screenshot="viewScreenshot"
