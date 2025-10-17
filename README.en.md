@@ -46,6 +46,10 @@ Name and compile your special memories into albums.
 Automatically tracks "how many worlds you visited this month."
 "One year ago today" memories are randomly displayed.
 
+### Multi-language Support
+
+Supports Japanese and English. Automatically switches based on your system language settings, and can be manually changed in the settings.
+
 ## 🔒 Privacy & Security
 
 - ✅ **Everything Local**: All data processed on your PC
