@@ -270,13 +270,13 @@
     /* Border */
     --border-default: var(--color-cool-gray-500);
     --border-strong: var(--color-cool-gray-200);
-    --border-subtle: var(--color-cool-gray-750);
+    --border-subtle: var(--color-cool-gray-600);
     --border-focus: var(--color-indigo-400);
 
     /* Text */
     --text-primary: var(--color-cool-gray-50);
-    --text-secondary: var(--color-cool-gray-200);
-    --text-tertiary: var(--color-cool-gray-300);
+    --text-secondary: var(--color-cool-gray-100);
+    --text-tertiary: var(--color-cool-gray-200);
     --text-disabled: var(--color-cool-gray-400);
     --text-on-color: var(--color-cool-gray-0);
     --text-link: var(--color-indigo-300);
