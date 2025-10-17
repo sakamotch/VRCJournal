@@ -1,183 +1,506 @@
-# VRCJournal - アーキテクチャ設計
+# VRCJournal - システムアーキテクチャ
 
-## 1. 目的
+## 1. 技術スタック
 
-- VRChatでの体験を**思い出**として整理・振り返るための日記ツール。
-- VRChatのログを解析し、「いつ」「どこで」「誰と」過ごしたかを自動記録。
-- 訪れたワールドの思い出、撮影した写真、感想を一元管理。
-- アカウント情報不要。ローカルログのみで完結。
-- 他者の監視・追跡機能は一切持たない。あくまで**自分の思い出**を整理するツール。
+### フロントエンド
+- **フレームワーク**: Vue 3 (Composition API, `<script setup>`)
+- **ビルドツール**: Vite
+- **言語**: TypeScript
+- **UIライブラリ**: Lucide Vue (アイコン)
+- **スタイル**: CSS Variables (カスタムデザインシステム)
 
-## 2. 想定ユーザー
+### バックエンド
+- **フレームワーク**: Tauri 2.x
+- **言語**: Rust
+- **データベース**: SQLite 3
+- **ファイル監視**: notify クレート
 
-- VRChatでの思い出を大切にしたい個人ユーザー。
-- 「あのワールド、どこだっけ？」「あの人とどこで会ったっけ？」を解決したいユーザー。
-- VRChatへのログイン情報をアプリに渡したくないユーザー。
-- 写真や感想と一緒に、VR体験を日記的に記録したいユーザー。
-- 他者の行動追跡・監視機能を求めないユーザー。
+### プラットフォーム
+- **対応OS**: Windows
 
-## 3. 利用シナリオ
+## 2. アーキテクチャ原則
 
-### 基本フロー
-1. **自動記録**: アプリ起動中、VRChatのログを監視し、訪問ワールド・プレイヤー情報を自動記録
-2. **思い出の追加**: セッション後、写真やメモを追加して思い出を充実
-3. **振り返り**: タイムラインやワールド一覧から過去の体験を振り返る
-4. **再訪問**: 「あのワールドにまた行きたい」→お気に入りから招待URL生成
+### 2.1 イベント駆動アーキテクチャ
+VRCJournalは**完全なイベント駆動アーキテクチャ**を採用します。
 
-### ユースケース例
+**基本原則:**
+1. **ログの変更は即座にイベントを発火する**
+2. **フロントエンドは常にイベントを監視して動的に更新する**
+3. **フロントエンドからバックエンドへのデータ要求は最小限にする**
+   - 初回ページロード時のみデータ取得
+   - ページ切り替え時のみデータ取得
+   - それ以外はイベント経由で自動更新
 
-**ケース1: 素敵なワールドを見つけた**
-- セッション記録を開き、星マークでお気に入り登録
-- 撮影した写真の中から、代表的な1枚をワールドサムネイルに設定
-- 「景色が綺麗で癒された」とメモを記入
-- 「風景」「癒し」タグを追加
+### 2.2 データフロー
+```
+VRChatログファイル
+  ↓ (notify - ファイル変更検知)
+LogWatcher
+  ↓ (新しい行を読み取り)
+LogParser
+  ↓ (LogEventに変換)
+EventProcessor
+  ↓ (データベースに保存 + ProcessedEventに変換)
+データベース (SQLite)
+  ↓ (Tauriイベント発行)
+フロントエンド (Vue)
+  ↓ (リアクティブに表示更新)
+UI更新完了
+```
 
-**ケース2: 友達との集まり**
-- セッションに「○○さんの誕生日会」とタイトル設定
-- 集合写真を複数枚添付
-- お気に入りセッションに登録して、後から簡単に見返せるように
+## 3. コアコンポーネント
 
-**ケース3: 思い出を振り返る**
-- 月次レポートで「今月は15個のワールドを訪問」を確認
-- ワールドお気に入り一覧から「行きたいワールドリスト」をチェック
-- 「1年前の今日」機能で懐かしい思い出を再発見
+### 3.1 LogWatcher (バックエンド)
+**責務**: VRChatログファイルの監視とリアルタイム読み取り
 
-## 4. 対象データ
+**処理フロー:**
+```rust
+// 起動時
+1. VRChatログディレクトリを特定
+   - %USERPROFILE%\AppData\LocalLow\VRChat\VRChat\
+2. データベースから処理済みファイル位置を取得
+3. 全ログファイルを初回読み込み (過去ログも処理)
+4. ファイル監視を開始 (notify)
 
-- `%USERPROFILE%\AppData\LocalLow\VRChat\VRChat\output_log_*.txt`  
-- 自分が参加したインスタンスにおけるプレイヤー情報（ログに含まれる範囲）。  
-- オンラインのフレンド状況や他プレイヤーの行動履歴のような情報は収集対象外。
+// 実行時
+1. ファイル変更イベントを受信
+2. 新しい行のみを読み取り
+3. LogParserに渡す
+4. ファイル位置をデータベースに保存
+```
 
-## 5. 非機能要件
+**重要な実装:**
+- ファイル位置 (byte offset) をデータベースに永続化
+- アプリ再起動後も続きから読み取り
+- 複数のログファイルを同時監視
 
-- VRChatのアカウント情報の入力を不要とする。  
-- 他者情報の不必要な収集は行わない。  
-- 軽量で高速なログ監視・解析を行う。  
-- SQLiteによりローカルデータベースへ永続的に記録する。  
-- バックアップ機能を備え、ユーザーが任意に復元可能とする。
-- UIは日誌的な記録作業に適した簡潔な構成とする。
+### 3.2 LogParser (バックエンド)
+**責務**: ログ行を構造化されたLogEventに変換
 
-## 6. 機能要件
+**処理するログイベント:**
+```rust
+pub enum LogEvent {
+    UserAuthenticated {
+        timestamp: DateTime<Utc>,
+        display_name: String,
+        user_id: String,
+    },
+    JoiningWorld {
+        timestamp: DateTime<Utc>,
+        world_id: String,
+        instance_id: String,
+        world_name: String,
+    },
+    EnteringRoom {
+        timestamp: DateTime<Utc>,
+        world_name: String,
+    },
+    PlayerJoined {
+        timestamp: DateTime<Utc>,
+        display_name: String,
+        user_id: String,
+    },
+    DestroyingPlayer {
+        timestamp: DateTime<Utc>,
+        display_name: String,
+    },
+    AvatarChanged {
+        timestamp: DateTime<Utc>,
+        display_name: String,
+        avatar_name: String,
+    },
+    ScreenshotTaken {
+        timestamp: DateTime<Utc>,
+        file_path: String,
+    },
+}
+```
 
-### 6.1 自動記録系
-- **ログファイル監視・解析**
-  - VRChatログファイルのリアルタイム監視
-  - 日時／ワールド名／インスタンスID／プレイヤー情報の自動記録
-  - スクリーンショット撮影の自動検知・セッション紐付け
+**パース処理:**
+- 正規表現によるログ行マッチング
+- タイムスタンプ解析
+- ワールドID・インスタンスID抽出
+- プレイヤー情報抽出
 
-### 6.2 思い出整理系（セッション）
-- **セッション管理**
-  - セッションタイトル設定
-  - お気に入りセッション登録（星マーク）
-  - セッションへのタグ追加
-  - Markdownメモ記入
-  - スクリーンショット自動表示・手動追加
-- **思い出アルバム**
-  - 複数セッションをまとめたアルバム作成
-  - アルバムタイトル・説明設定
-  - 例：「2025年10月の思い出」「○○さんとの写真集」
+### 3.3 EventProcessor (バックエンド)
+**責務**: LogEventを処理してデータベースに保存し、フロントエンド通知イベントを生成
 
-### 6.3 ワールド整理系
-- **ワールドお気に入り管理**
-  - ワールドに星マーク（1〜5段階評価）
-  - ワールドごとのメモ・カテゴリ設定
-  - ワールド代表サムネイル設定（セッション写真から選択）
-- **ワールドリスト**
-  - お気に入りワールド一覧
-  - 行きたいワールドリスト（ブックマーク）
-  - 定期訪問ワールド管理（最終訪問日からの経過日数表示）
-- **ワールド統計**
-  - ワールド別訪問回数・滞在時間
-  - ワールド別訪問履歴タイムライン
-  - ワールド訪問回数ランキング
+**内部状態:**
+```rust
+pub struct EventProcessor {
+    current_local_player_id: Option<i64>,     // 現在ログイン中のアカウント
+    current_session_id: Option<i64>,          // 現在のセッション
+    player_ids: HashMap<String, i64>,         // user_id -> player_id マッピング
+    pending_avatars: HashMap<String, (i64, DateTime<Utc>)>, // 保留中のアバター情報
+}
+```
 
-### 6.4 人物思い出系
-- **人物メモ**
-  - よく会う人へのニックネーム・メモ設定
-  - 初めて会った日・場所の記録
-  - その人との思い出タグ
-- **人物統計**
-  - 同席頻度ランキング
-  - 特定の人との活動履歴抽出
-  - グループメンバーとのセッション自動抽出
+**イベント処理フロー:**
+```rust
+LogEvent → process_event() → データベース保存 → Option<ProcessedEvent>
+```
 
-### 6.5 振り返り支援系
-- **レポート自動生成**
-  - 月次／年次活動レポート
-    - 訪問ワールド数
-    - 総滞在時間
-    - よく会った人トップ5
-    - 最も訪問したワールド
-  - グラフ・統計による可視化
-- **思い出の再発見**
-  - 「1年前の今日」表示
-  - ランダムな過去セッション表示
-  - タイムカプセル機能（未来日時に通知設定）
-- **記念日マーカー**
-  - 特定の日を記念日として登録
-  - その日のセッションに自動バッジ表示
+**発行するProcessedEvent:**
+```rust
+pub enum ProcessedEvent {
+    LocalPlayerUpdated,                        // アカウント追加・更新
+    SessionCreated { session_id: i64 },        // 新セッション作成
+    SessionEnded { session_id: i64, ended_at: String }, // セッション終了
+    PlayerJoined { session_id: i64 },          // プレイヤー参加
+    PlayerLeft { session_id: i64 },            // プレイヤー退出
+}
+```
 
-### 6.6 AI活用系（将来実装）
-- **スクリーンショット自動整理**
-  - アバター顔認識によるグルーピング
-  - 同一アバターの写真を横断検索
-  - アバターごとの出現セッション一覧
-  - 「この人とどのインスタンスで会ったか」可視化
-- **プライバシー保護**
-  - 全てローカル処理（外部送信なし）
-  - 顔埋め込みベクトルのみ保存
-  - 任意の写真をAI処理から除外可能
+**イベント処理ルール:**
 
-### 6.7 検索・表示系
-- **表示モード**
-  - タイムライン表示
-  - カレンダー表示
-  - ヒートマップ表示
-  - 写真ギャラリー表示
-  - アルバム表示
-- **検索・フィルタリング**
-  - タグ／ワールド名／日付／プレイヤーで絞り込み
-  - お気に入りのみ表示
-  - 未分類セッションの抽出
+| LogEvent | データベース操作 | ProcessedEvent | 備考 |
+|----------|------------------|----------------|------|
+| UserAuthenticated | ローカルプレイヤー作成/更新 | LocalPlayerUpdated | アカウント切り替え検知 |
+| JoiningWorld | セッション作成 | SessionCreated | 前セッションは自動的にinterrupted |
+| EnteringRoom | セッションのworld_name更新 | なし | メタデータ補完のみ |
+| PlayerJoined | プレイヤー作成/更新 + session_players追加 | PlayerJoined | プレイヤー数更新 |
+| DestroyingPlayer (自分) | セッション終了 + 全員退出処理 | SessionEnded | セッション完了 |
+| DestroyingPlayer (他) | session_playersのleft_at更新 | PlayerLeft | プレイヤー数更新 |
+| AvatarChanged | アバター記録 + session_avatars更新 | なし | 将来的にアバター履歴機能で使用 |
+| ScreenshotTaken | スクリーンショット記録 | なし | セッション詳細で表示 |
 
-### 6.8 ユーティリティ系
-- **再訪問支援**
-  - 過去インスタンスへの招待URL生成
-  - お気に入りワールドへのクイックアクセス
-- **データ管理**
-  - SQLiteによるローカル永続化
-  - データバックアップ・復元
-  - データエクスポート（JSON形式）
-- **UI設定**
-  - ライト／ダークテーマ切り替え
+### 3.4 Database (バックエンド)
+**責務**: データの永続化とクエリ
 
-## 7. 非対象機能
+**スキーマ設計:**
+- `players` - プレイヤー情報 (is_local=1がローカルプレイヤー)
+- `sessions` - セッション情報
+- `session_players` - セッション参加プレイヤー (joined_at, left_at)
+- `avatars` - アバター情報
+- `session_avatars` - セッション中のアバター使用履歴
+- `screenshots` - スクリーンショット
+- `player_name_history` - プレイヤー名前変更履歴
+- `log_files` - 処理済みログファイル位置
 
-- 他プレイヤーの行動履歴の追跡・収集。
-- 外部通信（サーバー連携・SNS投稿・クラウド同期）。
-- 自動タグ付けなど過剰な自動化機能。
-- AI機能における外部API利用
-  - 画像認識は全てローカル処理
-  - 顔データの外部送信は一切行わない  
+**重要なインデックス:**
+- `sessions.player_id` - アカウント別セッション取得
+- `session_players.session_id` - セッション内プレイヤー取得
+- `screenshots.session_id` - セッション内スクリーンショット取得
 
-## 8. プラットフォーム
+### 3.5 Frontend (Vue)
+**責務**: UIレンダリングとユーザーインタラクション
 
-- デスクトップアプリケーション。  
-- 対応 OS: Windows のみ。
+**イベントリスナー設定:**
+```typescript
+// App.vue (起動時に設定)
+onMounted(async () => {
+  // 初回データ読み込み
+  await loadUsers();
+  await loadSessions();
 
-## 9. 開発方針
+  // イベントリスナー登録
+  unlistenFn = await listen<ProcessedEvent>("log-event", (event) => {
+    const processedEvent = event.payload;
 
-### 9.1 基本方針
-- **思い出を大切にする**: VR体験を「記録」ではなく「思い出」として扱う
-- **シンプルで使いやすい**: 複雑な操作不要。日記を書く感覚で使える
-- **プライバシー第一**: 他者監視機能の完全排除。自分の体験のみを管理
+    switch (processedEvent.type) {
+      case "LocalPlayerUpdated":
+        loadUsers();  // アカウントリスト再取得
+        break;
 
-### 9.2 技術方針
-- **完全ローカル動作**: アカウント情報・外部通信不要
-- **軽量・高速**: ログ監視とデータベース処理を最適化
-- **拡張性**: 将来的なAI機能追加を見据えた設計
+      case "SessionCreated":
+        loadSessions();  // セッションリスト再取得
+        break;
 
-### 9.3 UI/UX方針
-- **視覚的**: 写真を中心とした思い出の整理
-- **直感的操作**: ドラッグ&ドロップ、ワンクリック操作
-- **心地よい体験**: 思い出を振り返る楽しさを重視したデザイン
+      case "SessionEnded":
+        // セッションのステータスをローカルで更新
+        updateSessionStatus(processedEvent.session_id, 'completed');
+        break;
+
+      case "PlayerJoined":
+      case "PlayerLeft":
+        // 該当セッションのプレイヤー数を再取得
+        refreshSessionPlayerCount(processedEvent.session_id);
+        break;
+    }
+  });
+});
+```
+
+**データ取得ルール:**
+- **初回ロード時**: `get_local_users()`, `get_sessions()` を呼び出し
+- **イベント受信時**: 必要に応じて再取得
+- **ページ切り替え時**: `get_sessions()` を必要なら再取得
+- **それ以外**: バックエンドからのプッシュを待つ
+
+## 4. データフロー詳細
+
+### 4.1 アプリ起動シーケンス
+```
+1. Tauriアプリ起動
+   ↓
+2. データベース初期化 (migrate)
+   ↓
+3. EventProcessor初期化
+   - データベースから最新のローカルプレイヤー取得
+   - 進行中のセッション復元
+   - セッション参加プレイヤーのマッピング復元
+   ↓
+4. LogWatcher起動
+   - 処理済みログファイル位置を取得
+   - 全ログファイルを初回読み込み
+   - ファイル監視開始
+   ↓
+5. フロントエンド初期化
+   - 初回データ取得 (get_local_users, get_sessions)
+   - イベントリスナー登録 (log-event)
+   ↓
+6. 待機状態 (ログ監視中)
+```
+
+### 4.2 ログ変更時のシーケンス
+```
+1. VRChatがログファイルに書き込み
+   ↓
+2. notify がファイル変更を検知
+   ↓
+3. LogWatcher が新しい行を読み取り
+   ↓
+4. LogParser が LogEvent に変換
+   ↓
+5. EventProcessor が処理
+   - データベース保存
+   - ProcessedEvent 生成 (通知が必要な場合のみ)
+   ↓
+6. Tauri が "log-event" を emit
+   ↓
+7. フロントエンドのイベントリスナーが受信
+   ↓
+8. イベントタイプに応じてUIを更新
+   - LocalPlayerUpdated → アカウントリスト再取得
+   - SessionCreated → セッションリスト再取得
+   - SessionEnded → セッションステータス更新
+   - PlayerJoined/Left → プレイヤー数更新
+```
+
+### 4.3 セッション作成フロー
+```
+VRChatログ: "[Behaviour] Joining wrld_xxx:12345~region(us)~..."
+   ↓
+LogParser: LogEvent::JoiningWorld
+   ↓
+EventProcessor:
+   1. 前のセッションを interrupted にする (もしあれば)
+   2. 新しいセッションをデータベースに作成
+   3. current_session_id を更新
+   4. player_ids, pending_avatars をクリア
+   5. ProcessedEvent::SessionCreated を返す
+   ↓
+Tauri emit: "log-event" { type: "SessionCreated", session_id: 123 }
+   ↓
+フロントエンド:
+   1. loadSessions() を呼び出し
+   2. セッションリストを再レンダリング
+   3. 新しいセッションがタイムラインのトップに表示される
+```
+
+### 4.4 プレイヤー参加フロー
+```
+VRChatログ: "[Behaviour] OnPlayerJoined Username123"
+              "[Behaviour] Initialized PlayerAPI "Username123" is local"
+   ↓
+LogParser: LogEvent::PlayerJoined { display_name, user_id }
+   ↓
+EventProcessor:
+   1. players テーブルにプレイヤーを作成/更新
+   2. player_name_history に名前履歴を追加
+   3. session_players に参加記録を追加
+   4. player_ids マッピングに追加
+   5. pending_avatars があれば記録
+   6. ProcessedEvent::PlayerJoined を返す
+   ↓
+Tauri emit: "log-event" { type: "PlayerJoined", session_id: 123 }
+   ↓
+フロントエンド:
+   1. 該当セッションのプレイヤー数を再取得 (軽量)
+   2. SessionCard のプレイヤー数バッジを更新
+```
+
+## 5. 非イベント駆動部分 (例外)
+
+以下の機能はユーザーアクション時に**Command呼び出し**を行います:
+
+### 5.1 初回データロード
+- `get_local_users()` - アプリ起動時
+- `get_sessions()` - アプリ起動時、アカウント切り替え時
+
+### 5.2 詳細情報の取得
+- `get_session_by_id(session_id)` - セッション詳細ビュー表示時
+- `get_session_players(session_id)` - セッション詳細ビュー表示時
+- `get_session_screenshots(session_id)` - セッション詳細ビュー表示時
+
+### 5.3 ユーザーアクション
+- `open_invite_url(world_id, instance_id)` - ワールドを開くボタンクリック時
+- `open_screenshot_directory(file_path)` - フォルダを開くボタンクリック時
+- `open_user_page(user_id)` - プレイヤーページを開くボタンクリック時
+
+## 6. 状態管理
+
+### 6.1 バックエンド状態 (EventProcessor)
+```rust
+// アプリケーション全体で1つのEventProcessorインスタンス
+pub struct EventProcessor {
+    current_local_player_id: Option<i64>,
+    current_session_id: Option<i64>,
+    player_ids: HashMap<String, i64>,
+    pending_avatars: HashMap<String, (i64, DateTime<Utc>)>,
+}
+```
+
+**状態遷移:**
+- `UserAuthenticated` → current_local_player_id 更新
+- `JoiningWorld` → current_session_id 更新、マップクリア
+- `PlayerJoined` → player_ids に追加
+- `DestroyingPlayer (自分)` → current_session_id クリア、マップクリア
+
+### 6.2 フロントエンド状態 (Vue Reactivity)
+```typescript
+// App.vue
+const localUsers = ref<LocalUser[]>([]);     // アカウントリスト
+const sessions = ref<Session[]>([]);         // セッションリスト
+const selectedUserId = ref<number | null>(null);  // 選択中のアカウント
+```
+
+**状態更新:**
+- イベント受信時に必要なデータのみ再取得
+- リアクティブなので自動的にUIが更新される
+
+## 7. エラーハンドリング
+
+### 7.1 ログ解析エラー
+- パースエラーは警告としてログ出力
+- アプリケーションは継続動作
+- 次の行から処理を再開
+
+### 7.2 データベースエラー
+- トランザクションでロールバック
+- エラーログ出力
+- フロントエンドに通知 (将来実装)
+
+### 7.3 ファイル監視エラー
+- ログディレクトリが見つからない場合は警告
+- ファイルアクセスエラーはリトライ
+- 致命的エラーの場合はアプリ再起動
+
+## 8. パフォーマンス最適化
+
+### 8.1 データベース
+- 適切なインデックス
+- プリペアドステートメント
+- バッチ挿入 (将来)
+
+### 8.2 イベント処理
+- 通知不要なイベントは `None` を返す
+- 重複イベントの抑制 (upsert使用)
+- 軽量なProcessedEvent
+
+### 8.3 フロントエンド
+- 必要最小限のデータ再取得
+- リストの仮想スクロール (将来)
+- 画像の遅延ロード (将来)
+
+## 9. 将来の拡張
+
+### 9.1 リアルタイムスクリーンショット通知
+```rust
+ProcessedEvent::ScreenshotTaken {
+    session_id: i64,
+    file_path: String,
+}
+```
+フロントエンドで即座にサムネイル表示
+
+### 9.2 ワールドメタデータ更新通知
+```rust
+ProcessedEvent::WorldMetadataUpdated {
+    session_id: i64,
+}
+```
+ワールド名が後から判明した場合に通知
+
+### 9.3 詳細なプレイヤーイベント
+```rust
+ProcessedEvent::PlayerAvatarChanged {
+    session_id: i64,
+    player_id: i64,
+}
+```
+アバター履歴のリアルタイム表示
+
+## 10. ディレクトリ構造
+
+```
+VRCJournal/
+├── src/                          # フロントエンド (Vue)
+│   ├── components/
+│   │   ├── common/               # 共通コンポーネント
+│   │   │   ├── Button.vue
+│   │   │   ├── Card.vue
+│   │   │   ├── Modal.vue
+│   │   │   ├── Dropdown.vue
+│   │   │   └── EmptyState.vue
+│   │   ├── views/                # ビューコンポーネント
+│   │   │   ├── WorldsView.vue
+│   │   │   ├── PeopleView.vue
+│   │   │   ├── PhotosView.vue
+│   │   │   └── StatsView.vue
+│   │   ├── Navigation.vue
+│   │   ├── SessionList.vue
+│   │   ├── SessionCard.vue
+│   │   ├── ScreenshotList.vue
+│   │   ├── PlayerList.vue
+│   │   ├── ScreenshotModal.vue
+│   │   ├── Settings.vue
+│   │   ├── ThemeSelector.vue
+│   │   └── NotificationContainer.vue
+│   ├── composables/              # Vue Composables
+│   │   └── useNotifications.ts
+│   ├── styles/
+│   │   └── theme.css             # デザインシステム
+│   ├── types.ts                  # TypeScript型定義
+│   ├── App.vue                   # ルートコンポーネント
+│   └── main.ts                   # エントリーポイント
+│
+├── src-tauri/                    # バックエンド (Rust)
+│   ├── src/
+│   │   ├── db/                   # データベースレイヤー
+│   │   │   ├── mod.rs
+│   │   │   ├── migrations.rs
+│   │   │   └── operations.rs
+│   │   ├── parser/               # ログパーサー
+│   │   │   ├── mod.rs
+│   │   │   ├── log_parser.rs
+│   │   │   └── types.rs
+│   │   ├── event_processor/      # イベント処理
+│   │   │   ├── mod.rs
+│   │   │   └── processor.rs
+│   │   ├── log_watcher/          # ログ監視
+│   │   │   ├── mod.rs
+│   │   │   └── watcher.rs
+│   │   └── lib.rs                # Tauri Commands
+│   └── Cargo.toml
+│
+└── docs/                         # ドキュメント
+    ├── requirements.md           # プロダクト要件定義
+    ├── architecture.md           # システムアーキテクチャ (このファイル)
+    ├── design-system.md          # デザインシステム (TODO)
+    └── development-log.md        # 開発ログ (TODO)
+```
+
+## 11. まとめ
+
+VRCJournalは**イベント駆動アーキテクチャ**を中心とした設計です:
+
+1. **ログ変更 → 即座にイベント発火**
+2. **データベース保存 → フロントエンド通知**
+3. **フロントエンド → リアクティブに更新**
+
+この設計により:
+- ✅ リアルタイムでUIが更新される
+- ✅ フロントエンドのポーリング不要
+- ✅ バックエンドとフロントエンドの疎結合
+- ✅ 拡張性が高い (新しいイベントの追加が容易)
