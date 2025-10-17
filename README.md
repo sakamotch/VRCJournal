@@ -1,5 +1,7 @@
 # VRCJournal
 
+**言語**: 日本語 | [English](README.en.md)
+
 > [!WARNING]
 > **🚧 現在開発中です 🚧**
 >
