@@ -1,13 +1,5 @@
 import type { Session, Player } from "@/types";
 import dayjs from "dayjs";
-import "dayjs/locale/ja";
-import relativeTime from "dayjs/plugin/relativeTime";
-import duration from "dayjs/plugin/duration";
-
-// プラグイン設定
-dayjs.extend(relativeTime);
-dayjs.extend(duration);
-dayjs.locale("ja");
 
 export function formatDateTime(dateStr: string): string {
   try {

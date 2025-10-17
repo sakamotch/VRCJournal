@@ -3,9 +3,6 @@ import { computed } from "vue";
 import type { Session } from "@/types";
 import SessionCard from "./SessionCard.vue";
 import dayjs from "dayjs";
-import "dayjs/locale/ja";
-
-dayjs.locale("ja");
 
 interface Props {
   sessions: Session[];

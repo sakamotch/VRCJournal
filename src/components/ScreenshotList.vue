@@ -4,9 +4,6 @@ import { convertFileSrc } from '@tauri-apps/api/core';
 import Button from "./common/Button.vue";
 import { Folder, Trash2 } from 'lucide-vue-next';
 import dayjs from "dayjs";
-import "dayjs/locale/ja";
-
-dayjs.locale("ja");
 
 interface Props {
   screenshots: Screenshot[];
