@@ -337,18 +337,15 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: linear-gradient(135deg,
-    var(--bg-sunken) 0%,
-    color-mix(in srgb, var(--bg-sunken) 98%, var(--color-indigo-500) 2%) 100%
-  );
+  background: var(--bg-sunken);
   border-radius: 6px;
   margin: 4px;
 }
 
 ::-webkit-scrollbar-thumb {
   background: linear-gradient(135deg,
-    color-mix(in srgb, var(--border-strong) 70%, var(--color-indigo-400) 30%) 0%,
-    color-mix(in srgb, var(--border-strong) 80%, var(--color-violet-400) 20%) 100%
+    color-mix(in srgb, var(--border-default) 60%, var(--color-indigo-400) 40%) 0%,
+    color-mix(in srgb, var(--border-default) 70%, var(--color-violet-400) 30%) 100%
   );
   border-radius: 6px;
   border: 2px solid var(--bg-sunken);
@@ -357,8 +354,8 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: linear-gradient(135deg,
-    color-mix(in srgb, var(--color-indigo-500) 60%, var(--border-strong) 40%) 0%,
-    color-mix(in srgb, var(--color-violet-500) 50%, var(--border-strong) 50%) 100%
+    color-mix(in srgb, var(--border-strong) 40%, var(--color-indigo-500) 60%) 0%,
+    color-mix(in srgb, var(--border-strong) 50%, var(--color-violet-500) 50%) 100%
   );
 }
 
@@ -372,5 +369,5 @@ body {
 /* Firefox */
 * {
   scrollbar-width: thin;
-  scrollbar-color: color-mix(in srgb, var(--border-strong) 70%, var(--color-indigo-400) 30%) var(--bg-sunken);
+  scrollbar-color: color-mix(in srgb, var(--border-default) 60%, var(--color-indigo-400) 40%) var(--bg-sunken);
 }
