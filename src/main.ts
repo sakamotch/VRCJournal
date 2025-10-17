@@ -1,5 +1,8 @@
 import { createApp } from "vue";
 import App from "./App.vue";
 import "./styles/theme.css";
+import { configureDayjs } from "./utils/dayjs-config";
 
-createApp(App).mount("#app");
+configureDayjs().then(() => {
+  createApp(App).mount("#app");
+});
