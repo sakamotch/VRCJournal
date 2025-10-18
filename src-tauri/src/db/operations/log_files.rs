@@ -1,5 +1,5 @@
 use chrono::{DateTime, Utc};
-use rusqlite::{Connection, Result, OptionalExtension};
+use rusqlite::{Connection, OptionalExtension, Result};
 
 /// ログファイルの情報を登録または更新
 pub fn upsert_log_file(
@@ -28,11 +28,7 @@ pub fn upsert_log_file(
 }
 
 /// ログファイルの処理位置を更新
-pub fn update_log_file_position(
-    conn: &Connection,
-    file_path: &str,
-    position: u64,
-) -> Result<()> {
+pub fn update_log_file_position(conn: &Connection, file_path: &str, position: u64) -> Result<()> {
     conn.execute(
         "UPDATE log_files
          SET last_processed_position = ?1, updated_at = CURRENT_TIMESTAMP
@@ -43,10 +39,7 @@ pub fn update_log_file_position(
 }
 
 /// ログファイルの処理位置を取得
-pub fn get_log_file_position(
-    conn: &Connection,
-    file_path: &str,
-) -> Result<Option<u64>> {
+pub fn get_log_file_position(conn: &Connection, file_path: &str) -> Result<Option<u64>> {
     let position: Option<i64> = conn
         .query_row(
             "SELECT last_processed_position FROM log_files WHERE file_path = ?1",
@@ -59,9 +52,7 @@ pub fn get_log_file_position(
 }
 
 /// 全てのログファイル情報を取得
-pub fn get_all_log_files(
-    conn: &Connection,
-) -> Result<Vec<(String, u64, u64, DateTime<Utc>)>> {
+pub fn get_all_log_files(conn: &Connection) -> Result<Vec<(String, u64, u64, DateTime<Utc>)>> {
     let mut stmt = conn.prepare(
         "SELECT file_path, file_size, last_processed_position, last_modified_at
          FROM log_files

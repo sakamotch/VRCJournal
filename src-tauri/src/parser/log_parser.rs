@@ -144,7 +144,11 @@ mod tests {
         let event = parser.parse_line(line).expect("Failed to parse");
 
         match event {
-            LogEvent::UserAuthenticated { display_name, user_id, .. } => {
+            LogEvent::UserAuthenticated {
+                display_name,
+                user_id,
+                ..
+            } => {
                 assert_eq!(display_name, "TestUser");
                 assert_eq!(user_id, "usr_12345678-abcd-ef01-2345-6789abcdef01");
             }
@@ -160,7 +164,11 @@ mod tests {
         let event = parser.parse_line(line).expect("Failed to parse");
 
         match event {
-            LogEvent::JoiningWorld { world_id, instance_id, .. } => {
+            LogEvent::JoiningWorld {
+                world_id,
+                instance_id,
+                ..
+            } => {
                 assert_eq!(world_id, "wrld_abcdef01-2345-6789-abcd-ef0123456789");
                 assert_eq!(instance_id, "11859~friends(usr_xxx)~region(jp)");
             }
@@ -176,7 +184,11 @@ mod tests {
         let event = parser.parse_line(line).expect("Failed to parse");
 
         match event {
-            LogEvent::JoiningWorld { world_id, instance_id, .. } => {
+            LogEvent::JoiningWorld {
+                world_id,
+                instance_id,
+                ..
+            } => {
                 assert_eq!(world_id, "wrld_abcdef01-2345-6789-abcd-ef0123456789");
                 assert_eq!(instance_id, "84455~region(jp)");
             }
@@ -192,7 +204,11 @@ mod tests {
         let event = parser.parse_line(line).expect("Failed to parse");
 
         match event {
-            LogEvent::PlayerJoined { display_name, user_id, .. } => {
+            LogEvent::PlayerJoined {
+                display_name,
+                user_id,
+                ..
+            } => {
                 assert_eq!(display_name, "TestPlayer");
                 assert_eq!(user_id, "usr_12345678-abcd-ef01-2345-6789abcdef01");
             }
@@ -208,7 +224,11 @@ mod tests {
         let event = parser.parse_line(line).expect("Failed to parse");
 
         match event {
-            LogEvent::PlayerLeft { display_name, user_id, .. } => {
+            LogEvent::PlayerLeft {
+                display_name,
+                user_id,
+                ..
+            } => {
                 assert_eq!(display_name, "TestPlayer");
                 assert_eq!(user_id, "usr_12345678-abcd-ef01-2345-6789abcdef01");
             }
@@ -224,7 +244,11 @@ mod tests {
         let event = parser.parse_line(line).expect("Failed to parse");
 
         match event {
-            LogEvent::PlayerLeft { display_name, user_id, .. } => {
+            LogEvent::PlayerLeft {
+                display_name,
+                user_id,
+                ..
+            } => {
                 assert_eq!(display_name, "TestPlayer");
                 assert_eq!(user_id, "usr_12345678-abcd-ef01-2345-6789abcdef01");
             }
@@ -235,12 +259,17 @@ mod tests {
     #[test]
     fn test_parse_avatar_changed() {
         let parser = VRChatLogParser::new();
-        let line = "2025.10.13 11:02:36 Debug      -  [Behaviour] Switching TestUser to avatar TestAvatar";
+        let line =
+            "2025.10.13 11:02:36 Debug      -  [Behaviour] Switching TestUser to avatar TestAvatar";
 
         let event = parser.parse_line(line).expect("Failed to parse");
 
         match event {
-            LogEvent::AvatarChanged { display_name, avatar_name, .. } => {
+            LogEvent::AvatarChanged {
+                display_name,
+                avatar_name,
+                ..
+            } => {
                 assert_eq!(display_name, "TestUser");
                 assert_eq!(avatar_name, "TestAvatar");
             }

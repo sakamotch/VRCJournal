@@ -11,7 +11,11 @@
     "lint": "eslint . --ext .vue,.js,.ts,.jsx,.tsx",
     "lint:fix": "eslint . --ext .vue,.js,.ts,.jsx,.tsx --fix",
     "lint:style": "stylelint \"**/*.{vue,scss,css}\"",
-    "lint:style:fix": "stylelint \"**/*.{vue,scss,css}\" --fix"
+    "lint:style:fix": "stylelint \"**/*.{vue,scss,css}\" --fix",
+    "lint:rust": "cargo clippy --manifest-path=src-tauri/Cargo.toml",
+    "lint:rust:fix": "cargo clippy --manifest-path=src-tauri/Cargo.toml --fix",
+    "format:rust": "cargo fmt --manifest-path=src-tauri/Cargo.toml",
+    "format:rust:check": "cargo fmt --manifest-path=src-tauri/Cargo.toml -- --check"
   },
   "dependencies": {
     "@tauri-apps/api": "^2",

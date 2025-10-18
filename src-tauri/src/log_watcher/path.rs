@@ -1,5 +1,5 @@
-use std::path::PathBuf;
 use std::env;
+use std::path::PathBuf;
 
 /// VRChatログディレクトリのパスを取得
 /// Windows: %USERPROFILE%\AppData\LocalLow\VRChat\VRChat\
@@ -50,11 +50,7 @@ pub fn get_all_log_files() -> Result<Vec<PathBuf>, String> {
     }
 
     // 最終更新日時でソート（古い順）
-    log_files.sort_by_key(|path| {
-        std::fs::metadata(path)
-            .and_then(|m| m.modified())
-            .ok()
-    });
+    log_files.sort_by_key(|path| std::fs::metadata(path).and_then(|m| m.modified()).ok());
 
     Ok(log_files)
 }
@@ -64,7 +60,8 @@ pub fn get_all_log_files() -> Result<Vec<PathBuf>, String> {
 pub fn get_latest_log_file() -> Result<PathBuf, String> {
     let log_files = get_all_log_files()?;
 
-    log_files.last()
+    log_files
+        .last()
         .cloned()
         .ok_or_else(|| "Failed to get latest log file".to_string())
 }

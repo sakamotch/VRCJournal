@@ -28,6 +28,9 @@ pub fn run_migrations(conn: &Connection) -> Result<()> {
         conn.execute("INSERT INTO schema_migrations (version) VALUES (1)", [])?;
     }
 
-    println!("Database migrations complete. Current version: {}", current_version.max(1));
+    println!(
+        "Database migrations complete. Current version: {}",
+        current_version.max(1)
+    );
     Ok(())
 }

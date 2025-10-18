@@ -1,5 +1,5 @@
-use rusqlite::{Connection, Result, OptionalExtension};
 use chrono::{DateTime, Utc};
+use rusqlite::{Connection, OptionalExtension, Result};
 
 #[derive(Debug, Clone)]
 pub struct Avatar {
@@ -61,19 +61,14 @@ pub fn upsert_avatar_by_name(
 pub fn record_avatar_usage(
     conn: &Connection,
     instance_id: i64,
-    player_id: i64,  // NOT NULL: ローカルプレイヤー or リモートプレイヤー
-    avatar_id: i64,  // NOT NULL: avatarsテーブルへの参照
+    player_id: i64, // NOT NULL: ローカルプレイヤー or リモートプレイヤー
+    avatar_id: i64, // NOT NULL: avatarsテーブルへの参照
     changed_at: DateTime<Utc>,
 ) -> Result<()> {
     conn.execute(
         "INSERT INTO avatar_usages (instance_id, player_id, avatar_id, changed_at)
          VALUES (?1, ?2, ?3, ?4)",
-        (
-            instance_id,
-            player_id,
-            avatar_id,
-            changed_at.to_rfc3339(),
-        ),
+        (instance_id, player_id, avatar_id, changed_at.to_rfc3339()),
     )?;
     Ok(())
 }
@@ -83,7 +78,7 @@ pub fn record_avatar_usage(
 pub struct AvatarUsage {
     pub player_id: i64,
     pub display_name: String,
-    pub is_local: bool,  // ローカルプレイヤーかどうか
+    pub is_local: bool, // ローカルプレイヤーかどうか
     pub avatar_name: String,
     pub changed_at: DateTime<Utc>,
 }

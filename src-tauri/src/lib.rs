@@ -1,12 +1,12 @@
 mod db;
-mod parser;
 mod event_processor;
 mod log_watcher;
+mod parser;
 
+use event_processor::EventProcessor;
 use std::sync::{Arc, Mutex};
 use tauri::{Emitter, Manager};
 use tauri_plugin_opener::OpenerExt;
-use event_processor::EventProcessor;
 
 // グローバルステート
 #[derive(Clone)]
@@ -27,13 +27,16 @@ async fn is_backend_ready(state: tauri::State<'_, AppState>) -> Result<bool, Str
 /// VRChatログディレクトリのパスを取得
 #[tauri::command]
 async fn get_log_path() -> Result<String, String> {
-    log_watcher::get_vrchat_log_path()
-        .map(|p| p.to_string_lossy().to_string())
+    log_watcher::get_vrchat_log_path().map(|p| p.to_string_lossy().to_string())
 }
 
 /// インスタンス招待URLを生成してデフォルトブラウザで開く
 #[tauri::command]
-async fn open_invite_url(app: tauri::AppHandle, world_id: String, instance_id: String) -> Result<String, String> {
+async fn open_invite_url(
+    app: tauri::AppHandle,
+    world_id: String,
+    instance_id: String,
+) -> Result<String, String> {
     // VRChatのWeb招待URL形式
     let url = format!(
         "https://vrchat.com/home/launch?worldId={}&instanceId={}",
@@ -41,7 +44,8 @@ async fn open_invite_url(app: tauri::AppHandle, world_id: String, instance_id: S
     );
 
     // デフォルトブラウザで開く
-    app.opener().open_url(&url, None::<&str>)
+    app.opener()
+        .open_url(&url, None::<&str>)
         .map_err(|e| format!("Failed to open URL: {}", e))?;
 
     Ok(url)
@@ -56,8 +60,9 @@ async fn get_local_users(state: tauri::State<'_, AppState>) -> Result<serde_json
     let players = db::operations::get_all_local_players(conn)
         .map_err(|e| format!("Failed to get local players: {}", e))?;
 
-    let json = serde_json::json!(
-        players.into_iter().map(|p| {
+    let json = serde_json::json!(players
+        .into_iter()
+        .map(|p| {
             serde_json::json!({
                 "id": p.id,
                 "displayName": p.display_name,
@@ -69,8 +74,8 @@ async fn get_local_users(state: tauri::State<'_, AppState>) -> Result<serde_json
                     .expect("Local player must have last_authenticated_at")
                     .to_rfc3339(),
             })
-        }).collect::<Vec<_>>()
-    );
+        })
+        .collect::<Vec<_>>());
 
     Ok(json)
 }
@@ -116,27 +121,29 @@ async fn get_instances(
         )
     };
 
-    let mut stmt = conn.prepare(&query)
+    let mut stmt = conn
+        .prepare(&query)
         .map_err(|e| format!("Failed to prepare statement: {}", e))?;
 
-    let instances = stmt.query_map([], |row| {
-        Ok(serde_json::json!({
-            "id": row.get::<_, i64>(0)?,
-            "localUserId": row.get::<_, i64>(1)?,
-            "userName": row.get::<_, String>(2)?,
-            "startedAt": row.get::<_, String>(3)?,
-            "endedAt": row.get::<_, Option<String>>(4)?,
-            "worldId": row.get::<_, String>(5)?,
-            "worldName": row.get::<_, Option<String>>(6)?,
-            "instanceId": row.get::<_, String>(7)?,
-            "status": row.get::<_, String>(8)?,
-            "playerCount": row.get::<_, i64>(9)?,
-            "screenshotCount": row.get::<_, i64>(10)?,
-        }))
-    })
-    .map_err(|e| format!("Failed to query instances: {}", e))?
-    .collect::<Result<Vec<_>, _>>()
-    .map_err(|e| format!("Failed to collect instances: {}", e))?;
+    let instances = stmt
+        .query_map([], |row| {
+            Ok(serde_json::json!({
+                "id": row.get::<_, i64>(0)?,
+                "localUserId": row.get::<_, i64>(1)?,
+                "userName": row.get::<_, String>(2)?,
+                "startedAt": row.get::<_, String>(3)?,
+                "endedAt": row.get::<_, Option<String>>(4)?,
+                "worldId": row.get::<_, String>(5)?,
+                "worldName": row.get::<_, Option<String>>(6)?,
+                "instanceId": row.get::<_, String>(7)?,
+                "status": row.get::<_, String>(8)?,
+                "playerCount": row.get::<_, i64>(9)?,
+                "screenshotCount": row.get::<_, i64>(10)?,
+            }))
+        })
+        .map_err(|e| format!("Failed to query instances: {}", e))?
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| format!("Failed to collect instances: {}", e))?;
 
     Ok(serde_json::json!(instances))
 }
@@ -249,23 +256,25 @@ async fn get_database_stats(state: tauri::State<'_, AppState>) -> Result<String,
     let db = state.db.lock().unwrap();
     let conn = db.connection();
 
-    let local_players: i64 = conn.query_row(
-        "SELECT COUNT(*) FROM players WHERE is_local = 1",
-        [],
-        |row| row.get(0)
-    ).unwrap_or(0);
+    let local_players: i64 = conn
+        .query_row(
+            "SELECT COUNT(*) FROM players WHERE is_local = 1",
+            [],
+            |row| row.get(0),
+        )
+        .unwrap_or(0);
 
-    let instances: i64 = conn.query_row(
-        "SELECT COUNT(*) FROM instances",
-        [],
-        |row| row.get(0)
-    ).unwrap_or(0);
+    let instances: i64 = conn
+        .query_row("SELECT COUNT(*) FROM instances", [], |row| row.get(0))
+        .unwrap_or(0);
 
-    let players: i64 = conn.query_row(
-        "SELECT COUNT(*) FROM players WHERE is_local = 0",
-        [],
-        |row| row.get(0)
-    ).unwrap_or(0);
+    let players: i64 = conn
+        .query_row(
+            "SELECT COUNT(*) FROM players WHERE is_local = 0",
+            [],
+            |row| row.get(0),
+        )
+        .unwrap_or(0);
 
     Ok(format!(
         "Local Players: {}, Instances: {}, Remote Players: {}",
@@ -285,8 +294,9 @@ async fn get_instance_players(
     let players = db::operations::get_players_in_instance(conn, instance_id)
         .map_err(|e| format!("Failed to get players: {}", e))?;
 
-    let json = serde_json::json!(
-        players.into_iter().map(|p| {
+    let json = serde_json::json!(players
+        .into_iter()
+        .map(|p| {
             serde_json::json!({
                 "id": p.id,
                 "displayName": p.display_name,
@@ -297,8 +307,8 @@ async fn get_instance_players(
                 "joinedAt": p.joined_at.to_rfc3339(),
                 "leftAt": p.left_at.map(|dt| dt.to_rfc3339()),
             })
-        }).collect::<Vec<_>>()
-    );
+        })
+        .collect::<Vec<_>>());
 
     Ok(json)
 }
@@ -309,7 +319,8 @@ async fn open_user_page(app: tauri::AppHandle, user_id: String) -> Result<String
     let url = format!("https://vrchat.com/home/user/{}", user_id);
 
     // デフォルトブラウザで開く
-    app.opener().open_url(&url, None::<&str>)
+    app.opener()
+        .open_url(&url, None::<&str>)
         .map_err(|e| format!("Failed to open URL: {}", e))?;
 
     Ok(url)
@@ -321,25 +332,24 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_os::init())
         .setup(|app| {
-            use std::collections::HashMap;
             use chrono::Utc;
+            use std::collections::HashMap;
 
             // データベースパスを決定
-            let app_data_dir = app.path().app_data_dir()
+            let app_data_dir = app
+                .path()
+                .app_data_dir()
                 .expect("Failed to get app data dir");
 
             // ディレクトリが存在しない場合は作成
-            std::fs::create_dir_all(&app_data_dir)
-                .expect("Failed to create app data directory");
+            std::fs::create_dir_all(&app_data_dir).expect("Failed to create app data directory");
 
             let db_path = app_data_dir.join("vrcjournal.db");
 
             // データベース初期化
-            let database = db::Database::open(db_path)
-                .expect("Failed to open database");
+            let database = db::Database::open(db_path).expect("Failed to open database");
 
-            database.migrate()
-                .expect("Failed to run migrations");
+            database.migrate().expect("Failed to run migrations");
 
             let app_state = AppState {
                 db: Arc::new(Mutex::new(database)),
@@ -379,7 +389,10 @@ pub fn run() {
                             let conn = db.connection();
                             let mut processor = app_state.event_processor.lock().unwrap();
                             if let Err(e) = processor.initialize_from_db(conn) {
-                                eprintln!("Failed to initialize EventProcessor from database: {}", e);
+                                eprintln!(
+                                    "Failed to initialize EventProcessor from database: {}",
+                                    e
+                                );
                             }
                         }
 
@@ -406,9 +419,17 @@ pub fn run() {
                                     if let Ok(metadata) = std::fs::metadata(path) {
                                         let file_size = metadata.len();
                                         if let Ok(modified) = metadata.modified() {
-                                            let modified_dt = chrono::DateTime::<Utc>::from(modified);
-                                            let _ = db::operations::upsert_log_file(conn, &path_str, file_size, modified_dt);
-                                            let _ = db::operations::update_log_file_position(conn, &path_str, *position);
+                                            let modified_dt =
+                                                chrono::DateTime::<Utc>::from(modified);
+                                            let _ = db::operations::upsert_log_file(
+                                                conn,
+                                                &path_str,
+                                                file_size,
+                                                modified_dt,
+                                            );
+                                            let _ = db::operations::update_log_file_position(
+                                                conn, &path_str, *position,
+                                            );
                                         }
                                     }
                                 }
@@ -416,7 +437,10 @@ pub fn run() {
                                 drop(processor);
                                 drop(db);
 
-                                println!("Initial log processing completed: {} events", events_count);
+                                println!(
+                                    "Initial log processing completed: {} events",
+                                    events_count
+                                );
 
                                 // ファイル監視を開始
                                 if let Err(e) = watcher.start_watching() {
@@ -445,7 +469,9 @@ pub fn run() {
                                         match processor.process_event(conn, event) {
                                             Ok(Some(processed_event)) => {
                                                 // フロントエンドにイベントを通知（詳細情報付き）
-                                                if let Err(e) = app_handle.emit("log-event", &processed_event) {
+                                                if let Err(e) =
+                                                    app_handle.emit("log-event", &processed_event)
+                                                {
                                                     eprintln!("Failed to emit event: {}", e);
                                                 }
                                             }
@@ -467,12 +493,20 @@ pub fn run() {
                                             if let Ok(metadata) = std::fs::metadata(&file_path) {
                                                 let file_size = metadata.len();
                                                 if let Ok(modified) = metadata.modified() {
-                                                    let modified_dt = chrono::DateTime::<Utc>::from(modified);
-                                                    let _ = db::operations::upsert_log_file(conn, &path_str, file_size, modified_dt);
+                                                    let modified_dt =
+                                                        chrono::DateTime::<Utc>::from(modified);
+                                                    let _ = db::operations::upsert_log_file(
+                                                        conn,
+                                                        &path_str,
+                                                        file_size,
+                                                        modified_dt,
+                                                    );
                                                 }
                                             }
 
-                                            let _ = db::operations::update_log_file_position(conn, &path_str, *position);
+                                            let _ = db::operations::update_log_file_position(
+                                                conn, &path_str, *position,
+                                            );
                                         }
                                     }
                                 }

@@ -1,16 +1,16 @@
-use rusqlite::{Connection, Result, OptionalExtension};
 use chrono::{DateTime, Utc};
+use rusqlite::{Connection, OptionalExtension, Result};
 
 #[derive(Debug, Clone)]
 pub struct Instance {
     pub id: i64,
-    pub player_id: i64,  // ローカルプレイヤー (is_local=1のplayer)
+    pub player_id: i64, // ローカルプレイヤー (is_local=1のplayer)
     pub started_at: DateTime<Utc>,
     pub ended_at: Option<DateTime<Utc>>,
     pub world_id: String,
     pub world_name: Option<String>,
     pub instance_id: String,
-    pub status: String,  // active, completed, interrupted
+    pub status: String, // active, completed, interrupted
 }
 
 /// 新しいインスタンスを作成
@@ -46,10 +46,7 @@ pub fn end_instance(conn: &Connection, instance_id: i64, ended_at: DateTime<Utc>
 }
 
 /// 最新の未終了インスタンスを取得
-pub fn get_latest_active_instance(
-    conn: &Connection,
-    player_id: i64,
-) -> Result<Option<Instance>> {
+pub fn get_latest_active_instance(conn: &Connection, player_id: i64) -> Result<Option<Instance>> {
     conn.query_row(
         "SELECT id, player_id, started_at, ended_at, world_id, world_name, instance_id, status
          FROM instances
@@ -64,9 +61,11 @@ pub fn get_latest_active_instance(
                 started_at: DateTime::parse_from_rfc3339(&row.get::<_, String>(2)?)
                     .unwrap()
                     .with_timezone(&Utc),
-                ended_at: row
-                    .get::<_, Option<String>>(3)?
-                    .map(|s| DateTime::parse_from_rfc3339(&s).unwrap().with_timezone(&Utc)),
+                ended_at: row.get::<_, Option<String>>(3)?.map(|s| {
+                    DateTime::parse_from_rfc3339(&s)
+                        .unwrap()
+                        .with_timezone(&Utc)
+                }),
                 world_id: row.get(4)?,
                 world_name: row.get(5)?,
                 instance_id: row.get(6)?,
@@ -100,9 +99,11 @@ pub fn get_instances_by_player(
                 started_at: DateTime::parse_from_rfc3339(&row.get::<_, String>(2)?)
                     .unwrap()
                     .with_timezone(&Utc),
-                ended_at: row
-                    .get::<_, Option<String>>(3)?
-                    .map(|s| DateTime::parse_from_rfc3339(&s).unwrap().with_timezone(&Utc)),
+                ended_at: row.get::<_, Option<String>>(3)?.map(|s| {
+                    DateTime::parse_from_rfc3339(&s)
+                        .unwrap()
+                        .with_timezone(&Utc)
+                }),
                 world_id: row.get(4)?,
                 world_name: row.get(5)?,
                 instance_id: row.get(6)?,

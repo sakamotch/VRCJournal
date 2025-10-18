@@ -42,10 +42,14 @@ impl LogWatcher {
 
         for log_file in log_files {
             let start_position = file_positions.get(&log_file).copied().unwrap_or(0);
-            let (events, final_position) = self.read_file_from_position(&log_file, start_position)?;
+            let (events, final_position) =
+                self.read_file_from_position(&log_file, start_position)?;
 
             // ファイルの状態を記録
-            self.file_states.lock().unwrap().insert(log_file.clone(), final_position);
+            self.file_states
+                .lock()
+                .unwrap()
+                .insert(log_file.clone(), final_position);
 
             for event in events {
                 all_events.push((log_file.clone(), event));
@@ -71,7 +75,8 @@ impl LogWatcher {
 
         // バイト列を読み込んで、UTF-8エラーを無視しながら行ごとに処理
         let mut buffer = Vec::new();
-        let bytes_read = file.read_to_end(&mut buffer)
+        let bytes_read = file
+            .read_to_end(&mut buffer)
             .map_err(|e| format!("Failed to read file: {}", e))?;
 
         // 不正なUTF-8シーケンスを置換して文字列に変換
@@ -150,7 +155,10 @@ impl LogWatcher {
                             }
                             // ファイルサイズが減った場合（ログローテーション等）
                             else if current_size < previous_size {
-                                println!("File size decreased, resetting position: {:?}", file_path);
+                                println!(
+                                    "File size decreased, resetting position: {:?}",
+                                    file_path
+                                );
                                 file_states.lock().unwrap().insert(file_path.clone(), 0);
                                 sizes.insert(file_path.clone(), current_size);
 
@@ -190,8 +198,8 @@ impl LogWatcher {
         parser: &VRChatLogParser,
         event_tx: &Sender<(PathBuf, LogEvent)>,
     ) -> Result<(), String> {
-        let mut file = File::open(log_path)
-            .map_err(|e| format!("Failed to open log file: {}", e))?;
+        let mut file =
+            File::open(log_path).map_err(|e| format!("Failed to open log file: {}", e))?;
 
         let mut states = file_states.lock().unwrap();
         let position = states.get(log_path).copied().unwrap_or(0);
@@ -201,7 +209,8 @@ impl LogWatcher {
 
         // バイト列を読み込んで、UTF-8エラーを無視しながら行ごとに処理
         let mut buffer = Vec::new();
-        let bytes_read = file.read_to_end(&mut buffer)
+        let bytes_read = file
+            .read_to_end(&mut buffer)
             .map_err(|e| format!("Failed to read file: {}", e))?;
 
         // 新しく読み込んだデータがない場合は何もしない

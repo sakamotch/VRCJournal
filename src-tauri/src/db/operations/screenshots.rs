@@ -1,5 +1,5 @@
-use rusqlite::{Connection, Result};
 use chrono::{DateTime, Utc};
+use rusqlite::{Connection, Result};
 
 /// スクリーンショットを記録
 pub fn record_screenshot(
@@ -25,17 +25,18 @@ pub fn get_instance_screenshots(
         "SELECT id, file_path, taken_at
          FROM screenshots
          WHERE instance_id = ?1
-         ORDER BY taken_at ASC"
+         ORDER BY taken_at ASC",
     )?;
 
-    let screenshots = stmt.query_map([instance_id], |row| {
-        Ok((
-            row.get(0)?,  // id
-            row.get(1)?,  // file_path
-            row.get(2)?,  // taken_at
-        ))
-    })?
-    .collect::<Result<Vec<_>>>()?;
+    let screenshots = stmt
+        .query_map([instance_id], |row| {
+            Ok((
+                row.get(0)?, // id
+                row.get(1)?, // file_path
+                row.get(2)?, // taken_at
+            ))
+        })?
+        .collect::<Result<Vec<_>>>()?;
 
     Ok(screenshots)
 }

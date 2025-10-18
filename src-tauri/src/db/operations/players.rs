@@ -1,5 +1,5 @@
-use rusqlite::{Connection, Result, OptionalExtension};
 use chrono::{DateTime, Utc};
+use rusqlite::{Connection, OptionalExtension, Result};
 
 #[derive(Debug, Clone)]
 pub struct Player {
@@ -16,13 +16,13 @@ pub struct Player {
 #[derive(Debug, Clone)]
 pub struct InstancePlayer {
     pub id: i64,
-    pub display_name: String,             // 現在の表示名
-    pub display_name_at_join: String,     // その時の表示名
+    pub display_name: String,         // 現在の表示名
+    pub display_name_at_join: String, // その時の表示名
     pub user_id: String,
     pub first_seen_at: DateTime<Utc>,
     pub last_seen_at: DateTime<Utc>,
-    pub joined_at: DateTime<Utc>,        // インスタンスに参加した時刻
-    pub left_at: Option<DateTime<Utc>>,   // インスタンスから退出した時刻
+    pub joined_at: DateTime<Utc>,       // インスタンスに参加した時刻
+    pub left_at: Option<DateTime<Utc>>, // インスタンスから退出した時刻
 }
 
 /// プレイヤーを作成または更新（一般プレイヤー用: is_local=0）
@@ -132,7 +132,12 @@ pub fn add_player_to_instance(
     conn.execute(
         "INSERT INTO instance_players (instance_id, player_id, joined_at, display_name_history_id)
          VALUES (?1, ?2, ?3, ?4)",
-        (instance_id, player_id, joined_at.to_rfc3339(), display_name_history_id),
+        (
+            instance_id,
+            player_id,
+            joined_at.to_rfc3339(),
+            display_name_history_id,
+        ),
     )?;
     Ok(())
 }
@@ -174,8 +179,8 @@ pub fn get_players_in_instance(conn: &Connection, instance_id: i64) -> Result<Ve
         .query_map([instance_id], |row| {
             Ok(InstancePlayer {
                 id: row.get(0)?,
-                display_name: row.get(1)?,              // 現在の名前
-                display_name_at_join: row.get(2)?,      // その時の名前
+                display_name: row.get(1)?,         // 現在の名前
+                display_name_at_join: row.get(2)?, // その時の名前
                 user_id: row.get(3)?,
                 first_seen_at: DateTime::parse_from_rfc3339(&row.get::<_, String>(4)?)
                     .unwrap()
@@ -186,8 +191,11 @@ pub fn get_players_in_instance(conn: &Connection, instance_id: i64) -> Result<Ve
                 joined_at: DateTime::parse_from_rfc3339(&row.get::<_, String>(6)?)
                     .unwrap()
                     .with_timezone(&Utc),
-                left_at: row.get::<_, Option<String>>(7)?
-                    .map(|s| DateTime::parse_from_rfc3339(&s).unwrap().with_timezone(&Utc)),
+                left_at: row.get::<_, Option<String>>(7)?.map(|s| {
+                    DateTime::parse_from_rfc3339(&s)
+                        .unwrap()
+                        .with_timezone(&Utc)
+                }),
             })
         })?
         .collect::<Result<Vec<_>>>()?;
@@ -217,10 +225,16 @@ pub fn get_all_local_players(conn: &Connection) -> Result<Vec<Player>> {
                 last_seen_at: DateTime::parse_from_rfc3339(&row.get::<_, String>(5)?)
                     .unwrap()
                     .with_timezone(&Utc),
-                first_authenticated_at: row.get::<_, Option<String>>(6)?
-                    .map(|s| DateTime::parse_from_rfc3339(&s).unwrap().with_timezone(&Utc)),
-                last_authenticated_at: row.get::<_, Option<String>>(7)?
-                    .map(|s| DateTime::parse_from_rfc3339(&s).unwrap().with_timezone(&Utc)),
+                first_authenticated_at: row.get::<_, Option<String>>(6)?.map(|s| {
+                    DateTime::parse_from_rfc3339(&s)
+                        .unwrap()
+                        .with_timezone(&Utc)
+                }),
+                last_authenticated_at: row.get::<_, Option<String>>(7)?.map(|s| {
+                    DateTime::parse_from_rfc3339(&s)
+                        .unwrap()
+                        .with_timezone(&Utc)
+                }),
             })
         })?
         .collect::<Result<Vec<_>>>()?;

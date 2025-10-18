@@ -1,5 +1,5 @@
-use rusqlite::{Connection, Result, OptionalExtension};
 use chrono::{DateTime, Utc};
+use rusqlite::{Connection, OptionalExtension, Result};
 
 #[derive(Debug, Clone)]
 pub struct PlayerNameHistory {
@@ -51,7 +51,10 @@ pub fn upsert_player_name_history(
 }
 
 /// プレイヤーの全名前履歴を取得（新しい順）
-pub fn get_player_name_history(conn: &Connection, player_id: i64) -> Result<Vec<PlayerNameHistory>> {
+pub fn get_player_name_history(
+    conn: &Connection,
+    player_id: i64,
+) -> Result<Vec<PlayerNameHistory>> {
     let mut stmt = conn.prepare(
         "SELECT id, player_id, display_name, first_seen_at, last_seen_at
          FROM player_name_history
