@@ -92,7 +92,7 @@ function formatScreenshotTime(dateStr: string): string {
     border: 1px solid color-mix(in srgb, var(--border-subtle) 95%, var(--accent-primary-light) 5%);
 
     h4 {
-      margin: 0 0 0.75rem 0;
+      margin: 0 0 0.75rem;
       font-size: 0.95rem;
       color: var(--text-secondary);
     }
@@ -132,26 +132,6 @@ function formatScreenshotTime(dateStr: string): string {
       z-index: 0;
     }
 
-    &:hover {
-      border-color: color-mix(in srgb, var(--border-default) 80%, var(--accent-primary-light) 20%);
-      box-shadow: 0 4px 12px color-mix(in srgb, var(--accent-primary) 15%, transparent);
-      color: var(--interactive-default);
-
-      &::before {
-        opacity: 1;
-      }
-
-      .screenshot-time {
-        &::before {
-          opacity: 1;
-        }
-
-        &-text {
-          color: var(--interactive-default);
-        }
-      }
-    }
-
     & > * {
       position: relative;
       z-index: 1;
@@ -168,6 +148,56 @@ function formatScreenshotTime(dateStr: string): string {
         &::before {
           opacity: 0;
         }
+      }
+    }
+
+    &:hover {
+      border-color: color-mix(in srgb, var(--border-default) 80%, var(--accent-primary-light) 20%);
+      box-shadow: 0 4px 12px color-mix(in srgb, var(--accent-primary) 15%, transparent);
+      color: var(--interactive-default);
+
+      &::before {
+        opacity: 1;
+      }
+    }
+
+    .screenshot-time {
+      position: relative;
+      padding: 0.25rem 0.5rem;
+      background: linear-gradient(135deg,
+        var(--player-item-bg) 0%,
+        color-mix(in srgb, var(--player-item-bg) 97%, var(--accent-primary) 3%) 100%
+      );
+      font-size: 0.75rem;
+      font-weight: 500;
+      text-align: center;
+      overflow: hidden;
+
+      &::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg,
+          color-mix(in srgb, var(--bg-hover) 92%, var(--accent-primary-light) 8%) 0%,
+          color-mix(in srgb, var(--bg-hover) 96%, var(--accent-secondary-light) 4%) 100%
+        );
+        opacity: 0;
+        transition: opacity 0.3s ease;
+      }
+
+      &-text {
+        position: relative;
+        color: var(--text-primary);
+      }
+    }
+
+    &:hover .screenshot-time {
+      &::before {
+        opacity: 1;
+      }
+
+      &-text {
+        color: var(--interactive-default);
       }
     }
   }
@@ -190,36 +220,6 @@ function formatScreenshotTime(dateStr: string): string {
       var(--bg-sunken) 0%,
       color-mix(in srgb, var(--bg-sunken) 95%, var(--feedback-error-light) 5%) 100%
     );
-  }
-
-  &-time {
-    position: relative;
-    padding: 0.25rem 0.5rem;
-    background: linear-gradient(135deg,
-      var(--player-item-bg) 0%,
-      color-mix(in srgb, var(--player-item-bg) 97%, var(--accent-primary) 3%) 100%
-    );
-    font-size: 0.75rem;
-    font-weight: 500;
-    text-align: center;
-    overflow: hidden;
-
-    &::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(135deg,
-        color-mix(in srgb, var(--bg-hover) 92%, var(--accent-primary-light) 8%) 0%,
-        color-mix(in srgb, var(--bg-hover) 96%, var(--accent-secondary-light) 4%) 100%
-      );
-      opacity: 0;
-      transition: opacity 0.3s ease;
-    }
-
-    &-text {
-      position: relative;
-      color: var(--text-primary);
-    }
   }
 }
 

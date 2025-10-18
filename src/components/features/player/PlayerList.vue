@@ -77,7 +77,7 @@ function formatPlayerTime(dateStr: string): string {
     border: 1px solid color-mix(in srgb, var(--border-subtle) 95%, var(--accent-primary-light) 5%);
 
     h4 {
-      margin: 0 0 0.75rem 0;
+      margin: 0 0 0.75rem;
       font-size: 0.95rem;
       color: var(--text-secondary);
     }
@@ -96,22 +96,6 @@ function formatPlayerTime(dateStr: string): string {
     &.player-stayed {
       padding: 1px 1px 1px 3px;
       background: linear-gradient(180deg, var(--interactive-default) 0%, var(--accent-secondary) 100%);
-    }
-
-    &:hover &-content {
-      border-color: color-mix(in srgb, var(--border-default) 80%, var(--accent-primary-light) 20%);
-
-      .player-name {
-        color: var(--interactive-default);
-      }
-
-      &::before {
-        opacity: 1;
-      }
-
-      .player-icon {
-        opacity: 1;
-      }
     }
 
     &-content {
@@ -151,11 +135,37 @@ function formatPlayerTime(dateStr: string): string {
 
     &.player-stayed &-content {
       padding-left: calc(0.75rem - 3px);
-      border: 0px;
+      border: 0;
       background: linear-gradient(135deg,
         color-mix(in srgb, var(--player-item-bg) 95%, var(--interactive-default) 5%) 0%,
         color-mix(in srgb, var(--player-item-bg) 97%, var(--accent-secondary) 3%) 100%
       );
+    }
+
+    &:hover &-content {
+      border-color: color-mix(in srgb, var(--border-default) 80%, var(--accent-primary-light) 20%);
+
+      &::before {
+        opacity: 1;
+      }
+    }
+
+    .player-name {
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    .player-icon {
+      opacity: 0.5;
+      transition: opacity 0.2s;
+    }
+
+    &:hover .player-name {
+      color: var(--interactive-default);
+    }
+
+    &:hover .player-icon {
+      opacity: 1;
     }
   }
 
@@ -179,16 +189,6 @@ function formatPlayerTime(dateStr: string): string {
       color: var(--feedback-success);
       font-weight: 500;
     }
-  }
-
-  &-name {
-    font-weight: 500;
-    color: var(--text-primary);
-  }
-
-  &-icon {
-    opacity: 0.5;
-    transition: opacity 0.2s;
   }
 }
 </style>

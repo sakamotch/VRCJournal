@@ -14,6 +14,3 @@ const { t } = useI18n();
     :icon="BarChart3"
   />
 </template>
-
-<style scoped lang="scss">
-</style>

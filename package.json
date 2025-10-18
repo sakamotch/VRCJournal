@@ -9,7 +9,9 @@
     "preview": "vite preview",
     "tauri": "tauri",
     "lint": "eslint . --ext .vue,.js,.ts,.jsx,.tsx",
-    "lint:fix": "eslint . --ext .vue,.js,.ts,.jsx,.tsx --fix"
+    "lint:fix": "eslint . --ext .vue,.js,.ts,.jsx,.tsx --fix",
+    "lint:style": "stylelint \"**/*.{vue,scss,css}\"",
+    "lint:style:fix": "stylelint \"**/*.{vue,scss,css}\" --fix"
   },
   "dependencies": {
     "@tauri-apps/api": "^2",
@@ -33,7 +35,11 @@
     "eslint-plugin-simple-import-sort": "^12.1.1",
     "eslint-plugin-vue": "^10.5.1",
     "globals": "^16.4.0",
+    "postcss-html": "^1.8.0",
     "sass": "^1.93.2",
+    "stylelint": "^16.25.0",
+    "stylelint-config-recommended-vue": "^1.6.1",
+    "stylelint-config-standard-scss": "^14.0.0",
     "typescript": "~5.6.2",
     "vite": "^6.0.3",
     "vue-tsc": "^2.1.10"

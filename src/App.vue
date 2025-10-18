@@ -104,14 +104,14 @@ useBackendEvents({
   display: flex;
   align-items: center;
   gap: 1rem;
-
-  :deep(.icon-button:hover) .settings-icon {
-    transform: rotate(90deg);
-  }
 }
 
 .settings-icon {
   transition: transform 0.2s;
+
+  .header-actions :deep(.icon-button:hover) & {
+    transform: rotate(90deg);
+  }
 }
 
 .content {

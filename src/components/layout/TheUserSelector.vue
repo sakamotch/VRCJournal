@@ -156,14 +156,15 @@ onBeforeUnmount(() => {
   max-height: 300px;
   overflow-y: auto;
   backdrop-filter: blur(8px);
-  animation: dropdownSlide 0.2s ease;
+  animation: dropdown-slide 0.2s ease;
 }
 
-@keyframes dropdownSlide {
+@keyframes dropdown-slide {
   from {
     opacity: 0;
     transform: translateY(-8px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);

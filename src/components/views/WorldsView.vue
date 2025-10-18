@@ -14,6 +14,3 @@ const { t } = useI18n();
     :icon="Globe"
   />
 </template>
-
-<style scoped lang="scss">
-</style>

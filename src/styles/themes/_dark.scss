@@ -6,7 +6,7 @@
 @use '../theme-interface' as *;
 
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]):not([data-theme="cyberpunk"]):not([data-theme="pastel"]):not([data-theme="aurora"]) {
+  :root:not([data-theme="light"], [data-theme="cyberpunk"], [data-theme="pastel"], [data-theme="aurora"]) {
     @include theme-tokens;
 
     /* ==========================================
@@ -66,13 +66,14 @@
        Alias Tokens
        ========================================== */
 
-    /* Overlay & Transparency */
+    /* Overlay */
     --overlay-light: var(--alpha-white-4);
     --overlay-light-medium: var(--alpha-white-8);
     --overlay-medium: var(--alpha-white-12);
     --overlay-medium-strong: var(--alpha-white-16);
     --overlay-strong: var(--alpha-white-32);
-
+  
+    /* Transparency */
     --scrim-light: var(--alpha-black-16);
     --scrim-medium: var(--alpha-black-24);
     --scrim-strong: var(--alpha-black-48);

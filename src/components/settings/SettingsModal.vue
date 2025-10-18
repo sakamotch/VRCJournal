@@ -51,7 +51,7 @@ const emit = defineEmits<Emits>();
     }
 
     h3 {
-      margin: 0 0 1rem 0;
+      margin: 0 0 1rem;
       font-size: 1rem;
       color: var(--text-secondary);
       font-weight: 600;

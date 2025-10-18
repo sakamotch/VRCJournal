@@ -165,11 +165,11 @@ const getIcon = (type: string) => {
 
   /* Transitions */
   &-enter-active {
-    animation: notificationSlideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    animation: notification-slide-in 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   &-leave-active {
-    animation: notificationSlideOut 0.3s cubic-bezier(0.4, 0, 1, 1);
+    animation: notification-slide-out 0.3s cubic-bezier(0.4, 0, 1, 1);
   }
 
   &-move {
@@ -177,22 +177,24 @@ const getIcon = (type: string) => {
   }
 }
 
-@keyframes notificationSlideIn {
+@keyframes notification-slide-in {
   from {
     opacity: 0;
     transform: translateX(calc(100% + 3rem)) scale(0.9);
   }
+
   to {
     opacity: 1;
     transform: translateX(0) scale(1);
   }
 }
 
-@keyframes notificationSlideOut {
+@keyframes notification-slide-out {
   from {
     opacity: 1;
     transform: translateX(0) scale(1);
   }
+
   to {
     opacity: 0;
     transform: translateX(calc(100% + 3rem)) scale(0.9);

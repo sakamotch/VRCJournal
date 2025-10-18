@@ -49,33 +49,28 @@ defineProps<Props>();
     border: 1px solid color-mix(in srgb, var(--border-default) 85%, var(--accent-primary-light) 15%);
     box-shadow: 0 8px 32px color-mix(in srgb, var(--accent-primary) 10%, transparent);
     max-width: 500px;
-    animation: fadeInScale 0.5s ease;
+    animation: fade-in-scale 0.5s ease;
 
     h2 {
-      margin: 0 0 1rem 0;
-      background: linear-gradient(135deg,
-        var(--text-primary) 0%,
-        color-mix(in srgb, var(--text-primary) 80%, var(--accent-primary-light) 20%) 100%
-      );
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+      margin: 0 0 1rem;
+      color: var(--text-primary);
       font-size: 2rem;
     }
 
     p {
-      margin: 0 0 1.5rem 0;
+      margin: 0 0 1.5rem;
       color: var(--text-secondary);
       line-height: 1.6;
     }
   }
 }
 
-@keyframes fadeInScale {
+@keyframes fade-in-scale {
   from {
     opacity: 0;
     transform: scale(0.95);
   }
+
   to {
     opacity: 1;
     transform: scale(1);

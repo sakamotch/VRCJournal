@@ -178,29 +178,31 @@ const emit = defineEmits<Emits>();
 }
 
 .modal-enter-active .modal-panel {
-  animation: slideUp 0.3s ease;
+  animation: slide-up 0.3s ease;
 }
 
 .modal-leave-active .modal-panel {
-  animation: slideDown 0.2s ease;
+  animation: slide-down 0.2s ease;
 }
 
-@keyframes slideUp {
+@keyframes slide-up {
   from {
     transform: translateY(20px);
     opacity: 0;
   }
+
   to {
     transform: translateY(0);
     opacity: 1;
   }
 }
 
-@keyframes slideDown {
+@keyframes slide-down {
   from {
     transform: translateY(0);
     opacity: 1;
   }
+
   to {
     transform: translateY(20px);
     opacity: 0;

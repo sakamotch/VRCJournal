@@ -132,7 +132,7 @@ function formatDateHeader(date: dayjs.Dayjs): string {
     overflow-y: auto;
 
     h2 {
-      margin: 0 0 1rem 0;
+      margin: 0 0 1rem;
       font-size: 1.3rem;
       color: var(--text-primary);
     }
@@ -160,14 +160,7 @@ function formatDateHeader(date: dayjs.Dayjs): string {
   &-header {
     font-size: 0.875rem;
     font-weight: 600;
-    background: linear-gradient(90deg,
-      transparent 0%,
-      color-mix(in srgb, var(--text-secondary) 100%, transparent 0%) 50%,
-      transparent 100%
-    );
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: var(--text-secondary);
     display: flex;
     align-items: center;
     gap: 1rem;

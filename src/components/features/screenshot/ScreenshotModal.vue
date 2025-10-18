@@ -75,18 +75,18 @@ const emit = defineEmits<Emits>();
 
   /* Transition classes */
   &-enter-active {
-    animation: modalFadeIn 0.2s ease;
+    animation: modal-fade-in 0.2s ease;
 
     .modal-content {
-      animation: modalZoomIn 0.3s ease;
+      animation: modal-zoom-in 0.3s ease;
     }
   }
 
   &-leave-active {
-    animation: modalFadeOut 0.2s ease;
+    animation: modal-fade-out 0.2s ease;
 
     .modal-content {
-      animation: modalZoomOut 0.2s ease;
+      animation: modal-zoom-out 0.2s ease;
     }
   }
 
@@ -131,40 +131,44 @@ const emit = defineEmits<Emits>();
   }
 }
 
-@keyframes modalFadeIn {
+@keyframes modal-fade-in {
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
 }
 
-@keyframes modalFadeOut {
+@keyframes modal-fade-out {
   from {
     opacity: 1;
   }
+
   to {
     opacity: 0;
   }
 }
 
-@keyframes modalZoomIn {
+@keyframes modal-zoom-in {
   from {
     transform: scale(0.95);
     opacity: 0;
   }
+
   to {
     transform: scale(1);
     opacity: 1;
   }
 }
 
-@keyframes modalZoomOut {
+@keyframes modal-zoom-out {
   from {
     transform: scale(1);
     opacity: 1;
   }
+
   to {
     transform: scale(0.95);
     opacity: 0;
