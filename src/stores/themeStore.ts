@@ -1,10 +1,9 @@
 import { ref, watch } from 'vue';
+import { STORAGE_KEYS } from './constants';
 
 export type Theme = 'light' | 'dark' | 'cyberpunk' | 'pastel' | 'aurora' | 'system';
 
-const THEME_STORAGE_KEY = 'VRCJournal-theme';
-
-const theme = ref<Theme>((localStorage.getItem(THEME_STORAGE_KEY) as Theme) || 'system');
+const theme = ref<Theme>((localStorage.getItem(STORAGE_KEYS.THEME) as Theme) || 'system');
 
 function applyTheme(newTheme: Theme) {
   const root = document.documentElement;
@@ -17,7 +16,7 @@ function applyTheme(newTheme: Theme) {
 }
 
 watch(theme, (newTheme) => {
-  localStorage.setItem(THEME_STORAGE_KEY, newTheme);
+  localStorage.setItem(STORAGE_KEYS.THEME, newTheme);
   applyTheme(newTheme);
 }, { immediate: true });
 

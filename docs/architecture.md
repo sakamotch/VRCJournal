@@ -565,31 +565,57 @@ ProcessedEvent::PlayerAvatarChanged {
 VRCJournal/
 ├── src/                          # フロントエンド (Vue)
 │   ├── components/
-│   │   ├── common/               # 共通コンポーネント
+│   │   ├── common/               # 共通UIコンポーネント
 │   │   │   ├── Button.vue
 │   │   │   ├── Card.vue
 │   │   │   ├── Modal.vue
 │   │   │   ├── Dropdown.vue
 │   │   │   └── EmptyState.vue
-│   │   ├── views/                # ビューコンポーネント
+│   │   ├── views/                # ページビューコンポーネント
 │   │   │   ├── InstancesView.vue
 │   │   │   ├── WorldsView.vue
 │   │   │   ├── PeopleView.vue
 │   │   │   ├── PhotosView.vue
 │   │   │   └── StatsView.vue
-│   │   ├── Navigation.vue
-│   │   ├── InstanceCard.vue
-│   │   ├── ScreenshotList.vue
-│   │   ├── PlayerList.vue
-│   │   ├── ScreenshotModal.vue
-│   │   ├── Settings.vue
-│   │   ├── ThemeSelector.vue
-│   │   └── NotificationContainer.vue
+│   │   ├── features/             # 機能別コンポーネント
+│   │   │   ├── instance/
+│   │   │   │   └── InstanceCard.vue
+│   │   │   ├── player/
+│   │   │   │   └── PlayerList.vue
+│   │   │   └── screenshot/
+│   │   │       ├── ScreenshotList.vue
+│   │   │       └── ScreenshotModal.vue
+│   │   ├── layout/               # レイアウトコンポーネント
+│   │   │   ├── Navigation.vue
+│   │   │   ├── Sidebar.vue
+│   │   │   └── NotificationContainer.vue
+│   │   └── settings/             # 設定関連コンポーネント
+│   │       ├── Settings.vue
+│   │       ├── ThemeSelector.vue
+│   │       └── LanguageSelector.vue
 │   ├── composables/              # Vue Composables
 │   │   └── useNotifications.ts
-│   ├── styles/
-│   │   └── theme.css             # デザインシステム
-│   ├── types.ts                  # TypeScript型定義
+│   ├── stores/                   # 状態管理
+│   │   └── themeStore.ts
+│   ├── types/                    # TypeScript型定義
+│   │   └── index.ts
+│   ├── utils/                    # ユーティリティ関数
+│   │   ├── dayjs-config.ts
+│   │   └── formatters.ts
+│   ├── i18n/                     # 多言語対応
+│   │   ├── index.ts
+│   │   └── locales/
+│   │       ├── ja.ts
+│   │       └── en.ts
+│   ├── styles/                   # スタイル定義
+│   │   ├── primitives.css
+│   │   ├── theme.css
+│   │   └── themes/
+│   │       ├── light.css
+│   │       ├── dark.css
+│   │       ├── cyberpunk.css
+│   │       ├── aurora.css
+│   │       └── pastel.css
 │   ├── App.vue                   # ルートコンポーネント
 │   └── main.ts                   # エントリーポイント
 │

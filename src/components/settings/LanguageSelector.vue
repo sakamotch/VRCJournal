@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { setLocale, type Locale } from '@/i18n';
+import { useLocale, type Locale } from '@/stores/localeStore';
 
-const { t, locale } = useI18n();
+const { t } = useI18n();
+const { locale, setLocale } = useLocale();
 
 const currentLocale = computed(() => locale.value);
 

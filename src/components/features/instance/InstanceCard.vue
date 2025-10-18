@@ -3,10 +3,10 @@ import { ref, computed } from "vue";
 import { useI18n } from "vue-i18n";
 import dayjs from "dayjs";
 import type { Instance, Player, Screenshot } from "@/types";
-import PlayerList from "./PlayerList.vue";
-import ScreenshotList from "./ScreenshotList.vue";
-import Button from "./common/Button.vue";
-import Card from "./common/Card.vue";
+import PlayerList from "@/components/features/player/PlayerList.vue";
+import ScreenshotList from "@/components/features/screenshot/ScreenshotList.vue";
+import Button from "@/components/common/Button.vue";
+import Card from "@/components/common/Card.vue";
 import { invoke } from "@tauri-apps/api/core";
 import { Calendar, Clock, Users, Camera, ChevronDown, ChevronRight, ExternalLink } from "lucide-vue-next";
 

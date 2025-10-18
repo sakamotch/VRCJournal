@@ -2,7 +2,7 @@
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import type { Instance } from "@/types";
-import InstanceCard from "@/components/InstanceCard.vue";
+import InstanceCard from "@/components/features/instance/InstanceCard.vue";
 import dayjs from "dayjs";
 
 const { t, locale } = useI18n();

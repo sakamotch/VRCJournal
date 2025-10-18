@@ -2,7 +2,7 @@
 import { useI18n } from "vue-i18n";
 import type { Screenshot } from "@/types";
 import { convertFileSrc } from '@tauri-apps/api/core';
-import Button from "./common/Button.vue";
+import Button from "@/components/common/Button.vue";
 import { Folder, Trash2 } from 'lucide-vue-next';
 import dayjs from "dayjs";
 

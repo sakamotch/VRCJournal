@@ -2,7 +2,7 @@
 import { useI18n } from 'vue-i18n';
 import ThemeSelector from './ThemeSelector.vue';
 import LanguageSelector from './LanguageSelector.vue';
-import Modal from './common/Modal.vue';
+import Modal from '@/components/common/Modal.vue';
 
 const { t } = useI18n();
 
