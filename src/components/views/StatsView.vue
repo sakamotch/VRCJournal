@@ -14,5 +14,5 @@ const { t } = useI18n();
   />
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 </style>
