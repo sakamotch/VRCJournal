@@ -3,9 +3,8 @@ import dayjs from "dayjs";
 import { ExternalLink } from "lucide-vue-next";
 import { useI18n } from "vue-i18n";
 
-import type { Instance,Player } from "@/types";
-import { formatPlayerName } from "@/utils/formatters";
-import { isPlayerStayedUntilEnd } from "@/utils/player";
+import type { Instance, Player } from "../types";
+import { formatPlayerName, isPlayerStayedUntilEnd } from "../utils";
 
 const { t, locale } = useI18n();
 

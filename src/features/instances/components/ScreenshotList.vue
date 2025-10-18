@@ -4,8 +4,9 @@ import dayjs from "dayjs";
 import { Folder, Trash2 } from 'lucide-vue-next';
 import { useI18n } from "vue-i18n";
 
-import BaseButton from "@/components/common/BaseButton.vue";
-import type { Screenshot } from "@/types";
+import BaseButton from "@/components/base/BaseButton.vue";
+
+import type { Screenshot } from "../types";
 
 const { t } = useI18n();
 

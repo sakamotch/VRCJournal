@@ -1,8 +1,9 @@
-import { invoke } from '@tauri-apps/api/core';
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 
-import { useNotifications } from './useNotifications';
+import { useNotifications } from '@/composables/useNotifications';
+
+import * as api from '../api';
 
 export function useScreenshot() {
   const { t } = useI18n();
@@ -19,7 +20,7 @@ export function useScreenshot() {
 
   async function openScreenshotDirectory(filePath: string) {
     try {
-      await invoke('open_screenshot_directory', { filePath });
+      await api.openScreenshotDirectory(filePath);
     } catch (err) {
       console.error('Failed to open directory:', err);
       showError(`${t('error.openDirectory')}: ${err}`);

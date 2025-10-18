@@ -1,6 +1,6 @@
 import { ref } from 'vue';
 
-import type { NavigationView } from '@/components/layout/Navigation.vue';
+import type { NavigationView } from '@/components/app/AppNavigation.vue';
 
 export function useAppState() {
   const showSettings = ref(false);

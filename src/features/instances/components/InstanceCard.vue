@@ -1,15 +1,16 @@
 <script setup lang="ts">
-import { invoke } from "@tauri-apps/api/core";
 import dayjs from "dayjs";
 import { Calendar, Camera, ChevronDown, ChevronRight, Clock, ExternalLink,Users } from "lucide-vue-next";
 import { computed,ref } from "vue";
 import { useI18n } from "vue-i18n";
 
-import BaseButton from "@/components/common/BaseButton.vue";
-import BaseCard from "@/components/common/BaseCard.vue";
-import PlayerList from "@/components/features/player/PlayerList.vue";
-import ScreenshotList from "@/components/features/screenshot/ScreenshotList.vue";
-import type { Instance, Player, Screenshot } from "@/types";
+import BaseButton from "@/components/base/BaseButton.vue";
+import BaseCard from "@/components/base/BaseCard.vue";
+
+import * as api from "../api";
+import type { Instance, Player, Screenshot } from "../types";
+import PlayerList from "./PlayerList.vue";
+import ScreenshotList from "./ScreenshotList.vue";
 
 const { t, locale } = useI18n();
 
@@ -76,9 +77,7 @@ async function togglePlayers() {
 
   if (playersExpanded.value && players.value === null) {
     try {
-      const result = await invoke<Player[]>("get_instance_players", {
-        instanceId: props.instance.id,
-      });
+      const result = await api.getInstancePlayers(props.instance.id);
       players.value = result;
     } catch (error) {
       console.error("Failed to load players:", error);
@@ -91,9 +90,7 @@ async function toggleScreenshots() {
 
   if (screenshotsExpanded.value && screenshots.value === null) {
     try {
-      const result = await invoke<Screenshot[]>("get_instance_screenshots", {
-        instanceId: props.instance.id,
-      });
+      const result = await api.getInstanceScreenshots(props.instance.id);
       screenshots.value = result;
     } catch (error) {
       console.error("Failed to load screenshots:", error);

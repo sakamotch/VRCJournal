@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n';
 
-import BaseModal from '@/components/common/BaseModal.vue';
+import BaseModal from '@/components/base/BaseModal.vue';
 
 import SettingsLanguageSelector from './SettingsLanguageSelector.vue';
 import SettingsThemeSelector from './SettingsThemeSelector.vue';

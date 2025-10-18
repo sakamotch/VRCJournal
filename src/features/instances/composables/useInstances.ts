@@ -1,12 +1,12 @@
-import { invoke } from '@tauri-apps/api/core';
 import { storeToRefs } from 'pinia';
 import { ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 
+import { useNotifications } from '@/composables/useNotifications';
 import { useUserStore } from '@/stores/userStore';
-import type { Instance } from '@/types';
 
-import { useNotifications } from './useNotifications';
+import * as api from '../api';
+import type { Instance } from '../types';
 
 export function useInstances() {
   const { t } = useI18n();
@@ -19,10 +19,7 @@ export function useInstances() {
   async function loadInstances(localUserId: number) {
     isLoading.value = true;
     try {
-      const result = await invoke<Instance[]>('get_instances', {
-        localUserId,
-        limit: 100,
-      });
+      const result = await api.getInstances(localUserId);
       instances.value = result;
     } catch (err) {
       console.error('Failed to load instances:', err);
@@ -34,11 +31,7 @@ export function useInstances() {
 
   async function openInviteUrl(instance: Instance) {
     try {
-      const url = await invoke<string>('open_invite_url', {
-        worldId: instance.worldId,
-        instanceId: instance.instanceId,
-      });
-
+      const url = await api.openInviteUrl(instance.worldId, instance.instanceId);
       success(`${t('notification.inviteOpened')}: ${url}`);
     } catch (err) {
       showError(`${t('common.error')}: ${err}`);
@@ -47,10 +40,7 @@ export function useInstances() {
 
   async function openUserPage(userId: string) {
     try {
-      const url = await invoke<string>('open_user_page', {
-        userId: userId,
-      });
-
+      const url = await api.openUserPage(userId);
       success(`${t('notification.userPageOpened')}: ${url}`);
     } catch (err) {
       showError(`${t('common.error')}: ${err}`);

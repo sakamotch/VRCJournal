@@ -4,12 +4,13 @@ import { storeToRefs } from "pinia";
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 
-import InstanceCard from "@/components/features/instance/InstanceCard.vue";
-import ScreenshotModal from "@/components/features/screenshot/ScreenshotModal.vue";
 import { useBackendEvents } from "@/composables/useBackendEvents";
-import { useInstances } from "@/composables/useInstances";
-import { useScreenshot } from "@/composables/useScreenshot";
 import { useUserStore } from "@/stores/userStore";
+
+import InstanceCard from "./components/InstanceCard.vue";
+import ScreenshotModal from "./components/ScreenshotModal.vue";
+import { useInstances } from "./composables/useInstances";
+import { useScreenshot } from "./composables/useScreenshot";
 
 const { t, locale } = useI18n();
 
