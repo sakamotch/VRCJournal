@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n';
-import { useTheme } from '@/stores/themeStore';
+import { useThemeStore } from '@/stores/themeStore';
+import { storeToRefs } from 'pinia';
 import { Sun, Moon, Monitor, Zap, Heart, Sparkles } from 'lucide-vue-next';
 
 const { t } = useI18n();
-const { theme, setTheme } = useTheme();
+const themeStore = useThemeStore();
+const { theme } = storeToRefs(themeStore);
+const { setTheme } = themeStore;
 </script>
 
 <template>

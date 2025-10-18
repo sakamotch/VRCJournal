@@ -1,3 +1,4 @@
+import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import { locale as getSystemLocale } from '@tauri-apps/plugin-os';
 import { STORAGE_KEYS } from './constants';
@@ -15,26 +16,34 @@ async function detectSystemLocale(): Promise<Locale> {
 
 function getSavedLocale(): Locale | null {
   const saved = localStorage.getItem(STORAGE_KEYS.LOCALE);
-  return saved === 'ja' || saved === 'en' ? saved : null;
+  return (saved === 'ja' || saved === 'en') ? saved : null;
 }
 
 async function getInitialLocale(): Promise<Locale> {
   return getSavedLocale() ?? await detectSystemLocale();
 }
 
-const locale = ref<Locale>('ja');
+export const useLocaleStore = defineStore('locale', () => {
+  // State
+  const locale = ref<Locale>('ja');
 
-export function useLocale() {
+  // Actions
+  function setLocale(newLocale: Locale) {
+    locale.value = newLocale;
+    localStorage.setItem(STORAGE_KEYS.LOCALE, newLocale);
+  }
+
+  async function initLocale() {
+    const initialLocale = await getInitialLocale();
+    locale.value = initialLocale;
+    localStorage.setItem(STORAGE_KEYS.LOCALE, initialLocale);
+  }
+
   return {
+    // State
     locale,
-    setLocale: (newLocale: Locale) => {
-      locale.value = newLocale;
-      localStorage.setItem(STORAGE_KEYS.LOCALE, newLocale);
-    },
-    initLocale: async () => {
-      const initialLocale = await getInitialLocale();
-      locale.value = initialLocale;
-      localStorage.setItem(STORAGE_KEYS.LOCALE, initialLocale);
-    },
+    // Actions
+    setLocale,
+    initLocale,
   };
-}
+});

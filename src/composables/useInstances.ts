@@ -3,12 +3,14 @@ import { invoke } from '@tauri-apps/api/core';
 import { useI18n } from 'vue-i18n';
 import type { Instance } from '@/types';
 import { useNotifications } from './useNotifications';
-import { useUserSelection } from '@/stores/userStore';
+import { useUserStore } from '@/stores/userStore';
+import { storeToRefs } from 'pinia';
 
 export function useInstances() {
   const { t } = useI18n();
   const { success, error: showError } = useNotifications();
-  const { selectedUserId } = useUserSelection();
+  const userStore = useUserStore();
+  const { selectedUserId } = storeToRefs(userStore);
   const instances = ref<Instance[]>([]);
   const isLoading = ref(false);
 

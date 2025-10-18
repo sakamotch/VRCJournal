@@ -6,16 +6,18 @@ import NotificationContainer from "@/components/layout/NotificationContainer.vue
 import UserSelector from "@/components/layout/UserSelector.vue";
 import IconButton from "@/components/common/IconButton.vue";
 import { Settings as SettingsIcon } from "lucide-vue-next";
-import { useUsers } from "@/composables/useUsers";
-import { useUserSelection } from "@/stores/userStore";
+import { useUserStore } from "@/stores/userStore";
 import { useBackendEvents } from "@/composables/useBackendEvents";
 import { useAppState } from "@/composables/useAppState";
 import { useViewRouter } from "@/composables/useViewRouter";
+import { storeToRefs } from "pinia";
 
 const { t } = useI18n();
 
-const { localUsers, loadUsers } = useUsers();
-const { selectedUserId, selectUser } = useUserSelection();
+const userStore = useUserStore();
+const { localUsers, selectedUserId } = storeToRefs(userStore);
+const { loadUsers, selectUser } = userStore;
+
 const { showSettings, currentView, navigateToView } = useAppState();
 const { currentComponent } = useViewRouter(currentView);
 

@@ -1,3 +1,4 @@
+import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import { STORAGE_KEYS } from './constants';
 import type { Theme } from '@/types';
@@ -24,20 +25,28 @@ function applyTheme(newTheme: Theme) {
   }
 }
 
-const theme = ref<Theme>('system');
+export const useThemeStore = defineStore('theme', () => {
+  // State
+  const theme = ref<Theme>('system');
 
-export function useTheme() {
+  // Actions
+  function setTheme(newTheme: Theme) {
+    theme.value = newTheme;
+    localStorage.setItem(STORAGE_KEYS.THEME, newTheme);
+    applyTheme(newTheme);
+  }
+
+  function initTheme() {
+    const savedTheme = getSavedTheme();
+    theme.value = savedTheme;
+    applyTheme(savedTheme);
+  }
+
   return {
+    // State
     theme,
-    setTheme: (newTheme: Theme) => {
-      theme.value = newTheme;
-      localStorage.setItem(STORAGE_KEYS.THEME, newTheme);
-      applyTheme(newTheme);
-    },
-    initTheme: () => {
-      const savedTheme = getSavedTheme();
-      theme.value = savedTheme;
-      applyTheme(savedTheme);
-    }
+    // Actions
+    setTheme,
+    initTheme,
   };
-}
+});

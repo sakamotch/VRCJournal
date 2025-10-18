@@ -1,39 +1,46 @@
 import { createApp, watch } from "vue";
+import { createPinia } from "pinia";
 import App from "./App.vue";
 import "./styles/theme.scss";
 import { configureDayjs, setDayjsLocale } from "./utils/dayjs-config";
 import { i18n, setI18nLocale } from "./i18n";
-import { useTheme } from "./stores/themeStore";
-import { useLocale } from "./stores/localeStore";
-import { useUserSelection } from "./stores/userStore";
+import { useThemeStore } from "./stores/themeStore";
+import { useLocaleStore } from "./stores/localeStore";
+import { useUserStore } from "./stores/userStore";
+import { storeToRefs } from "pinia";
 
 async function initializeApp() {
   try {
     // Day.js プラグイン設定
     configureDayjs();
 
-    // テーマ初期化
-    const { initTheme } = useTheme();
-    initTheme();
+    // Vue アプリ作成
+    const app = createApp(App);
 
-    // ロケール初期化
-    const { locale, initLocale } = useLocale();
-    await initLocale();
+    // プラグイン登録
+    const pinia = createPinia();
+    app.use(pinia);
+    app.use(i18n);
 
-    // ユーザー選択初期化
-    const { initSelectedUser } = useUserSelection();
-    initSelectedUser();
+    // ストア初期化
+    const themeStore = useThemeStore();
+    themeStore.initTheme();
+
+    const localeStore = useLocaleStore();
+    await localeStore.initLocale();
+
+    const userStore = useUserStore();
+    userStore.initSelectedUser();
 
     // ロケール変更時の副作用
+    const { locale } = storeToRefs(localeStore);
     watch(locale, (newLocale) => {
       setI18nLocale(newLocale);
       setDayjsLocale(newLocale);
       document.documentElement.lang = newLocale;
     }, { immediate: true });
 
-    // Vue アプリ作成とマウント
-    const app = createApp(App);
-    app.use(i18n);
+    // Vue アプリマウント
     app.mount("#app");
   } catch (error) {
     console.error('Failed to initialize app:', error);

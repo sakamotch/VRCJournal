@@ -6,12 +6,14 @@ import ScreenshotModal from "@/components/features/screenshot/ScreenshotModal.vu
 import { useInstances } from "@/composables/useInstances";
 import { useScreenshot } from "@/composables/useScreenshot";
 import { useBackendEvents } from "@/composables/useBackendEvents";
-import { useUserSelection } from "@/stores/userStore";
+import { useUserStore } from "@/stores/userStore";
+import { storeToRefs } from "pinia";
 import dayjs from "dayjs";
 
 const { t, locale } = useI18n();
 
-const { selectedUserId } = useUserSelection();
+const userStore = useUserStore();
+const { selectedUserId } = storeToRefs(userStore);
 const {
   instances,
   isLoading,
