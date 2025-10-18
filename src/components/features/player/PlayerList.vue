@@ -38,14 +38,16 @@ function formatPlayerTime(dateStr: string): string {
         :class="{ 'player-stayed': isPlayerStayedUntilEnd(player, instance) }"
         @click="emit('openUserPage', player.userId)"
       >
-        <div class="player-info">
-          <span class="player-name">{{ formatPlayerName(player) }}</span>
-          <ExternalLink :size="14" class="player-icon" />
-        </div>
-        <div class="player-times">
-          <span class="player-time">{{ t('instance.joined') }}: {{ formatPlayerTime(player.joinedAt) }}</span>
-          <span class="player-time" v-if="player.leftAt">{{ t('instance.left') }}: {{ formatPlayerTime(player.leftAt) }}</span>
-          <span class="player-time player-time-active" v-else>{{ t('instance.inInstance') }}</span>
+        <div class="player-item-content">
+          <div class="player-info">
+            <span class="player-name">{{ formatPlayerName(player) }}</span>
+            <ExternalLink :size="14" class="player-icon" />
+          </div>
+          <div class="player-times">
+            <span class="player-time">{{ t('instance.joined') }}: {{ formatPlayerTime(player.joinedAt) }}</span>
+            <span class="player-time" v-if="player.leftAt">{{ t('instance.left') }}: {{ formatPlayerTime(player.leftAt) }}</span>
+            <span class="player-time player-time-active" v-else>{{ t('instance.inInstance') }}</span>
+          </div>
         </div>
       </div>
     </div>
@@ -78,35 +80,15 @@ function formatPlayerTime(dateStr: string): string {
   }
 
   &-item {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-    padding: 0.5rem 0.75rem;
-    background: linear-gradient(135deg,
-      var(--player-item-bg) 0%,
-      color-mix(in srgb, var(--player-item-bg) 97%, var(--accent-primary) 3%) 100%
-    );
     border-radius: 6px;
-    transition: all 0.3s ease;
     cursor: pointer;
-    position: relative;
-    overflow: hidden;
-    border: 1px solid transparent;
 
-    &::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(135deg,
-        color-mix(in srgb, var(--bg-hover) 92%, var(--accent-primary-light) 8%) 0%,
-        color-mix(in srgb, var(--bg-hover) 96%, var(--accent-secondary-light) 4%) 100%
-      );
-      opacity: 0;
-      transition: opacity 0.3s ease;
-      z-index: 0;
+    &.player-stayed {
+      padding: 1px 1px 1px 3px;
+      background: linear-gradient(180deg, var(--interactive-default) 0%, var(--accent-secondary) 100%);
     }
 
-    &:hover {
+    &:hover &-content {
       border-color: color-mix(in srgb, var(--border-default) 80%, var(--accent-primary-light) 20%);
 
       .player-name {
@@ -122,15 +104,44 @@ function formatPlayerTime(dateStr: string): string {
       }
     }
 
-    & > * {
+    &-content {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+      padding: 0.5rem 0.75rem;
+      background: linear-gradient(135deg,
+        var(--player-item-bg) 0%,
+        color-mix(in srgb, var(--player-item-bg) 97%, var(--accent-primary) 3%) 100%
+      );
+      border-radius: 6px;
+      transition: all 0.3s ease;
       position: relative;
-      z-index: 1;
+      overflow: hidden;
+      border: 1px solid transparent;
+      z-index: 2;
+
+      &::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg,
+          color-mix(in srgb, var(--bg-hover) 92%, var(--accent-primary-light) 8%) 0%,
+          color-mix(in srgb, var(--bg-hover) 96%, var(--accent-secondary-light) 4%) 100%
+        );
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        z-index: 0;
+      }
+
+      & > * {
+        position: relative;
+        z-index: 1;
+      }
     }
 
-    &.player-stayed {
-      border-left: 3px solid transparent;
-      border-image: linear-gradient(180deg, var(--interactive-default) 0%, var(--accent-secondary) 100%) 1;
-      padding-left: calc(0.75rem - 2px); /* ボーダー分を調整 */
+    &.player-stayed &-content {
+      padding-left: calc(0.75rem - 3px);
+      border: 0px;
       background: linear-gradient(135deg,
         color-mix(in srgb, var(--player-item-bg) 95%, var(--interactive-default) 5%) 0%,
         color-mix(in srgb, var(--player-item-bg) 97%, var(--accent-secondary) 3%) 100%
