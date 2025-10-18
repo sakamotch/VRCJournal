@@ -125,11 +125,26 @@ let unlistenFn: UnlistenFn | null = null;
 let unlistenReadyFn: UnlistenFn | null = null;
 
 onMounted(async () => {
+  // バックエンドが既に準備完了かどうかを確認
+  try {
+    const ready = await invoke<boolean>("is_backend_ready");
+    if (ready) {
+      // 既に準備完了の場合（F5リロードなど）
+      isBackendReady.value = true;
+      await loadUsers();
+      await loadSessions();
+    }
+  } catch (err) {
+    console.error("Failed to check backend ready status:", err);
+  }
+
   // バックエンドの初期化完了を待ってからデータを取得
   unlistenReadyFn = await listen("backend-ready", async () => {
-    isBackendReady.value = true;
-    await loadUsers();
-    await loadSessions();
+    if (!isBackendReady.value) {
+      isBackendReady.value = true;
+      await loadUsers();
+      await loadSessions();
+    }
   });
 
   unlistenFn = await listen<any>("log-event", (event) => {

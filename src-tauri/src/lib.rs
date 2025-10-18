@@ -13,9 +13,16 @@ use event_processor::EventProcessor;
 pub struct AppState {
     db: Arc<Mutex<db::Database>>,
     event_processor: Arc<Mutex<EventProcessor>>,
+    backend_ready: Arc<Mutex<bool>>,
 }
 
 // Tauri Commands
+
+/// バックエンドの準備完了状態を確認
+#[tauri::command]
+async fn is_backend_ready(state: tauri::State<'_, AppState>) -> Result<bool, String> {
+    Ok(*state.backend_ready.lock().unwrap())
+}
 
 /// VRChatログディレクトリのパスを取得
 #[tauri::command]
@@ -336,6 +343,7 @@ pub fn run() {
             let app_state = AppState {
                 db: Arc::new(Mutex::new(database)),
                 event_processor: Arc::new(Mutex::new(EventProcessor::new())),
+                backend_ready: Arc::new(Mutex::new(false)),
             };
 
             app.manage(app_state.clone());
@@ -415,6 +423,9 @@ pub fn run() {
                                     return;
                                 }
 
+                                // バックエンド準備完了フラグを設定
+                                *app_state.backend_ready.lock().unwrap() = true;
+
                                 // フロントエンドに初期化完了を通知
                                 if let Err(e) = app_handle.emit("backend-ready", ()) {
                                     eprintln!("Failed to emit backend-ready: {}", e);
@@ -479,6 +490,7 @@ pub fn run() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
+            is_backend_ready,
             get_log_path,
             open_invite_url,
             get_local_users,
