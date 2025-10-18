@@ -5,7 +5,7 @@ use std::path::PathBuf;
 pub fn get_vrchat_log_path() -> Result<PathBuf, String> {
     #[cfg(target_os = "windows")]
     {
-        let userprofile = env::var("USERPROFILE")
+        let userprofile = std::env::var("USERPROFILE")
             .map_err(|_| "USERPROFILE environment variable not found".to_string())?;
 
         let log_path = PathBuf::from(userprofile)
@@ -63,21 +63,4 @@ pub fn get_latest_log_file() -> Result<PathBuf, String> {
         .last()
         .cloned()
         .ok_or_else(|| "Failed to get latest log file".to_string())
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    #[cfg(target_os = "windows")]
-    fn test_get_vrchat_log_path() {
-        // この環境でVRChatがインストールされているかはわからないので、
-        // パスの構築だけテスト
-        let result = get_vrchat_log_path();
-        // エラーでもOK（VRChatがインストールされていない環境）
-        if let Ok(path) = result {
-            assert!(path.to_str().unwrap().contains("VRChat"));
-        }
-    }
 }

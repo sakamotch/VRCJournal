@@ -7,7 +7,6 @@ pub struct VRChatLogParser {
     joining_regex: Regex,
     entering_room_regex: Regex,
     player_joined_regex: Regex,
-    player_left_regex: Regex,
     avatar_changed_regex: Regex,
     screenshot_regex: Regex,
     leaving_instance_regex: Regex,
@@ -34,11 +33,6 @@ impl VRChatLogParser {
             // 2025.10.13 11:02:36 Debug      -  [Behaviour] OnPlayerJoined DisplayName (usr_xxx)
             player_joined_regex: Regex::new(
                 r"(\d{4}\.\d{2}\.\d{2} \d{2}:\d{2}:\d{2}) .* \[Behaviour\] OnPlayerJoined (.+?) \((usr_[a-f0-9\-]+)\)"
-            ).unwrap(),
-
-            // 2025.10.13 10:24:55 Debug      -  [Behaviour] OnPlayerLeft DisplayName (usr_xxx)
-            player_left_regex: Regex::new(
-                r"(\d{4}\.\d{2}\.\d{2} \d{2}:\d{2}:\d{2}) .* \[Behaviour\] OnPlayerLeft(?:Room)? (.+?) \((usr_[a-f0-9\-]+)\)"
             ).unwrap(),
 
             // 2025.10.13 11:02:36 Debug      -  [Behaviour] Switching DisplayName to avatar AvatarName
@@ -217,46 +211,6 @@ mod tests {
     }
 
     #[test]
-    fn test_parse_player_left() {
-        let parser = VRChatLogParser::new();
-        let line = "2025.10.13 10:24:55 Debug      -  [Behaviour] OnPlayerLeft TestPlayer (usr_12345678-abcd-ef01-2345-6789abcdef01)";
-
-        let event = parser.parse_line(line).expect("Failed to parse");
-
-        match event {
-            LogEvent::PlayerLeft {
-                display_name,
-                user_id,
-                ..
-            } => {
-                assert_eq!(display_name, "TestPlayer");
-                assert_eq!(user_id, "usr_12345678-abcd-ef01-2345-6789abcdef01");
-            }
-            _ => panic!("Expected PlayerLeft event"),
-        }
-    }
-
-    #[test]
-    fn test_parse_player_left_room() {
-        let parser = VRChatLogParser::new();
-        let line = "2025.10.13 10:24:55 Debug      -  [Behaviour] OnPlayerLeftRoom TestPlayer (usr_12345678-abcd-ef01-2345-6789abcdef01)";
-
-        let event = parser.parse_line(line).expect("Failed to parse");
-
-        match event {
-            LogEvent::PlayerLeft {
-                display_name,
-                user_id,
-                ..
-            } => {
-                assert_eq!(display_name, "TestPlayer");
-                assert_eq!(user_id, "usr_12345678-abcd-ef01-2345-6789abcdef01");
-            }
-            _ => panic!("Expected PlayerLeft event"),
-        }
-    }
-
-    #[test]
     fn test_parse_avatar_changed() {
         let parser = VRChatLogParser::new();
         let line =
@@ -274,6 +228,58 @@ mod tests {
                 assert_eq!(avatar_name, "TestAvatar");
             }
             _ => panic!("Expected AvatarChanged event"),
+        }
+    }
+
+    #[test]
+    fn test_parse_entering_room() {
+        let parser = VRChatLogParser::new();
+        let line =
+            "2025.10.13 10:55:55 Debug      -  [Behaviour] Joining or Creating Room: VRChat Home";
+
+        let event = parser.parse_line(line).expect("Failed to parse");
+
+        match event {
+            LogEvent::EnteringRoom { world_name, .. } => {
+                assert_eq!(world_name, "VRChat Home");
+            }
+            _ => panic!("Expected EnteringRoom event"),
+        }
+    }
+
+    #[test]
+    fn test_parse_screenshot_taken() {
+        let parser = VRChatLogParser::new();
+        let line = "2025.10.15 15:48:41 Debug      -  [VRC Camera] Took screenshot to: D:\\VRChat\\Screenshots\\VRChat_2025-10-15_15-48-41.png";
+
+        let event = parser.parse_line(line).expect("Failed to parse");
+
+        match event {
+            LogEvent::ScreenshotTaken { file_path, .. } => {
+                assert_eq!(
+                    file_path,
+                    "D:\\VRChat\\Screenshots\\VRChat_2025-10-15_15-48-41.png"
+                );
+            }
+            _ => panic!("Expected ScreenshotTaken event"),
+        }
+    }
+
+    #[test]
+    fn test_parse_destroying_player() {
+        let parser = VRChatLogParser::new();
+        let line =
+            "2025.10.15 15:49:00 Debug      -  [Behaviour] Destroying TestPlayer";
+
+        let event = parser.parse_line(line).expect("Failed to parse");
+
+        match event {
+            LogEvent::DestroyingPlayer {
+                display_name, ..
+            } => {
+                assert_eq!(display_name, "TestPlayer");
+            }
+            _ => panic!("Expected DestroyingPlayer event"),
         }
     }
 
