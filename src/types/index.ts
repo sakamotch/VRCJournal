@@ -37,3 +37,7 @@ export interface Screenshot {
   takenAt: string;
   exists: boolean;
 }
+
+export type Locale = 'ja' | 'en';
+
+export type Theme = 'light' | 'dark' | 'cyberpunk' | 'pastel' | 'aurora' | 'system';

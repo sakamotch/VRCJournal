@@ -4,7 +4,7 @@ import "dayjs/locale/en";
 import relativeTime from "dayjs/plugin/relativeTime";
 import duration from "dayjs/plugin/duration";
 import localizedFormat from "dayjs/plugin/localizedFormat";
-import type { Locale } from "@/i18n";
+import type { Locale } from "@/types";
 
 export function configureDayjs() {
   dayjs.extend(relativeTime);
