@@ -22,13 +22,15 @@ const getIcon = (type: string) => {
         :key="notification.id"
         :class="['notification', `notification-${notification.type}`]"
       >
-        <div class="notification-icon">
-          <component :is="getIcon(notification.type)" :size="20" />
+        <div class="notification-content">
+          <div class="notification-icon">
+            <component :is="getIcon(notification.type)" :size="20" />
+          </div>
+          <div class="notification-message">{{ notification.message }}</div>
+          <button class="notification-close" @click="remove(notification.id)">
+            <X :size="16" />
+          </button>
         </div>
-        <div class="notification-message">{{ notification.message }}</div>
-        <button class="notification-close" @click="remove(notification.id)">
-          <X :size="16" />
-        </button>
       </div>
     </TransitionGroup>
   </div>
@@ -49,47 +51,41 @@ const getIcon = (type: string) => {
     width: calc(100vw - 3rem);
   }
 
-  display: flex;
-  align-items: center;
-  gap: 0.875rem;
-  padding: 1rem 1.25rem;
-  background: linear-gradient(135deg,
-    color-mix(in srgb, var(--bg-elevated) 96%, var(--accent-primary) 4%) 0%,
-    var(--bg-elevated) 100%
-  );
-  border: 1px solid var(--border-default);
   border-radius: 12px;
-  box-shadow:
-    0 12px 32px -8px var(--scrim-medium),
-    0 4px 12px -2px var(--scrim-light),
-    0 0 0 1px color-mix(in srgb, var(--border-default) 70%, var(--notification-color) 30%);
-  backdrop-filter: blur(12px) saturate(150%);
   pointer-events: auto;
-  position: relative;
-  overflow: hidden;
+  padding: 1px 1px 1px 3px; /* ボーダーの太さ */
+  background: var(--notification-color);
 
-  &::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 3px;
-    background: var(--notification-color);
-    border-radius: 12px 0 0 12px;
-    pointer-events: none;
-  }
-
-  &::after {
-    content: '';
-    position: absolute;
-    inset: 0;
+  &-content {
+    display: flex;
+    align-items: center;
+    gap: 0.875rem;
+    padding: 1rem 1.25rem 1rem calc(1.25rem - 2px); /* 左ボーダーが2px太い分を引く */
     background: linear-gradient(135deg,
-      color-mix(in srgb, var(--notification-color) 8%, transparent 92%) 0%,
-      transparent 100%
+      color-mix(in srgb, var(--bg-elevated) 96%, var(--accent-primary) 4%) 0%,
+      var(--bg-elevated) 100%
     );
-    pointer-events: none;
+    border: 1px solid var(--border-default);
     border-radius: 12px;
+    box-shadow:
+      0 12px 32px -8px var(--scrim-medium),
+      0 4px 12px -2px var(--scrim-light),
+      0 0 0 1px color-mix(in srgb, var(--border-default) 70%, var(--notification-color) 30%);
+    backdrop-filter: blur(12px) saturate(150%);
+    position: relative;
+    overflow: hidden;
+
+    &::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg,
+        color-mix(in srgb, var(--notification-color) 8%, transparent 92%) 0%,
+        transparent 100%
+      );
+      pointer-events: none;
+      border-radius: 12px;
+    }
   }
 
   &-icon {
