@@ -76,10 +76,11 @@ async fn get_local_users(state: tauri::State<'_, AppState>) -> Result<serde_json
 }
 
 /// インスタンス一覧を取得
+/// local_user_id: 0 = 全アカウント, 1以上 = 特定のアカウント
 #[tauri::command]
 async fn get_instances(
     state: tauri::State<'_, AppState>,
-    local_user_id: Option<i64>,
+    local_user_id: i64,
     limit: Option<i64>,
 ) -> Result<serde_json::Value, String> {
     let db = state.db.lock().unwrap();
@@ -87,7 +88,7 @@ async fn get_instances(
 
     let limit = limit.unwrap_or(50);
 
-    let query = if let Some(player_id) = local_user_id {
+    let query = if local_user_id > 0 {
         format!(
             "SELECT i.id, i.player_id, p.display_name as user_name, i.started_at, i.ended_at,
                     i.world_id, i.world_name, i.instance_id, i.status,
@@ -98,7 +99,7 @@ async fn get_instances(
              WHERE i.player_id = {} AND p.is_local = 1
              ORDER BY i.started_at DESC
              LIMIT {}",
-            player_id, limit
+            local_user_id, limit
         )
     } else {
         format!(

@@ -185,12 +185,32 @@ async function toggleScreenshots() {
   </Card>
 </template>
 
-<style scoped>
-.instance-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  margin-bottom: 0.5rem;
+<style scoped lang="scss">
+.instance {
+  &-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 0.5rem;
+  }
+
+  &-info {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    font-size: 0.9rem;
+    color: var(--text-tertiary);
+  }
+
+  &-details {
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--border-subtle);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+  }
 }
 
 .world-name {
@@ -205,14 +225,6 @@ async function toggleScreenshots() {
   color: var(--text-secondary);
   white-space: nowrap;
   margin-left: 1rem;
-}
-
-.instance-info {
-  display: flex;
-  gap: 1rem;
-  flex-wrap: wrap;
-  font-size: 0.9rem;
-  color: var(--text-tertiary);
 }
 
 .info-item {
@@ -242,10 +254,10 @@ async function toggleScreenshots() {
   cursor: pointer;
   user-select: none;
   transition: color 0.2s;
-}
 
-.clickable:hover {
-  color: var(--text-primary);
+  &:hover {
+    color: var(--text-primary);
+  }
 }
 
 .loading {
@@ -253,16 +265,6 @@ async function toggleScreenshots() {
   padding: 1rem;
   color: var(--text-tertiary);
   font-size: 0.9rem;
-}
-
-.instance-details {
-  margin-top: 0.5rem;
-  padding-top: 0.5rem;
-  border-top: 1px solid var(--border-subtle);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 1rem;
 }
 
 .detail-item {

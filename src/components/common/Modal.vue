@@ -37,58 +37,74 @@ const emit = defineEmits<Emits>();
   </Teleport>
 </template>
 
-<style scoped>
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: radial-gradient(circle at center,
-    color-mix(in srgb, var(--bg-overlay) 100%, transparent 0%) 0%,
-    color-mix(in srgb, var(--bg-overlay) 95%, var(--interactive-subtle) 5%) 100%
-  );
-  backdrop-filter: blur(4px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
+<style scoped lang="scss">
+.modal {
+  &-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: radial-gradient(circle at center,
+      color-mix(in srgb, var(--bg-overlay) 100%, transparent 0%) 0%,
+      color-mix(in srgb, var(--bg-overlay) 95%, var(--interactive-subtle) 5%) 100%
+    );
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+  }
 
-.modal-panel {
-  width: 90%;
-  max-height: 80vh;
-  background: linear-gradient(135deg,
-    var(--bg-surface) 0%,
-    color-mix(in srgb, var(--bg-surface) 98%, var(--accent-primary) 2%) 100%
-  );
-  border-radius: 16px;
-  box-shadow: 0 20px 60px var(--scrim-strong),
-              0 0 0 1px color-mix(in srgb, var(--border-default) 80%, var(--accent-primary-light) 20%);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
+  &-panel {
+    width: 90%;
+    max-height: 80vh;
+    background: linear-gradient(135deg,
+      var(--bg-surface) 0%,
+      color-mix(in srgb, var(--bg-surface) 98%, var(--accent-primary) 2%) 100%
+    );
+    border-radius: 16px;
+    box-shadow: 0 20px 60px var(--scrim-strong),
+                0 0 0 1px color-mix(in srgb, var(--border-default) 80%, var(--accent-primary-light) 20%);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
 
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1.5rem;
-  border-bottom: 2px solid transparent;
-  border-image: linear-gradient(90deg,
-    transparent 0%,
-    color-mix(in srgb, var(--border-default) 70%, var(--accent-primary-light) 30%) 30%,
-    color-mix(in srgb, var(--border-default) 50%, var(--accent-secondary-light) 50%) 50%,
-    color-mix(in srgb, var(--border-default) 70%, var(--accent-primary-light) 30%) 70%,
-    transparent 100%
-  ) 1;
-}
+  &-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    border-bottom: 2px solid transparent;
+    border-image: linear-gradient(90deg,
+      transparent 0%,
+      color-mix(in srgb, var(--border-default) 70%, var(--accent-primary-light) 30%) 30%,
+      color-mix(in srgb, var(--border-default) 50%, var(--accent-secondary-light) 50%) 50%,
+      color-mix(in srgb, var(--border-default) 70%, var(--accent-primary-light) 30%) 70%,
+      transparent 100%
+    ) 1;
 
-.modal-header h2 {
-  margin: 0;
-  font-size: 1.25rem;
-  color: var(--text-primary);
+    h2 {
+      margin: 0;
+      font-size: 1.25rem;
+      color: var(--text-primary);
+    }
+  }
+
+  &-content {
+    padding: 1.5rem;
+    overflow-y: auto;
+    flex: 1;
+  }
+
+  &-footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--border-subtle);
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+  }
 }
 
 .close-button {
@@ -107,41 +123,27 @@ const emit = defineEmits<Emits>();
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
-}
 
-.close-button::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg,
-    color-mix(in srgb, var(--bg-hover) 90%, var(--feedback-error-light) 10%) 0%,
-    color-mix(in srgb, var(--bg-hover) 95%, var(--feedback-error-dark) 5%) 100%
-  );
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  border-radius: 8px;
-}
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg,
+      color-mix(in srgb, var(--bg-hover) 90%, var(--feedback-error-light) 10%) 0%,
+      color-mix(in srgb, var(--bg-hover) 95%, var(--feedback-error-dark) 5%) 100%
+    );
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    border-radius: 8px;
+  }
 
-.close-button:hover {
-  color: var(--feedback-error);
-}
+  &:hover {
+    color: var(--feedback-error);
 
-.close-button:hover::before {
-  opacity: 1;
-}
-
-.modal-content {
-  padding: 1.5rem;
-  overflow-y: auto;
-  flex: 1;
-}
-
-.modal-footer {
-  padding: 1rem 1.5rem;
-  border-top: 1px solid var(--border-subtle);
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.75rem;
+    &::before {
+      opacity: 1;
+    }
+  }
 }
 
 /* Transition animations */

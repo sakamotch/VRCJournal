@@ -35,31 +35,33 @@ const emit = defineEmits<Emits>();
   </Modal>
 </template>
 
-<style scoped>
-.setting-section {
-  margin-bottom: 2rem;
-}
+<style scoped lang="scss">
+.setting {
+  &-section {
+    margin-bottom: 2rem;
 
-.setting-section:last-child {
-  margin-bottom: 0;
-}
+    &:last-child {
+      margin-bottom: 0;
+    }
 
-.setting-section h3 {
-  margin: 0 0 1rem 0;
-  font-size: 1rem;
-  color: var(--text-secondary);
-  font-weight: 600;
-}
+    h3 {
+      margin: 0 0 1rem 0;
+      font-size: 1rem;
+      color: var(--text-secondary);
+      font-weight: 600;
+    }
+  }
 
-.setting-item {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
+  &-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
 
-.setting-item label {
-  font-size: 0.875rem;
-  color: var(--text-primary);
-  font-weight: 500;
+    label {
+      font-size: 0.875rem;
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+  }
 }
 </style>

@@ -1,10 +1,11 @@
 import { createApp, watch } from "vue";
 import App from "./App.vue";
-import "./styles/theme.css";
+import "./styles/theme.scss";
 import { configureDayjs, setDayjsLocale } from "./utils/dayjs-config";
 import { i18n, setI18nLocale } from "./i18n";
 import { useTheme } from "./stores/themeStore";
 import { useLocale } from "./stores/localeStore";
+import { useUserSelection } from "./stores/userStore";
 
 async function initializeApp() {
   try {
@@ -18,6 +19,10 @@ async function initializeApp() {
     // ロケール初期化
     const { locale, initLocale } = useLocale();
     await initLocale();
+
+    // ユーザー選択初期化
+    const { initSelectedUser } = useUserSelection();
+    initSelectedUser();
 
     // ロケール変更時の副作用
     watch(locale, (newLocale) => {

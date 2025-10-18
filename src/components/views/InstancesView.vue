@@ -1,34 +1,42 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
-import type { Instance } from "@/types";
 import InstanceCard from "@/components/features/instance/InstanceCard.vue";
+import { useInstances } from "@/composables/useInstances";
+import { useScreenshot } from "@/composables/useScreenshot";
+import { useBackendEvents } from "@/composables/useBackendEvents";
+import { useUserSelection } from "@/stores/userStore";
 import dayjs from "dayjs";
 
 const { t, locale } = useI18n();
 
-interface Props {
-  instances: Instance[];
-  isLoading: boolean;
-}
+const { selectedUserId } = useUserSelection();
+const {
+  instances,
+  isLoading,
+  loadInstances,
+  openInviteUrl,
+  openUserPage,
+  updateInstanceEnd,
+} = useInstances();
+const {
+  viewScreenshot,
+  openScreenshotDirectory,
+} = useScreenshot();
 
-interface Emits {
-  (e: "openInvite", instance: Instance): void;
-  (e: "openUserPage", userId: string): void;
-  (e: "viewScreenshot", filePath: string): void;
-  (e: "openDirectory", filePath: string): void;
-}
-
-const props = defineProps<Props>();
-const emit = defineEmits<Emits>();
+useBackendEvents({
+  onInstanceCreated: () => loadInstances(selectedUserId.value),
+  onInstanceEnded: updateInstanceEnd,
+  onPlayerJoined: () => loadInstances(selectedUserId.value),
+});
 
 const instancesByDate = computed(() => {
   // locale.valueを依存関係に追加してロケール変更時に再計算
   locale.value;
 
-  const groups: { date: string; displayDate: string; instances: Instance[] }[] = [];
+  const groups: { date: string; displayDate: string; instances: any[] }[] = [];
 
-  props.instances.forEach(instance => {
+  instances.value.forEach(instance => {
     const date = dayjs(instance.startedAt);
     const dateKey = date.format("YYYY/MM/DD");
 
@@ -79,10 +87,10 @@ function formatDateHeader(date: dayjs.Dayjs): string {
             v-for="instance in group.instances"
             :key="instance.id"
             :instance="instance"
-            @open-invite="(i) => emit('openInvite', i)"
-            @open-user-page="(userId) => emit('openUserPage', userId)"
-            @view-screenshot="(filePath) => emit('viewScreenshot', filePath)"
-            @open-directory="(filePath) => emit('openDirectory', filePath)"
+            @open-invite="openInviteUrl"
+            @open-user-page="openUserPage"
+            @view-screenshot="viewScreenshot"
+            @open-directory="openScreenshotDirectory"
           />
         </div>
       </div>
@@ -90,77 +98,80 @@ function formatDateHeader(date: dayjs.Dayjs): string {
   </div>
 </template>
 
-<style scoped>
-.instance-list-container {
-  flex: 1;
-  padding: 1.5rem;
-  overflow-y: auto;
-}
-
-.instance-list-container h2 {
-  margin: 0 0 1rem 0;
-  font-size: 1.3rem;
-  color: var(--text-primary);
-}
-
-.loading, .empty {
-  text-align: center;
-  padding: 2rem;
-  color: var(--text-tertiary);
-}
-
+<style scoped lang="scss">
 .instance-list {
+  &-container {
+    flex: 1;
+    padding: 1.5rem;
+    overflow-y: auto;
+
+    h2 {
+      margin: 0 0 1rem 0;
+      font-size: 1.3rem;
+      color: var(--text-primary);
+    }
+  }
+
   display: flex;
   flex-direction: column;
   gap: 2rem;
 }
 
-.date-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
+.loading,
+.empty {
+  text-align: center;
+  padding: 2rem;
+  color: var(--text-tertiary);
 }
 
-.date-header {
-  font-size: 0.875rem;
-  font-weight: 600;
-  background: linear-gradient(90deg,
-    transparent 0%,
-    color-mix(in srgb, var(--text-secondary) 100%, transparent 0%) 50%,
-    transparent 100%
-  );
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 0.75rem 0;
-  position: sticky;
-  top: 0;
-  z-index: 1;
-  backdrop-filter: blur(8px);
-  background-color: color-mix(in srgb, var(--bg-base) 90%, transparent 10%);
-}
+.date {
+  &-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
 
-.date-header::before,
-.date-header::after {
-  content: '';
-  flex: 1;
-  height: 2px;
-  background: linear-gradient(90deg,
-    transparent 0%,
-    color-mix(in srgb, var(--border-default) 70%, var(--accent-primary-light) 30%) 30%,
-    color-mix(in srgb, var(--border-default) 50%, var(--accent-secondary-light) 50%) 50%,
-    color-mix(in srgb, var(--border-default) 70%, var(--accent-primary-light) 30%) 70%,
-    transparent 100%
-  );
-  border-radius: 1px;
-}
+  &-header {
+    font-size: 0.875rem;
+    font-weight: 600;
+    background: linear-gradient(90deg,
+      transparent 0%,
+      color-mix(in srgb, var(--text-secondary) 100%, transparent 0%) 50%,
+      transparent 100%
+    );
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem 0;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    backdrop-filter: blur(8px);
+    background-color: color-mix(in srgb, var(--bg-base) 90%, transparent 10%);
 
-.date-instances {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
+    &::before,
+    &::after {
+      content: '';
+      flex: 1;
+      height: 2px;
+      background: linear-gradient(90deg,
+        transparent 0%,
+        color-mix(in srgb, var(--border-default) 70%, var(--accent-primary-light) 30%) 30%,
+        color-mix(in srgb, var(--border-default) 50%, var(--accent-secondary-light) 50%) 50%,
+        color-mix(in srgb, var(--border-default) 70%, var(--accent-primary-light) 30%) 70%,
+        transparent 100%
+      );
+      border-radius: 1px;
+    }
+  }
+
+  &-instances {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
 }
 </style>

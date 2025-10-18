@@ -1,0 +1,126 @@
+/* ==========================================
+   Theme Interface Mixin
+   全テーマで必須のデザイントークンを定義
+   ========================================== */
+
+@mixin theme-tokens {
+  /* ==========================================
+     Alias Tokens
+     ========================================== */
+
+  /* Overlay & Transparency */
+  --overlay-light: null;
+  --overlay-light-medium: null;
+  --overlay-medium: null;
+  --overlay-medium-strong: null;
+  --overlay-strong: null;
+
+  --scrim-light: null;
+  --scrim-medium: null;
+  --scrim-strong: null;
+  --scrim-heavy: null;
+  --scrim-opaque: null;
+
+  /* ==========================================
+     Semantic Tokens
+     ========================================== */
+
+  /* Background */
+  --bg-base: null;
+  --bg-surface: null;
+  --bg-elevated: null;
+  --bg-sunken: null;
+  --bg-overlay: null;
+  --bg-hover: null;
+  --bg-active: null;
+  --bg-selected: null;
+
+  /* Border */
+  --border-default: null;
+  --border-strong: null;
+  --border-subtle: null;
+  --border-focus: null;
+
+  /* Text */
+  --text-primary: null;
+  --text-secondary: null;
+  --text-tertiary: null;
+  --text-disabled: null;
+  --text-on-color: null;
+  --text-link: null;
+
+  /* Interactive */
+  --interactive-default: null;
+  --interactive-hover: null;
+  --interactive-active: null;
+  --interactive-disabled: null;
+  --interactive-subtle: null;
+
+  /* Accent Colors */
+  --accent-primary: null;
+  --accent-primary-light: null;
+  --accent-primary-dark: null;
+  --accent-secondary: null;
+  --accent-secondary-light: null;
+  --accent-secondary-dark: null;
+
+  /* Feedback */
+  --feedback-success: null;
+  --feedback-success-bg: null;
+  --feedback-success-light: null;
+  --feedback-warning: null;
+  --feedback-warning-bg: null;
+  --feedback-error: null;
+  --feedback-error-bg: null;
+  --feedback-error-light: null;
+  --feedback-error-dark: null;
+  --feedback-info: null;
+  --feedback-info-bg: null;
+
+  /* Shadow */
+  --shadow-xs: null;
+  --shadow-sm: null;
+  --shadow-md: null;
+  --shadow-lg: null;
+  --shadow-xl: null;
+
+  /* Header & Navigation */
+  --header-bg: null;
+  --header-text: null;
+  --sidebar-bg: null;
+  --sidebar-item-hover: null;
+  --sidebar-item-active: null;
+  --sidebar-text: null;
+  --sidebar-text-secondary: null;
+
+  /* Component-specific */
+  --player-item-bg: null;
+  --screenshot-border: null;
+  --screenshot-hover-border: null;
+}
+
+/* ==========================================
+   Scrollbar Mixin
+   スクロールバーのスタイルを定義
+   ========================================== */
+
+@mixin theme-scrollbar {
+  &::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: var(--bg-sunken);
+    border-radius: 6px;
+    margin: 4px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    border-radius: 6px;
+    border: 2px solid var(--bg-sunken);
+    transition: background 0.2s ease;
+  }
+
+  scrollbar-width: thin;
+}

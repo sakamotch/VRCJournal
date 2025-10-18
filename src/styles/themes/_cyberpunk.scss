@@ -3,9 +3,13 @@
    サイバーパンクテーマ - ネオンピンク × サイバーブルー
    ========================================== */
 
+@use '../theme-interface' as *;
+
 :root[data-theme="cyberpunk"] {
+  @include theme-tokens;
+
   /* ==========================================
-     Primitive Colors (このテーマ専用)
+     Primitive Colors
      ========================================== */
 
   /* Cool Gray Scale */
@@ -51,7 +55,7 @@
   --color-red-900: #7f1d1d;
 
   /* ==========================================
-     Alias Tokens (このテーマ専用)
+     Alias Tokens
      ========================================== */
 
   /* Overlay & Transparency */
@@ -146,51 +150,36 @@
   --player-item-bg: var(--bg-surface);
   --screenshot-border: var(--border-default);
   --screenshot-hover-border: var(--border-strong);
-}
 
-/* ==========================================
-   Scrollbar Styles
-   ========================================== */
+  /* ==========================================
+     Scrollbar Styles
+     ========================================== */
 
-:root[data-theme="cyberpunk"]::-webkit-scrollbar {
-  width: 12px;
-  height: 12px;
-}
+  @include theme-scrollbar;
 
-:root[data-theme="cyberpunk"]::-webkit-scrollbar-track {
-  background: var(--bg-sunken);
-  border-radius: 6px;
-  margin: 4px;
-}
+  &::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg,
+      color-mix(in srgb, var(--border-default) 60%, var(--color-neon-pink-500) 40%) 0%,
+      color-mix(in srgb, var(--border-default) 70%, var(--color-cyber-blue-500) 30%) 100%
+    );
+    box-shadow: 0 0 8px color-mix(in srgb, var(--color-neon-pink-500) 30%, transparent);
+  }
 
-:root[data-theme="cyberpunk"]::-webkit-scrollbar-thumb {
-  background: linear-gradient(135deg,
-    color-mix(in srgb, var(--border-default) 60%, var(--color-neon-pink-500) 40%) 0%,
-    color-mix(in srgb, var(--border-default) 70%, var(--color-cyber-blue-500) 30%) 100%
-  );
-  border-radius: 6px;
-  border: 2px solid var(--bg-sunken);
-  transition: background 0.2s ease;
-  box-shadow: 0 0 8px color-mix(in srgb, var(--color-neon-pink-500) 30%, transparent);
-}
+  &::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg,
+      color-mix(in srgb, var(--border-strong) 50%, var(--color-neon-pink-500) 50%) 0%,
+      color-mix(in srgb, var(--border-strong) 60%, var(--color-cyber-blue-500) 40%) 100%
+    );
+    box-shadow: 0 0 12px color-mix(in srgb, var(--color-neon-pink-500) 50%, transparent);
+  }
 
-:root[data-theme="cyberpunk"]::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(135deg,
-    color-mix(in srgb, var(--border-strong) 50%, var(--color-neon-pink-500) 50%) 0%,
-    color-mix(in srgb, var(--border-strong) 60%, var(--color-cyber-blue-500) 40%) 100%
-  );
-  box-shadow: 0 0 12px color-mix(in srgb, var(--color-neon-pink-500) 50%, transparent);
-}
+  &::-webkit-scrollbar-thumb:active {
+    background: linear-gradient(135deg,
+      var(--color-neon-pink-500) 0%,
+      var(--color-cyber-blue-500) 100%
+    );
+    box-shadow: 0 0 16px color-mix(in srgb, var(--color-neon-pink-500) 70%, transparent);
+  }
 
-:root[data-theme="cyberpunk"]::-webkit-scrollbar-thumb:active {
-  background: linear-gradient(135deg,
-    var(--color-neon-pink-500) 0%,
-    var(--color-cyber-blue-500) 100%
-  );
-  box-shadow: 0 0 16px color-mix(in srgb, var(--color-neon-pink-500) 70%, transparent);
-}
-
-:root[data-theme="cyberpunk"] {
-  scrollbar-width: thin;
   scrollbar-color: color-mix(in srgb, var(--border-default) 60%, var(--color-neon-pink-500) 40%) var(--bg-sunken);
 }

@@ -16,7 +16,7 @@ withDefaults(defineProps<Props>(), {
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .card {
   background: linear-gradient(135deg,
     var(--bg-surface) 0%,
@@ -28,35 +28,35 @@ withDefaults(defineProps<Props>(), {
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
-}
 
-.card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: linear-gradient(90deg,
-    transparent 0%,
-    var(--accent-primary-light) 50%,
-    transparent 100%
-  );
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg,
+      transparent 0%,
+      var(--accent-primary-light) 50%,
+      transparent 100%
+    );
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
 
-.card.hoverable:hover {
-  box-shadow: 0 8px 24px color-mix(in srgb, var(--accent-primary) 15%, transparent);
-  transform: translateY(-2px);
-  border-color: color-mix(in srgb, var(--border-default) 70%, var(--accent-primary-light) 30%);
-}
+  &.hoverable:hover {
+    box-shadow: 0 8px 24px color-mix(in srgb, var(--accent-primary) 15%, transparent);
+    transform: translateY(-2px);
+    border-color: color-mix(in srgb, var(--border-default) 70%, var(--accent-primary-light) 30%);
 
-.card.hoverable:hover::before {
-  opacity: 0.6;
-}
+    &::before {
+      opacity: 0.6;
+    }
+  }
 
-.card.clickable {
-  cursor: pointer;
+  &.clickable {
+    cursor: pointer;
+  }
 }
 </style>

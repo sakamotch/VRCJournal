@@ -36,43 +36,43 @@ const emit = defineEmits<Emits>();
   </aside>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .sidebar {
   width: 250px;
   background-color: var(--sidebar-bg);
   border-right: 1px solid var(--border-default);
   padding: 1rem;
   overflow-y: auto;
-}
 
-.sidebar h2 {
-  margin-top: 0;
-  font-size: 1.1rem;
-  color: var(--sidebar-text-secondary);
+  h2 {
+    margin-top: 0;
+    font-size: 1.1rem;
+    color: var(--sidebar-text-secondary);
+  }
 }
 
 .user-list {
   list-style: none;
   padding: 0;
   margin: 0;
-}
 
-.user-list li {
-  padding: 0.75rem;
-  margin-bottom: 0.5rem;
-  background-color: var(--bg-elevated);
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background-color 0.2s;
-  color: var(--sidebar-text);
-}
+  li {
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    background-color: var(--bg-elevated);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    color: var(--sidebar-text);
 
-.user-list li:hover {
-  background-color: var(--sidebar-item-hover);
-}
+    &:hover {
+      background-color: var(--sidebar-item-hover);
+    }
 
-.user-list li.active {
-  background-color: var(--sidebar-item-active);
-  color: var(--interactive-default);
+    &.active {
+      background-color: var(--sidebar-item-active);
+      color: var(--interactive-default);
+    }
+  }
 }
 </style>

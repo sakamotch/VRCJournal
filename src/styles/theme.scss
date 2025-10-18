@@ -1,17 +1,16 @@
 /* ==========================================
    VRCJournal Design Token System
-   各テーマが完全に独立した構造
    ========================================== */
 
-/* Global Primitives (全テーマ共通: Alpha値のみ) */
-@import './primitives.css';
+/* Global Primitives */
+@use 'primitives';
 
-/* Themes (各テーマが独自のcolor/overlay/gradient/scrollbarを定義) */
-@import './themes/light.css';
-@import './themes/dark.css';
-@import './themes/cyberpunk.css';
-@import './themes/pastel.css';
-@import './themes/aurora.css';
+/* Themes */
+@use 'themes/light';
+@use 'themes/dark';
+@use 'themes/cyberpunk';
+@use 'themes/pastel';
+@use 'themes/aurora';
 
 /* ==========================================
    Global Styles
