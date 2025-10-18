@@ -1,13 +1,15 @@
-import { createApp, watch } from "vue";
-import { createPinia } from "pinia";
-import App from "./App.vue";
 import "./styles/theme.scss";
-import { configureDayjs, setDayjsLocale } from "./utils/dayjs-config";
-import { i18n, setI18nLocale } from "./i18n";
-import { useThemeStore } from "./stores/themeStore";
-import { useLocaleStore } from "./stores/localeStore";
-import { useUserStore } from "./stores/userStore";
+
+import { createPinia } from "pinia";
 import { storeToRefs } from "pinia";
+import { createApp, watch } from "vue";
+
+import App from "./App.vue";
+import { i18n, setI18nLocale } from "./i18n";
+import { useLocaleStore } from "./stores/localeStore";
+import { useThemeStore } from "./stores/themeStore";
+import { useUserStore } from "./stores/userStore";
+import { configureDayjs, setDayjsLocale } from "./utils/dayjs-config";
 
 async function initializeApp() {
   try {

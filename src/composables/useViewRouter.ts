@@ -1,15 +1,16 @@
-import { computed, type Component, type Ref } from 'vue';
+import { type Component, computed, type Ref } from 'vue';
+
 import type { NavigationView } from '@/components/layout/Navigation.vue';
 import InstancesView from '@/components/views/InstancesView.vue';
-import WorldsView from '@/components/views/WorldsView.vue';
-import PeopleView from '@/components/views/PeopleView.vue';
+import PlayersView from '@/components/views/PlayersView.vue';
 import PhotosView from '@/components/views/PhotosView.vue';
 import StatsView from '@/components/views/StatsView.vue';
+import WorldsView from '@/components/views/WorldsView.vue';
 
 const VIEW_COMPONENTS: Record<NavigationView, Component> = {
   timeline: InstancesView,
   worlds: WorldsView,
-  people: PeopleView,
+  players: PlayersView,
   photos: PhotosView,
   stats: StatsView,
 };

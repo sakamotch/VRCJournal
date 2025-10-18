@@ -10,6 +10,7 @@ interface Emits {
 }
 
 withDefaults(defineProps<Props>(), {
+  title: undefined,
   maxWidth: '600px',
 });
 
@@ -19,16 +20,35 @@ const emit = defineEmits<Emits>();
 <template>
   <Teleport to="body">
     <Transition name="modal">
-      <div v-if="show" class="modal-overlay" @click="emit('close')">
-        <div class="modal-panel" :style="{ maxWidth }" @click.stop>
-          <div v-if="title" class="modal-header">
+      <div
+        v-if="show"
+        class="modal-overlay"
+        @click="emit('close')"
+      >
+        <div
+          class="modal-panel"
+          :style="{ maxWidth }"
+          @click.stop
+        >
+          <div
+            v-if="title"
+            class="modal-header"
+          >
             <h2>{{ title }}</h2>
-            <button class="close-button" @click="emit('close')">×</button>
+            <button
+              class="close-button"
+              @click="emit('close')"
+            >
+              ×
+            </button>
           </div>
           <div class="modal-content">
             <slot />
           </div>
-          <div v-if="$slots.footer" class="modal-footer">
+          <div
+            v-if="$slots.footer"
+            class="modal-footer"
+          >
             <slot name="footer" />
           </div>
         </div>

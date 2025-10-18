@@ -1,14 +1,15 @@
 <script setup lang="ts">
-import { ref, computed } from "vue";
-import { useI18n } from "vue-i18n";
+import { invoke } from "@tauri-apps/api/core";
 import dayjs from "dayjs";
-import type { Instance, Player, Screenshot } from "@/types";
+import { Calendar, Camera, ChevronDown, ChevronRight, Clock, ExternalLink,Users } from "lucide-vue-next";
+import { computed,ref } from "vue";
+import { useI18n } from "vue-i18n";
+
+import BaseButton from "@/components/common/BaseButton.vue";
+import BaseCard from "@/components/common/BaseCard.vue";
 import PlayerList from "@/components/features/player/PlayerList.vue";
 import ScreenshotList from "@/components/features/screenshot/ScreenshotList.vue";
-import Button from "@/components/common/Button.vue";
-import Card from "@/components/common/Card.vue";
-import { invoke } from "@tauri-apps/api/core";
-import { Calendar, Clock, Users, Camera, ChevronDown, ChevronRight, ExternalLink } from "lucide-vue-next";
+import type { Instance, Player, Screenshot } from "@/types";
 
 const { t, locale } = useI18n();
 
@@ -102,7 +103,10 @@ async function toggleScreenshots() {
 </script>
 
 <template>
-  <Card class="instance-card" :hoverable="false">
+  <BaseCard
+    class="instance-card"
+    :hoverable="false"
+  >
     <div class="instance-header">
       <h3 class="world-name">
         {{ instance.worldName || instance.worldId }}
@@ -129,24 +133,36 @@ async function toggleScreenshots() {
       </span>
       <span
         class="info-item player-count clickable"
-        @click="togglePlayers"
         :title="playersExpanded ? t('instance.hidePlayers') : t('instance.showPlayers')"
+        @click="togglePlayers"
       >
         <Users :size="16" />
         {{ t('instance.playerCount', { count: instance.playerCount }) }}
-        <ChevronDown v-if="playersExpanded" :size="14" />
-        <ChevronRight v-else :size="14" />
+        <ChevronDown
+          v-if="playersExpanded"
+          :size="14"
+        />
+        <ChevronRight
+          v-else
+          :size="14"
+        />
       </span>
       <span
         v-if="instance.screenshotCount > 0"
         class="info-item screenshot-count clickable"
-        @click="toggleScreenshots"
         :title="screenshotsExpanded ? t('instance.hidePhotos') : t('instance.showPhotos')"
+        @click="toggleScreenshots"
       >
         <Camera :size="16" />
         {{ t('instance.photoCount', { count: instance.screenshotCount }) }}
-        <ChevronDown v-if="screenshotsExpanded" :size="14" />
-        <ChevronRight v-else :size="14" />
+        <ChevronDown
+          v-if="screenshotsExpanded"
+          :size="14"
+        />
+        <ChevronRight
+          v-else
+          :size="14"
+        />
       </span>
     </div>
 
@@ -157,7 +173,10 @@ async function toggleScreenshots() {
       :instance="instance"
       @open-user-page="(userId) => emit('openUserPage', userId)"
     />
-    <div v-else-if="playersExpanded" class="loading">
+    <div
+      v-else-if="playersExpanded"
+      class="loading"
+    >
       {{ t('instance.loading') }}
     </div>
 
@@ -168,7 +187,10 @@ async function toggleScreenshots() {
       @view-screenshot="(filePath) => emit('viewScreenshot', filePath)"
       @open-directory="(filePath) => emit('openDirectory', filePath)"
     />
-    <div v-else-if="screenshotsExpanded" class="loading">
+    <div
+      v-else-if="screenshotsExpanded"
+      class="loading"
+    >
       {{ t('instance.loading') }}
     </div>
 
@@ -177,12 +199,12 @@ async function toggleScreenshots() {
         <span class="label">Instance:</span>
         <span class="value">{{ instance.instanceId }}</span>
       </div>
-      <Button @click="emit('openInvite', instance)">
+      <BaseButton @click="emit('openInvite', instance)">
         <ExternalLink :size="16" />
         <span>{{ t('instance.openWorld') }}</span>
-      </Button>
+      </BaseButton>
     </div>
-  </Card>
+  </BaseCard>
 </template>
 
 <style scoped lang="scss">

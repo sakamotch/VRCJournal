@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { useI18n } from 'vue-i18n';
-import { useLocaleStore } from '@/stores/localeStore';
 import { storeToRefs } from 'pinia';
+import { useI18n } from 'vue-i18n';
+
+import { useLocaleStore } from '@/stores/localeStore';
 import type { Locale } from '@/types';
 
 const { t } = useI18n();
@@ -18,15 +19,15 @@ function changeLocale(newLocale: Locale) {
   <div class="language-selector">
     <button
       :class="['language-button', { active: locale === 'ja' }]"
-      @click="changeLocale('ja')"
       :title="t('settings.languages.ja')"
+      @click="changeLocale('ja')"
     >
       <span class="label">{{ t('settings.languages.ja') }}</span>
     </button>
     <button
       :class="['language-button', { active: locale === 'en' }]"
-      @click="changeLocale('en')"
       :title="t('settings.languages.en')"
+      @click="changeLocale('en')"
     >
       <span class="label">{{ t('settings.languages.en') }}</span>
     </button>

@@ -12,7 +12,7 @@ export default {
   },
   navigation: {
     instances: 'インスタンス',
-    people: 'プレイヤー',
+    players: 'プレイヤー',
     worlds: 'ワールド',
     photos: 'スクリーンショット',
     stats: '統計',

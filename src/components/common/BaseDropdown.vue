@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount } from 'vue';
+import { onBeforeUnmount,onMounted, ref } from 'vue';
 
 interface Props {
   modelValue: boolean;
@@ -35,12 +35,21 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="dropdown" ref="dropdownRef">
-    <div class="dropdown-trigger" @click="emit('update:modelValue', !props.modelValue)">
+  <div
+    ref="dropdownRef"
+    class="dropdown"
+  >
+    <div
+      class="dropdown-trigger"
+      @click="emit('update:modelValue', !props.modelValue)"
+    >
       <slot name="trigger" />
     </div>
     <Transition name="dropdown">
-      <div v-if="props.modelValue" :class="['dropdown-menu', `align-${props.align}`]">
+      <div
+        v-if="props.modelValue"
+        :class="['dropdown-menu', `align-${props.align}`]"
+      >
         <slot />
       </div>
     </Transition>

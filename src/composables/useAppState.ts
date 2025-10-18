@@ -1,4 +1,5 @@
 import { ref } from 'vue';
+
 import type { NavigationView } from '@/components/layout/Navigation.vue';
 
 export function useAppState() {

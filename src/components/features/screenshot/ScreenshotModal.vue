@@ -15,14 +15,26 @@ const emit = defineEmits<Emits>();
 
 <template>
   <Transition name="modal">
-    <div v-if="filePath" class="modal-overlay" @click="emit('close')">
-      <div class="modal-content" @click.stop>
-        <button class="modal-close" @click="emit('close')">×</button>
+    <div
+      v-if="filePath"
+      class="modal-overlay"
+      @click="emit('close')"
+    >
+      <div
+        class="modal-content"
+        @click.stop
+      >
+        <button
+          class="modal-close"
+          @click="emit('close')"
+        >
+          ×
+        </button>
         <img
           :src="convertFileSrc(filePath)"
           alt="Screenshot"
           class="modal-image"
-        />
+        >
       </div>
     </div>
   </Transition>

@@ -11,9 +11,16 @@ defineProps<Props>();
 <template>
   <div class="empty-state">
     <div class="empty-state-card">
-      <component v-if="icon" :is="icon" :size="48" class="empty-icon" />
+      <component
+        :is="icon"
+        v-if="icon"
+        :size="48"
+        class="empty-icon"
+      />
       <h2>{{ title }}</h2>
-      <p v-if="description">{{ description }}</p>
+      <p v-if="description">
+        {{ description }}
+      </p>
       <slot />
     </div>
   </div>

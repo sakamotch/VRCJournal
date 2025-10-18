@@ -1,8 +1,10 @@
+import { locale as getSystemLocale } from '@tauri-apps/plugin-os';
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
-import { locale as getSystemLocale } from '@tauri-apps/plugin-os';
-import { STORAGE_KEYS } from './constants';
+
 import type { Locale } from '@/types';
+
+import { STORAGE_KEYS } from './constants';
 
 async function detectSystemLocale(): Promise<Locale> {
   try {

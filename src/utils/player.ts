@@ -1,5 +1,6 @@
-import type { Instance, Player } from "@/types";
 import dayjs from "dayjs";
+
+import type { Instance, Player } from "@/types";
 
 /**
  * プレイヤーがインスタンスの最後まで在席していたかを判定

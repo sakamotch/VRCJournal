@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { useI18n } from 'vue-i18n';
-import { useThemeStore } from '@/stores/themeStore';
+import { Heart, Monitor, Moon, Sparkles,Sun, Zap } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
-import { Sun, Moon, Monitor, Zap, Heart, Sparkles } from 'lucide-vue-next';
+import { useI18n } from 'vue-i18n';
+
+import { useThemeStore } from '@/stores/themeStore';
 
 const { t } = useI18n();
 const themeStore = useThemeStore();
@@ -14,50 +15,68 @@ const { setTheme } = themeStore;
   <div class="theme-selector">
     <button
       :class="['theme-button', { active: theme === 'light' }]"
-      @click="setTheme('light')"
       :title="t('settings.themes.light')"
+      @click="setTheme('light')"
     >
-      <Sun :size="18" class="icon" />
+      <Sun
+        :size="18"
+        class="icon"
+      />
       <span class="label">{{ t('settings.themes.light') }}</span>
     </button>
     <button
       :class="['theme-button', { active: theme === 'dark' }]"
-      @click="setTheme('dark')"
       :title="t('settings.themes.dark')"
+      @click="setTheme('dark')"
     >
-      <Moon :size="18" class="icon" />
+      <Moon
+        :size="18"
+        class="icon"
+      />
       <span class="label">{{ t('settings.themes.dark') }}</span>
     </button>
     <button
       :class="['theme-button', { active: theme === 'cyberpunk' }]"
-      @click="setTheme('cyberpunk')"
       :title="t('settings.themes.cyberpunk')"
+      @click="setTheme('cyberpunk')"
     >
-      <Zap :size="18" class="icon" />
+      <Zap
+        :size="18"
+        class="icon"
+      />
       <span class="label">{{ t('settings.themes.cyberpunk') }}</span>
     </button>
     <button
       :class="['theme-button', { active: theme === 'pastel' }]"
-      @click="setTheme('pastel')"
       :title="t('settings.themes.pastel')"
+      @click="setTheme('pastel')"
     >
-      <Heart :size="18" class="icon" />
+      <Heart
+        :size="18"
+        class="icon"
+      />
       <span class="label">{{ t('settings.themes.pastel') }}</span>
     </button>
     <button
       :class="['theme-button', { active: theme === 'aurora' }]"
-      @click="setTheme('aurora')"
       :title="t('settings.themes.aurora')"
+      @click="setTheme('aurora')"
     >
-      <Sparkles :size="18" class="icon" />
+      <Sparkles
+        :size="18"
+        class="icon"
+      />
       <span class="label">{{ t('settings.themes.aurora') }}</span>
     </button>
     <button
       :class="['theme-button', { active: theme === 'system' }]"
-      @click="setTheme('system')"
       :title="t('settings.themes.system')"
+      @click="setTheme('system')"
     >
-      <Monitor :size="18" class="icon" />
+      <Monitor
+        :size="18"
+        class="icon"
+      />
       <span class="label">{{ t('settings.themes.system') }}</span>
     </button>
   </div>

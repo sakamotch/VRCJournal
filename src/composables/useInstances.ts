@@ -1,10 +1,12 @@
-import { ref, watch } from 'vue';
 import { invoke } from '@tauri-apps/api/core';
-import { useI18n } from 'vue-i18n';
-import type { Instance } from '@/types';
-import { useNotifications } from './useNotifications';
-import { useUserStore } from '@/stores/userStore';
 import { storeToRefs } from 'pinia';
+import { ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
+
+import { useUserStore } from '@/stores/userStore';
+import type { Instance } from '@/types';
+
+import { useNotifications } from './useNotifications';
 
 export function useInstances() {
   const { t } = useI18n();

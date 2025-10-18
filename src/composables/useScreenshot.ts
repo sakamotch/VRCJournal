@@ -1,6 +1,7 @@
-import { ref } from 'vue';
 import { invoke } from '@tauri-apps/api/core';
+import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+
 import { useNotifications } from './useNotifications';
 
 export function useScreenshot() {

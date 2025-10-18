@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { useI18n } from "vue-i18n";
 import dayjs from "dayjs";
-import type { Player, Instance } from "@/types";
+import { ExternalLink } from "lucide-vue-next";
+import { useI18n } from "vue-i18n";
+
+import type { Instance,Player } from "@/types";
 import { formatPlayerName } from "@/utils/formatters";
 import { isPlayerStayedUntilEnd } from "@/utils/player";
-import { ExternalLink } from "lucide-vue-next";
 
 const { t, locale } = useI18n();
 
@@ -41,12 +42,21 @@ function formatPlayerTime(dateStr: string): string {
         <div class="player-item-content">
           <div class="player-info">
             <span class="player-name">{{ formatPlayerName(player) }}</span>
-            <ExternalLink :size="14" class="player-icon" />
+            <ExternalLink
+              :size="14"
+              class="player-icon"
+            />
           </div>
           <div class="player-times">
             <span class="player-time">{{ t('instance.joined') }}: {{ formatPlayerTime(player.joinedAt) }}</span>
-            <span class="player-time" v-if="player.leftAt">{{ t('instance.left') }}: {{ formatPlayerTime(player.leftAt) }}</span>
-            <span class="player-time player-time-active" v-else>{{ t('instance.inInstance') }}</span>
+            <span
+              v-if="player.leftAt"
+              class="player-time"
+            >{{ t('instance.left') }}: {{ formatPlayerTime(player.leftAt) }}</span>
+            <span
+              v-else
+              class="player-time player-time-active"
+            >{{ t('instance.inInstance') }}</span>
           </div>
         </div>
       </div>

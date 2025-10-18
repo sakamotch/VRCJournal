@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { useI18n } from "vue-i18n";
-import type { Screenshot } from "@/types";
 import { convertFileSrc } from '@tauri-apps/api/core';
-import Button from "@/components/common/Button.vue";
-import { Folder, Trash2 } from 'lucide-vue-next';
 import dayjs from "dayjs";
+import { Folder, Trash2 } from 'lucide-vue-next';
+import { useI18n } from "vue-i18n";
+
+import BaseButton from "@/components/common/BaseButton.vue";
+import type { Screenshot } from "@/types";
 
 const { t } = useI18n();
 
@@ -28,7 +29,10 @@ function formatScreenshotTime(dateStr: string): string {
 <template>
   <div class="screenshot-list">
     <h4>{{ t('instance.screenshots') }}</h4>
-    <div v-if="screenshots.length > 0" class="screenshot-grid">
+    <div
+      v-if="screenshots.length > 0"
+      class="screenshot-grid"
+    >
       <div
         v-for="screenshot in screenshots"
         :key="screenshot.id"
@@ -41,26 +45,37 @@ function formatScreenshotTime(dateStr: string): string {
           :src="convertFileSrc(screenshot.filePath)"
           :alt="`Screenshot ${screenshot.id}`"
           class="screenshot-thumbnail"
-        />
-        <div v-else class="screenshot-deleted-placeholder">
-          <Trash2 :size="32" class="deleted-icon" />
-          <div class="deleted-text">{{ t('screenshot.deleted') }}</div>
+        >
+        <div
+          v-else
+          class="screenshot-deleted-placeholder"
+        >
+          <Trash2
+            :size="32"
+            class="deleted-icon"
+          />
+          <div class="deleted-text">
+            {{ t('screenshot.deleted') }}
+          </div>
         </div>
         <div class="screenshot-time">
           <span class="screenshot-time-text">{{ formatScreenshotTime(screenshot.takenAt) }}</span>
         </div>
       </div>
     </div>
-    <div v-else class="no-screenshots">
+    <div
+      v-else
+      class="no-screenshots"
+    >
       {{ t('screenshot.noScreenshots') }}
     </div>
-    <Button
+    <BaseButton
       v-if="screenshots.length > 0"
       @click="emit('openDirectory', screenshots[0].filePath)"
     >
       <Folder :size="16" />
       <span>{{ t('common.openFolder') }}</span>
-    </Button>
+    </BaseButton>
   </div>
 </template>
 

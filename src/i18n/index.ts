@@ -1,7 +1,9 @@
 import { createI18n } from 'vue-i18n';
-import ja from './locales/ja';
-import en from './locales/en';
+
 import type { Locale } from '@/types';
+
+import en from './locales/en';
+import ja from './locales/ja';
 
 export const i18n = createI18n({
   legacy: false,

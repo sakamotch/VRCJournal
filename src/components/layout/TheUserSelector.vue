@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
-import { useI18n } from 'vue-i18n';
 import { ChevronDown } from 'lucide-vue-next';
+import { computed, onBeforeUnmount,onMounted, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
+
 import type { LocalUser, UserFilterId } from '@/types';
 import { ALL_USERS } from '@/types';
 
@@ -50,13 +51,16 @@ onBeforeUnmount(() => {
   <div class="user-selector">
     <button
       class="user-selector-button"
-      @click="showDropdown = !showDropdown"
       :title="selectedUserName"
+      @click="showDropdown = !showDropdown"
     >
       <span class="user-name">{{ selectedUserName }}</span>
       <ChevronDown :size="16" />
     </button>
-    <div v-if="showDropdown" class="user-dropdown">
+    <div
+      v-if="showDropdown"
+      class="user-dropdown"
+    >
       <button
         :class="['user-option', { active: selectedUserId === ALL_USERS }]"
         @click="selectUser(ALL_USERS)"

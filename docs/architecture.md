@@ -574,7 +574,7 @@ VRCJournal/
 │   │   ├── views/                # ページビューコンポーネント
 │   │   │   ├── InstancesView.vue
 │   │   │   ├── WorldsView.vue
-│   │   │   ├── PeopleView.vue
+│   │   │   ├── PlayersView.vue
 │   │   │   ├── PhotosView.vue
 │   │   │   └── StatsView.vue
 │   │   ├── features/             # 機能別コンポーネント

@@ -1,14 +1,15 @@
 <script setup lang="ts">
+import dayjs from "dayjs";
+import { storeToRefs } from "pinia";
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
+
 import InstanceCard from "@/components/features/instance/InstanceCard.vue";
 import ScreenshotModal from "@/components/features/screenshot/ScreenshotModal.vue";
+import { useBackendEvents } from "@/composables/useBackendEvents";
 import { useInstances } from "@/composables/useInstances";
 import { useScreenshot } from "@/composables/useScreenshot";
-import { useBackendEvents } from "@/composables/useBackendEvents";
 import { useUserStore } from "@/stores/userStore";
-import { storeToRefs } from "pinia";
-import dayjs from "dayjs";
 
 const { t, locale } = useI18n();
 
@@ -76,14 +77,29 @@ function formatDateHeader(date: dayjs.Dayjs): string {
   <div class="instance-list-container">
     <h2>{{ t('instance.title') }}</h2>
 
-    <div v-if="isLoading" class="loading">{{ t('common.loading') }}</div>
+    <div
+      v-if="isLoading"
+      class="loading"
+    >
+      {{ t('common.loading') }}
+    </div>
 
-    <div v-else-if="instances.length === 0" class="empty">
+    <div
+      v-else-if="instances.length === 0"
+      class="empty"
+    >
       {{ t('instance.noInstances') }}
     </div>
 
-    <div v-else class="instance-list">
-      <div v-for="group in instancesByDate" :key="group.date" class="date-group">
+    <div
+      v-else
+      class="instance-list"
+    >
+      <div
+        v-for="group in instancesByDate"
+        :key="group.date"
+        class="date-group"
+      >
         <div class="date-header">
           {{ group.displayDate }}
         </div>

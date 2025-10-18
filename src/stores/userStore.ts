@@ -1,8 +1,10 @@
-import { defineStore } from 'pinia';
-import { ref, computed } from 'vue';
 import { invoke } from '@tauri-apps/api/core';
+import { defineStore } from 'pinia';
+import { computed,ref } from 'vue';
+
 import type { LocalUser, UserFilterId } from '@/types';
 import { ALL_USERS } from '@/types';
+
 import { STORAGE_KEYS } from './constants';
 
 function getSavedUserId(): UserFilterId {

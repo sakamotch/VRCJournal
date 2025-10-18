@@ -12,7 +12,7 @@ export default {
   },
   navigation: {
     instances: 'Instances',
-    people: 'People',
+    players: 'Players',
     worlds: 'Worlds',
     photos: 'Photos',
     stats: 'Stats',

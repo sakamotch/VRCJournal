@@ -1,6 +1,7 @@
 <script setup lang="ts">
+import { CheckCircle2, Info, X,XCircle } from 'lucide-vue-next';
+
 import { useNotifications } from '@/composables/useNotifications';
-import { CheckCircle2, XCircle, Info, X } from 'lucide-vue-next';
 
 const { notifications, remove } = useNotifications();
 
@@ -24,10 +25,18 @@ const getIcon = (type: string) => {
       >
         <div class="notification-content">
           <div class="notification-icon">
-            <component :is="getIcon(notification.type)" :size="20" />
+            <component
+              :is="getIcon(notification.type)"
+              :size="20"
+            />
           </div>
-          <div class="notification-message">{{ notification.message }}</div>
-          <button class="notification-close" @click="remove(notification.id)">
+          <div class="notification-message">
+            {{ notification.message }}
+          </div>
+          <button
+            class="notification-close"
+            @click="remove(notification.id)"
+          >
             <X :size="16" />
           </button>
         </div>

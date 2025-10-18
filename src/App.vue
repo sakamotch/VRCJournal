@@ -1,16 +1,17 @@
 <script setup lang="ts">
-import { useI18n } from "vue-i18n";
-import Navigation from "@/components/layout/Navigation.vue";
-import Settings from "@/components/settings/Settings.vue";
-import NotificationContainer from "@/components/layout/NotificationContainer.vue";
-import UserSelector from "@/components/layout/UserSelector.vue";
-import IconButton from "@/components/common/IconButton.vue";
 import { Settings as SettingsIcon } from "lucide-vue-next";
-import { useUserStore } from "@/stores/userStore";
-import { useBackendEvents } from "@/composables/useBackendEvents";
-import { useAppState } from "@/composables/useAppState";
-import { useViewRouter } from "@/composables/useViewRouter";
 import { storeToRefs } from "pinia";
+import { useI18n } from "vue-i18n";
+
+import BaseIconButton from "@/components/common/BaseIconButton.vue";
+import AppNavigation from "@/components/layout/AppNavigation.vue";
+import TheNotificationContainer from "@/components/layout/TheNotificationContainer.vue";
+import TheUserSelector from "@/components/layout/TheUserSelector.vue";
+import SettingsModal from "@/components/settings/SettingsModal.vue";
+import { useAppState } from "@/composables/useAppState";
+import { useBackendEvents } from "@/composables/useBackendEvents";
+import { useViewRouter } from "@/composables/useViewRouter";
+import { useUserStore } from "@/stores/userStore";
 
 const { t } = useI18n();
 
@@ -33,20 +34,26 @@ useBackendEvents({
       <div class="header-content">
         <h1>VRCJournal</h1>
         <div class="header-actions">
-          <UserSelector
+          <TheUserSelector
             :users="localUsers"
             :selected-user-id="selectedUserId"
             @select="selectUser"
           />
-          <IconButton @click="showSettings = true" :title="t('settings.title')">
-            <SettingsIcon :size="20" class="settings-icon" />
-          </IconButton>
+          <BaseIconButton
+            :title="t('settings.title')"
+            @click="showSettings = true"
+          >
+            <SettingsIcon
+              :size="20"
+              class="settings-icon"
+            />
+          </BaseIconButton>
         </div>
       </div>
     </header>
 
     <div class="content">
-      <Navigation
+      <AppNavigation
         :current-view="currentView"
         @navigate="navigateToView"
       />
@@ -56,12 +63,12 @@ useBackendEvents({
       </main>
     </div>
 
-    <Settings
+    <SettingsModal
       :show="showSettings"
       @close="showSettings = false"
     />
 
-    <NotificationContainer />
+    <TheNotificationContainer />
   </div>
 </template>
 

@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n';
-import ThemeSelector from './ThemeSelector.vue';
-import LanguageSelector from './LanguageSelector.vue';
-import Modal from '@/components/common/Modal.vue';
+
+import BaseModal from '@/components/common/BaseModal.vue';
+
+import SettingsLanguageSelector from './SettingsLanguageSelector.vue';
+import SettingsThemeSelector from './SettingsThemeSelector.vue';
 
 const { t } = useI18n();
 
@@ -19,20 +21,24 @@ const emit = defineEmits<Emits>();
 </script>
 
 <template>
-  <Modal :show="show" :title="t('settings.title')" @close="emit('close')">
+  <BaseModal
+    :show="show"
+    :title="t('settings.title')"
+    @close="emit('close')"
+  >
     <div class="setting-section">
       <h3>{{ t('settings.theme') }}</h3>
       <div class="setting-item">
-        <ThemeSelector />
+        <SettingsThemeSelector />
       </div>
     </div>
     <div class="setting-section">
       <h3>{{ t('settings.language') }}</h3>
       <div class="setting-item">
-        <LanguageSelector />
+        <SettingsLanguageSelector />
       </div>
     </div>
-  </Modal>
+  </BaseModal>
 </template>
 
 <style scoped lang="scss">

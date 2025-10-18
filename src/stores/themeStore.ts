@@ -1,7 +1,9 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
-import { STORAGE_KEYS } from './constants';
+
 import type { Theme } from '@/types';
+
+import { STORAGE_KEYS } from './constants';
 
 function getSavedTheme(): Theme {
   const saved = localStorage.getItem(STORAGE_KEYS.THEME);
