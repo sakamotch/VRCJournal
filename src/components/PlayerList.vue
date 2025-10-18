@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useI18n } from "vue-i18n";
 import dayjs from "dayjs";
-import type { Player, Session } from "@/types";
+import type { Player, Instance } from "@/types";
 import { formatPlayerName, isPlayerStayedUntilEnd } from "@/utils/formatters";
 import { ExternalLink } from "lucide-vue-next";
 
@@ -9,7 +9,7 @@ const { t, locale } = useI18n();
 
 interface Props {
   players: Player[];
-  session: Session;
+  instance: Instance;
 }
 
 interface Emits {
@@ -28,13 +28,13 @@ function formatPlayerTime(dateStr: string): string {
 
 <template>
   <div class="player-list">
-    <h4>{{ t('session.joinHistory') }}</h4>
+    <h4>{{ t('instance.joinHistory') }}</h4>
     <div class="player-items">
       <div
         v-for="player in players"
         :key="`${player.id}-${player.joinedAt}`"
         class="player-item"
-        :class="{ 'player-stayed': isPlayerStayedUntilEnd(player, session) }"
+        :class="{ 'player-stayed': isPlayerStayedUntilEnd(player, instance) }"
         @click="emit('openUserPage', player.userId)"
       >
         <div class="player-info">
@@ -42,9 +42,9 @@ function formatPlayerTime(dateStr: string): string {
           <ExternalLink :size="14" class="player-icon" />
         </div>
         <div class="player-times">
-          <span class="player-time">{{ t('session.joined') }}: {{ formatPlayerTime(player.joinedAt) }}</span>
-          <span class="player-time" v-if="player.leftAt">{{ t('session.left') }}: {{ formatPlayerTime(player.leftAt) }}</span>
-          <span class="player-time player-time-active" v-else>{{ t('session.inSession') }}</span>
+          <span class="player-time">{{ t('instance.joined') }}: {{ formatPlayerTime(player.joinedAt) }}</span>
+          <span class="player-time" v-if="player.leftAt">{{ t('instance.left') }}: {{ formatPlayerTime(player.leftAt) }}</span>
+          <span class="player-time player-time-active" v-else>{{ t('instance.inInstance') }}</span>
         </div>
       </div>
     </div>

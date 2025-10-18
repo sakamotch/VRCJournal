@@ -60,16 +60,16 @@ pub fn upsert_avatar_by_name(
 /// アバター使用履歴を記録
 pub fn record_avatar_usage(
     conn: &Connection,
-    session_id: i64,
+    instance_id: i64,
     player_id: i64,  // NOT NULL: ローカルプレイヤー or リモートプレイヤー
     avatar_id: i64,  // NOT NULL: avatarsテーブルへの参照
     changed_at: DateTime<Utc>,
 ) -> Result<()> {
     conn.execute(
-        "INSERT INTO avatar_usages (session_id, player_id, avatar_id, changed_at)
+        "INSERT INTO avatar_usages (instance_id, player_id, avatar_id, changed_at)
          VALUES (?1, ?2, ?3, ?4)",
         (
-            session_id,
+            instance_id,
             player_id,
             avatar_id,
             changed_at.to_rfc3339(),
@@ -78,7 +78,7 @@ pub fn record_avatar_usage(
     Ok(())
 }
 
-/// セッション内のアバター使用履歴を取得
+/// インスタンス内のアバター使用履歴を取得
 #[derive(Debug, Clone)]
 pub struct AvatarUsage {
     pub player_id: i64,
@@ -88,21 +88,21 @@ pub struct AvatarUsage {
     pub changed_at: DateTime<Utc>,
 }
 
-pub fn get_avatar_usages_in_session(
+pub fn get_avatar_usages_in_instance(
     conn: &Connection,
-    session_id: i64,
+    instance_id: i64,
 ) -> Result<Vec<AvatarUsage>> {
     let mut stmt = conn.prepare(
         "SELECT au.player_id, p.display_name, p.is_local, a.avatar_name, au.changed_at
          FROM avatar_usages au
          INNER JOIN players p ON au.player_id = p.id
          INNER JOIN avatars a ON au.avatar_id = a.id
-         WHERE au.session_id = ?1
+         WHERE au.instance_id = ?1
          ORDER BY au.changed_at",
     )?;
 
     let usages = stmt
-        .query_map([session_id], |row| {
+        .query_map([instance_id], |row| {
             Ok(AvatarUsage {
                 player_id: row.get(0)?,
                 display_name: row.get(1)?,

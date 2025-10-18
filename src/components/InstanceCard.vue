@@ -2,7 +2,7 @@
 import { ref, computed } from "vue";
 import { useI18n } from "vue-i18n";
 import dayjs from "dayjs";
-import type { Session, Player, Screenshot } from "@/types";
+import type { Instance, Player, Screenshot } from "@/types";
 import PlayerList from "./PlayerList.vue";
 import ScreenshotList from "./ScreenshotList.vue";
 import Button from "./common/Button.vue";
@@ -13,11 +13,11 @@ import { Calendar, Clock, Users, Camera, ChevronDown, ChevronRight, ExternalLink
 const { t, locale } = useI18n();
 
 interface Props {
-  session: Session;
+  instance: Instance;
 }
 
 interface Emits {
-  (e: "openInvite", session: Session): void;
+  (e: "openInvite", instance: Instance): void;
   (e: "openUserPage", userId: string): void;
   (e: "viewScreenshot", filePath: string): void;
   (e: "openDirectory", filePath: string): void;
@@ -31,32 +31,32 @@ const screenshotsExpanded = ref(false);
 const players = ref<Player[] | null>(null);
 const screenshots = ref<Screenshot[] | null>(null);
 
-const sessionDate = computed(() => {
+const instanceDate = computed(() => {
   // locale.valueを依存関係に追加
   locale.value;
-  return dayjs(props.session.startedAt).format('L');
+  return dayjs(props.instance.startedAt).format('L');
 });
 
-const sessionStartTime = computed(() => {
+const instanceStartTime = computed(() => {
   locale.value;
-  return dayjs(props.session.startedAt).format('LT');
+  return dayjs(props.instance.startedAt).format('LT');
 });
 
-const sessionEndTime = computed(() => {
+const instanceEndTime = computed(() => {
   locale.value;
-  return props.session.endedAt ? dayjs(props.session.endedAt).format('LT') : '';
+  return props.instance.endedAt ? dayjs(props.instance.endedAt).format('LT') : '';
 });
 
-const sessionDuration = computed(() => {
-  if (props.session.status === 'interrupted') {
-    return t('session.unknown');
+const instanceDuration = computed(() => {
+  if (props.instance.status === 'interrupted') {
+    return t('instance.unknown');
   }
-  if (!props.session.endedAt) {
-    return t('session.ongoing');
+  if (!props.instance.endedAt) {
+    return t('instance.ongoing');
   }
 
-  const start = dayjs(props.session.startedAt);
-  const end = dayjs(props.session.endedAt);
+  const start = dayjs(props.instance.startedAt);
+  const end = dayjs(props.instance.endedAt);
   const diff = end.diff(start);
   const dur = dayjs.duration(diff);
 
@@ -64,9 +64,9 @@ const sessionDuration = computed(() => {
   const minutes = dur.minutes();
 
   if (hours > 0) {
-    return t('session.durationHours', { hours, minutes });
+    return t('instance.durationHours', { hours, minutes });
   } else {
-    return t('session.durationMinutes', { minutes });
+    return t('instance.durationMinutes', { minutes });
   }
 });
 
@@ -75,8 +75,8 @@ async function togglePlayers() {
 
   if (playersExpanded.value && players.value === null) {
     try {
-      const result = await invoke<Player[]>("get_session_players", {
-        sessionId: props.session.id,
+      const result = await invoke<Player[]>("get_instance_players", {
+        instanceId: props.instance.id,
       });
       players.value = result;
     } catch (error) {
@@ -90,8 +90,8 @@ async function toggleScreenshots() {
 
   if (screenshotsExpanded.value && screenshots.value === null) {
     try {
-      const result = await invoke<Screenshot[]>("get_session_screenshots", {
-        sessionId: props.session.id,
+      const result = await invoke<Screenshot[]>("get_instance_screenshots", {
+        instanceId: props.instance.id,
       });
       screenshots.value = result;
     } catch (error) {
@@ -102,49 +102,49 @@ async function toggleScreenshots() {
 </script>
 
 <template>
-  <Card class="session-card" :hoverable="false">
-    <div class="session-header">
+  <Card class="instance-card" :hoverable="false">
+    <div class="instance-header">
       <h3 class="world-name">
-        {{ session.worldName || session.worldId }}
+        {{ instance.worldName || instance.worldId }}
       </h3>
-      <span class="user-name">{{ session.userName }}</span>
+      <span class="user-name">{{ instance.userName }}</span>
     </div>
-    <div class="session-info">
+    <div class="instance-info">
       <span class="info-item date">
         <Calendar :size="16" />
-        {{ sessionDate }}
+        {{ instanceDate }}
       </span>
       <span
         class="info-item time"
-        :title="session.status === 'interrupted' ? t('session.interruptedWarning') : ''"
+        :title="instance.status === 'interrupted' ? t('instance.interruptedWarning') : ''"
       >
         <Clock :size="16" />
-        {{ sessionStartTime }}
-        <template v-if="session.endedAt">
-          〜 {{ sessionEndTime }} ({{ sessionDuration }})
+        {{ instanceStartTime }}
+        <template v-if="instance.endedAt">
+          〜 {{ instanceEndTime }} ({{ instanceDuration }})
         </template>
         <template v-else>
-          〜 {{ sessionDuration }}
+          〜 {{ instanceDuration }}
         </template>
       </span>
       <span
         class="info-item player-count clickable"
         @click="togglePlayers"
-        :title="playersExpanded ? t('session.hidePlayers') : t('session.showPlayers')"
+        :title="playersExpanded ? t('instance.hidePlayers') : t('instance.showPlayers')"
       >
         <Users :size="16" />
-        {{ t('session.playerCount', { count: session.playerCount }) }}
+        {{ t('instance.playerCount', { count: instance.playerCount }) }}
         <ChevronDown v-if="playersExpanded" :size="14" />
         <ChevronRight v-else :size="14" />
       </span>
       <span
-        v-if="session.screenshotCount > 0"
+        v-if="instance.screenshotCount > 0"
         class="info-item screenshot-count clickable"
         @click="toggleScreenshots"
-        :title="screenshotsExpanded ? t('session.hidePhotos') : t('session.showPhotos')"
+        :title="screenshotsExpanded ? t('instance.hidePhotos') : t('instance.showPhotos')"
       >
         <Camera :size="16" />
-        {{ t('session.photoCount', { count: session.screenshotCount }) }}
+        {{ t('instance.photoCount', { count: instance.screenshotCount }) }}
         <ChevronDown v-if="screenshotsExpanded" :size="14" />
         <ChevronRight v-else :size="14" />
       </span>
@@ -154,11 +154,11 @@ async function toggleScreenshots() {
     <PlayerList
       v-if="playersExpanded && players"
       :players="players"
-      :session="session"
+      :instance="instance"
       @open-user-page="(userId) => emit('openUserPage', userId)"
     />
     <div v-else-if="playersExpanded" class="loading">
-      {{ t('session.loading') }}
+      {{ t('instance.loading') }}
     </div>
 
     <!-- スクリーンショットリスト -->
@@ -169,24 +169,24 @@ async function toggleScreenshots() {
       @open-directory="(filePath) => emit('openDirectory', filePath)"
     />
     <div v-else-if="screenshotsExpanded" class="loading">
-      {{ t('session.loading') }}
+      {{ t('instance.loading') }}
     </div>
 
-    <div class="session-details">
+    <div class="instance-details">
       <div class="detail-item">
         <span class="label">Instance:</span>
-        <span class="value">{{ session.instanceId }}</span>
+        <span class="value">{{ instance.instanceId }}</span>
       </div>
-      <Button @click="emit('openInvite', session)">
+      <Button @click="emit('openInvite', instance)">
         <ExternalLink :size="16" />
-        <span>{{ t('session.openWorld') }}</span>
+        <span>{{ t('instance.openWorld') }}</span>
       </Button>
     </div>
   </Card>
 </template>
 
 <style scoped>
-.session-header {
+.instance-header {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
@@ -207,7 +207,7 @@ async function toggleScreenshots() {
   margin-left: 1rem;
 }
 
-.session-info {
+.instance-info {
   display: flex;
   gap: 1rem;
   flex-wrap: wrap;
@@ -255,7 +255,7 @@ async function toggleScreenshots() {
   font-size: 0.9rem;
 }
 
-.session-details {
+.instance-details {
   margin-top: 0.5rem;
   padding-top: 0.5rem;
   border-top: 1px solid var(--border-subtle);

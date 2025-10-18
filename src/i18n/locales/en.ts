@@ -11,7 +11,7 @@ export default {
     yesterday: 'Yesterday',
   },
   navigation: {
-    sessions: 'Sessions',
+    instances: 'Instances',
     people: 'People',
     worlds: 'Worlds',
     photos: 'Photos',
@@ -34,16 +34,16 @@ export default {
       en: 'English',
     },
   },
-  session: {
-    title: 'Session',
+  instance: {
+    title: 'Instance',
     duration: 'Duration',
     players: 'Players',
     screenshots: 'Screenshots',
-    noSessions: 'No sessions found',
+    noInstances: 'No instances found',
     joinHistory: 'Join History',
     joined: 'Joined',
     left: 'Left',
-    inSession: 'In Session',
+    inInstance: 'In Instance',
     loading: 'Loading...',
     openWorld: 'Open World',
     showPlayers: 'Show Players',
@@ -65,7 +65,7 @@ export default {
   },
   screenshot: {
     title: 'Screenshot',
-    noScreenshots: 'No screenshots taken in this session',
+    noScreenshots: 'No screenshots taken in this instance',
     deleted: 'Deleted',
     description: 'Coming soon: Photo gallery and album features',
   },
@@ -83,7 +83,7 @@ export default {
     allAccounts: 'All Accounts',
   },
   error: {
-    sessionLoad: 'Session load error',
+    instanceLoad: 'Instance load error',
     openDirectory: 'Failed to open directory',
   },
   notification: {

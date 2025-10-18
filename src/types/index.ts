@@ -6,7 +6,7 @@ export interface LocalUser {
   lastAuthenticatedAt: string;
 }
 
-export interface Session {
+export interface Instance {
   id: number;
   localUserId: number;
   userName: string;

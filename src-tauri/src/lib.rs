@@ -75,9 +75,9 @@ async fn get_local_users(state: tauri::State<'_, AppState>) -> Result<serde_json
     Ok(json)
 }
 
-/// セッション一覧を取得
+/// インスタンス一覧を取得
 #[tauri::command]
-async fn get_sessions(
+async fn get_instances(
     state: tauri::State<'_, AppState>,
     local_user_id: Option<i64>,
     limit: Option<i64>,
@@ -89,27 +89,27 @@ async fn get_sessions(
 
     let query = if let Some(player_id) = local_user_id {
         format!(
-            "SELECT s.id, s.player_id, p.display_name as user_name, s.started_at, s.ended_at,
-                    s.world_id, s.world_name, s.instance_id, s.status,
-                    (SELECT COUNT(DISTINCT player_id) FROM session_players WHERE session_id = s.id) as player_count,
-                    (SELECT COUNT(*) FROM screenshots WHERE session_id = s.id) as screenshot_count
-             FROM sessions s
-             JOIN players p ON s.player_id = p.id
-             WHERE s.player_id = {} AND p.is_local = 1
-             ORDER BY s.started_at DESC
+            "SELECT i.id, i.player_id, p.display_name as user_name, i.started_at, i.ended_at,
+                    i.world_id, i.world_name, i.instance_id, i.status,
+                    (SELECT COUNT(DISTINCT player_id) FROM instance_players WHERE instance_id = i.id) as player_count,
+                    (SELECT COUNT(*) FROM screenshots WHERE instance_id = i.id) as screenshot_count
+             FROM instances i
+             JOIN players p ON i.player_id = p.id
+             WHERE i.player_id = {} AND p.is_local = 1
+             ORDER BY i.started_at DESC
              LIMIT {}",
             player_id, limit
         )
     } else {
         format!(
-            "SELECT s.id, s.player_id, p.display_name as user_name, s.started_at, s.ended_at,
-                    s.world_id, s.world_name, s.instance_id, s.status,
-                    (SELECT COUNT(DISTINCT player_id) FROM session_players WHERE session_id = s.id) as player_count,
-                    (SELECT COUNT(*) FROM screenshots WHERE session_id = s.id) as screenshot_count
-             FROM sessions s
-             JOIN players p ON s.player_id = p.id
+            "SELECT i.id, i.player_id, p.display_name as user_name, i.started_at, i.ended_at,
+                    i.world_id, i.world_name, i.instance_id, i.status,
+                    (SELECT COUNT(DISTINCT player_id) FROM instance_players WHERE instance_id = i.id) as player_count,
+                    (SELECT COUNT(*) FROM screenshots WHERE instance_id = i.id) as screenshot_count
+             FROM instances i
+             JOIN players p ON i.player_id = p.id
              WHERE p.is_local = 1
-             ORDER BY s.started_at DESC
+             ORDER BY i.started_at DESC
              LIMIT {}",
             limit
         )
@@ -118,7 +118,7 @@ async fn get_sessions(
     let mut stmt = conn.prepare(&query)
         .map_err(|e| format!("Failed to prepare statement: {}", e))?;
 
-    let sessions = stmt.query_map([], |row| {
+    let instances = stmt.query_map([], |row| {
         Ok(serde_json::json!({
             "id": row.get::<_, i64>(0)?,
             "localUserId": row.get::<_, i64>(1)?,
@@ -133,30 +133,30 @@ async fn get_sessions(
             "screenshotCount": row.get::<_, i64>(10)?,
         }))
     })
-    .map_err(|e| format!("Failed to query sessions: {}", e))?
+    .map_err(|e| format!("Failed to query instances: {}", e))?
     .collect::<Result<Vec<_>, _>>()
-    .map_err(|e| format!("Failed to collect sessions: {}", e))?;
+    .map_err(|e| format!("Failed to collect instances: {}", e))?;
 
-    Ok(serde_json::json!(sessions))
+    Ok(serde_json::json!(instances))
 }
 
-/// 特定のセッションを取得
+/// 特定のインスタンスを取得
 #[tauri::command]
-async fn get_session_by_id(
+async fn get_instance_by_id(
     state: tauri::State<'_, AppState>,
-    session_id: i64,
+    instance_id: i64,
 ) -> Result<serde_json::Value, String> {
     let db = state.db.lock().unwrap();
     let conn = db.connection();
 
-    let session = conn.query_row(
-        "SELECT s.id, s.player_id, p.display_name as user_name, s.started_at, s.ended_at,
-                s.world_id, s.world_name, s.instance_id, s.status,
-                (SELECT COUNT(DISTINCT player_id) FROM session_players WHERE session_id = s.id) as player_count
-         FROM sessions s
-         JOIN players p ON s.player_id = p.id
-         WHERE s.id = ?1 AND p.is_local = 1",
-        [session_id],
+    let instance = conn.query_row(
+        "SELECT i.id, i.player_id, p.display_name as user_name, i.started_at, i.ended_at,
+                i.world_id, i.world_name, i.instance_id, i.status,
+                (SELECT COUNT(DISTINCT player_id) FROM instance_players WHERE instance_id = i.id) as player_count
+         FROM instances i
+         JOIN players p ON i.player_id = p.id
+         WHERE i.id = ?1 AND p.is_local = 1",
+        [instance_id],
         |row| {
             Ok(serde_json::json!({
                 "id": row.get::<_, i64>(0)?,
@@ -172,23 +172,23 @@ async fn get_session_by_id(
             }))
         }
     )
-    .map_err(|e| format!("Failed to get session: {}", e))?;
+    .map_err(|e| format!("Failed to get instance: {}", e))?;
 
-    Ok(session)
+    Ok(instance)
 }
 
-/// セッションのスクリーンショット一覧を取得
+/// インスタンスのスクリーンショット一覧を取得
 #[tauri::command]
-async fn get_session_screenshots(
+async fn get_instance_screenshots(
     state: tauri::State<'_, AppState>,
-    session_id: i64,
+    instance_id: i64,
 ) -> Result<serde_json::Value, String> {
     use std::path::Path;
 
     let db = state.db.lock().unwrap();
     let conn = db.connection();
 
-    let screenshots = db::operations::get_session_screenshots(conn, session_id)
+    let screenshots = db::operations::get_instance_screenshots(conn, instance_id)
         .map_err(|e| format!("Failed to get screenshots: {}", e))?;
 
     let result: Vec<serde_json::Value> = screenshots
@@ -254,8 +254,8 @@ async fn get_database_stats(state: tauri::State<'_, AppState>) -> Result<String,
         |row| row.get(0)
     ).unwrap_or(0);
 
-    let sessions: i64 = conn.query_row(
-        "SELECT COUNT(*) FROM sessions",
+    let instances: i64 = conn.query_row(
+        "SELECT COUNT(*) FROM instances",
         [],
         |row| row.get(0)
     ).unwrap_or(0);
@@ -267,21 +267,21 @@ async fn get_database_stats(state: tauri::State<'_, AppState>) -> Result<String,
     ).unwrap_or(0);
 
     Ok(format!(
-        "Local Players: {}, Sessions: {}, Remote Players: {}",
-        local_players, sessions, players
+        "Local Players: {}, Instances: {}, Remote Players: {}",
+        local_players, instances, players
     ))
 }
 
-/// セッションのプレイヤー一覧を取得
+/// インスタンスのプレイヤー一覧を取得
 #[tauri::command]
-async fn get_session_players(
+async fn get_instance_players(
     state: tauri::State<'_, AppState>,
-    session_id: i64,
+    instance_id: i64,
 ) -> Result<serde_json::Value, String> {
     let db = state.db.lock().unwrap();
     let conn = db.connection();
 
-    let players = db::operations::get_players_in_session(conn, session_id)
+    let players = db::operations::get_players_in_instance(conn, instance_id)
         .map_err(|e| format!("Failed to get players: {}", e))?;
 
     let json = serde_json::json!(
@@ -494,12 +494,12 @@ pub fn run() {
             get_log_path,
             open_invite_url,
             get_local_users,
-            get_sessions,
-            get_session_by_id,
-            get_session_screenshots,
+            get_instances,
+            get_instance_by_id,
+            get_instance_screenshots,
             open_screenshot_directory,
             get_database_stats,
-            get_session_players,
+            get_instance_players,
             open_user_page
         ])
         .run(tauri::generate_context!())

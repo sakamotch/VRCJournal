@@ -14,15 +14,15 @@ pub struct Player {
 }
 
 #[derive(Debug, Clone)]
-pub struct SessionPlayer {
+pub struct InstancePlayer {
     pub id: i64,
     pub display_name: String,             // 現在の表示名
     pub display_name_at_join: String,     // その時の表示名
     pub user_id: String,
     pub first_seen_at: DateTime<Utc>,
     pub last_seen_at: DateTime<Utc>,
-    pub joined_at: DateTime<Utc>,        // セッションに参加した時刻
-    pub left_at: Option<DateTime<Utc>>,   // セッションから退出した時刻
+    pub joined_at: DateTime<Utc>,        // インスタンスに参加した時刻
+    pub left_at: Option<DateTime<Utc>>,   // インスタンスから退出した時刻
 }
 
 /// プレイヤーを作成または更新（一般プレイヤー用: is_local=0）
@@ -120,59 +120,59 @@ pub fn upsert_local_player(
     Ok(player_id)
 }
 
-/// セッションにプレイヤーを追加
+/// インスタンスにプレイヤーを追加
 /// 同じプレイヤーが複数回出入りする場合も、それぞれ別のレコードとして記録される
-pub fn add_player_to_session(
+pub fn add_player_to_instance(
     conn: &Connection,
-    session_id: i64,
+    instance_id: i64,
     player_id: i64,
     display_name_history_id: i64,
     joined_at: DateTime<Utc>,
 ) -> Result<()> {
     conn.execute(
-        "INSERT INTO session_players (session_id, player_id, joined_at, display_name_history_id)
+        "INSERT INTO instance_players (instance_id, player_id, joined_at, display_name_history_id)
          VALUES (?1, ?2, ?3, ?4)",
-        (session_id, player_id, joined_at.to_rfc3339(), display_name_history_id),
+        (instance_id, player_id, joined_at.to_rfc3339(), display_name_history_id),
     )?;
     Ok(())
 }
 
-/// セッションからプレイヤーを退出させる
+/// インスタンスからプレイヤーを退出させる
 /// 同じプレイヤーが複数回出入りする場合、最新の（left_atがNULLの）レコードのみを更新
-pub fn remove_player_from_session(
+pub fn remove_player_from_instance(
     conn: &Connection,
-    session_id: i64,
+    instance_id: i64,
     player_id: i64,
     left_at: DateTime<Utc>,
 ) -> Result<()> {
     conn.execute(
-        "UPDATE session_players
+        "UPDATE instance_players
          SET left_at = ?1
          WHERE id = (
-             SELECT id FROM session_players
-             WHERE session_id = ?2 AND player_id = ?3 AND left_at IS NULL
+             SELECT id FROM instance_players
+             WHERE instance_id = ?2 AND player_id = ?3 AND left_at IS NULL
              ORDER BY joined_at DESC
              LIMIT 1
          )",
-        (left_at.to_rfc3339(), session_id, player_id),
+        (left_at.to_rfc3339(), instance_id, player_id),
     )?;
     Ok(())
 }
 
-/// セッションのプレイヤー一覧を取得（その時の名前と現在の名前を含む）
-pub fn get_players_in_session(conn: &Connection, session_id: i64) -> Result<Vec<SessionPlayer>> {
+/// インスタンスのプレイヤー一覧を取得（その時の名前と現在の名前を含む）
+pub fn get_players_in_instance(conn: &Connection, instance_id: i64) -> Result<Vec<InstancePlayer>> {
     let mut stmt = conn.prepare(
-        "SELECT p.id, p.display_name, pnh.display_name, p.user_id, p.first_seen_at, p.last_seen_at, sp.joined_at, sp.left_at
+        "SELECT p.id, p.display_name, pnh.display_name, p.user_id, p.first_seen_at, p.last_seen_at, ip.joined_at, ip.left_at
          FROM players p
-         INNER JOIN session_players sp ON p.id = sp.player_id
-         INNER JOIN player_name_history pnh ON sp.display_name_history_id = pnh.id
-         WHERE sp.session_id = ?1
-         ORDER BY sp.joined_at",
+         INNER JOIN instance_players ip ON p.id = ip.player_id
+         INNER JOIN player_name_history pnh ON ip.display_name_history_id = pnh.id
+         WHERE ip.instance_id = ?1
+         ORDER BY ip.joined_at",
     )?;
 
     let players = stmt
-        .query_map([session_id], |row| {
-            Ok(SessionPlayer {
+        .query_map([instance_id], |row| {
+            Ok(InstancePlayer {
                 id: row.get(0)?,
                 display_name: row.get(1)?,              // 現在の名前
                 display_name_at_join: row.get(2)?,      // その時の名前

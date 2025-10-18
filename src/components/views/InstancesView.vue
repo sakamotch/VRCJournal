@@ -1,19 +1,19 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
-import type { Session } from "@/types";
-import SessionCard from "./SessionCard.vue";
+import type { Instance } from "@/types";
+import InstanceCard from "@/components/InstanceCard.vue";
 import dayjs from "dayjs";
 
 const { t, locale } = useI18n();
 
 interface Props {
-  sessions: Session[];
+  instances: Instance[];
   isLoading: boolean;
 }
 
 interface Emits {
-  (e: "openInvite", session: Session): void;
+  (e: "openInvite", instance: Instance): void;
   (e: "openUserPage", userId: string): void;
   (e: "viewScreenshot", filePath: string): void;
   (e: "openDirectory", filePath: string): void;
@@ -22,24 +22,24 @@ interface Emits {
 const props = defineProps<Props>();
 const emit = defineEmits<Emits>();
 
-const sessionsByDate = computed(() => {
+const instancesByDate = computed(() => {
   // locale.valueを依存関係に追加してロケール変更時に再計算
   locale.value;
 
-  const groups: { date: string; displayDate: string; sessions: Session[] }[] = [];
+  const groups: { date: string; displayDate: string; instances: Instance[] }[] = [];
 
-  props.sessions.forEach(session => {
-    const date = dayjs(session.startedAt);
+  props.instances.forEach(instance => {
+    const date = dayjs(instance.startedAt);
     const dateKey = date.format("YYYY/MM/DD");
 
     const displayDate = formatDateHeader(date);
 
     let group = groups.find(g => g.date === dateKey);
     if (!group) {
-      group = { date: dateKey, displayDate, sessions: [] };
+      group = { date: dateKey, displayDate, instances: [] };
       groups.push(group);
     }
-    group.sessions.push(session);
+    group.instances.push(instance);
   });
 
   return groups;
@@ -60,26 +60,26 @@ function formatDateHeader(date: dayjs.Dayjs): string {
 </script>
 
 <template>
-  <div class="session-list-container">
-    <h2>{{ t('session.title') }}</h2>
+  <div class="instance-list-container">
+    <h2>{{ t('instance.title') }}</h2>
 
     <div v-if="isLoading" class="loading">{{ t('common.loading') }}</div>
 
-    <div v-else-if="sessions.length === 0" class="empty">
-      {{ t('session.noSessions') }}
+    <div v-else-if="instances.length === 0" class="empty">
+      {{ t('instance.noInstances') }}
     </div>
 
-    <div v-else class="session-list">
-      <div v-for="group in sessionsByDate" :key="group.date" class="date-group">
+    <div v-else class="instance-list">
+      <div v-for="group in instancesByDate" :key="group.date" class="date-group">
         <div class="date-header">
           {{ group.displayDate }}
         </div>
-        <div class="date-sessions">
-          <SessionCard
-            v-for="session in group.sessions"
-            :key="session.id"
-            :session="session"
-            @open-invite="(s) => emit('openInvite', s)"
+        <div class="date-instances">
+          <InstanceCard
+            v-for="instance in group.instances"
+            :key="instance.id"
+            :instance="instance"
+            @open-invite="(i) => emit('openInvite', i)"
             @open-user-page="(userId) => emit('openUserPage', userId)"
             @view-screenshot="(filePath) => emit('viewScreenshot', filePath)"
             @open-directory="(filePath) => emit('openDirectory', filePath)"
@@ -91,13 +91,13 @@ function formatDateHeader(date: dayjs.Dayjs): string {
 </template>
 
 <style scoped>
-.session-list-container {
+.instance-list-container {
   flex: 1;
   padding: 1.5rem;
   overflow-y: auto;
 }
 
-.session-list-container h2 {
+.instance-list-container h2 {
   margin: 0 0 1rem 0;
   font-size: 1.3rem;
   color: var(--text-primary);
@@ -109,7 +109,7 @@ function formatDateHeader(date: dayjs.Dayjs): string {
   color: var(--text-tertiary);
 }
 
-.session-list {
+.instance-list {
   display: flex;
   flex-direction: column;
   gap: 2rem;
@@ -158,7 +158,7 @@ function formatDateHeader(date: dayjs.Dayjs): string {
   border-radius: 1px;
 }
 
-.date-sessions {
+.date-instances {
   display: flex;
   flex-direction: column;
   gap: 1rem;

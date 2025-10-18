@@ -3,9 +3,9 @@ import { ref, computed, onMounted, onUnmounted, onBeforeUnmount } from "vue";
 import { useI18n } from "vue-i18n";
 import { invoke } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
-import type { LocalUser, Session } from "@/types";
+import type { LocalUser, Instance } from "@/types";
 import Navigation, { type NavigationView } from "@/components/Navigation.vue";
-import SessionList from "@/components/SessionList.vue";
+import InstancesView from "@/components/views/InstancesView.vue";
 import WorldsView from "@/components/views/WorldsView.vue";
 import PeopleView from "@/components/views/PeopleView.vue";
 import PhotosView from "@/components/views/PhotosView.vue";
@@ -21,7 +21,7 @@ const { success, error: showError } = useNotifications();
 const isBackendReady = ref(false); // バックエンドの初期化完了フラグ
 const isLoading = ref(false);
 const localUsers = ref<LocalUser[]>([]);
-const sessions = ref<Session[]>([]);
+const instances = ref<Instance[]>([]);
 const selectedUserId = ref<number | null>(null);
 const selectedScreenshot = ref<string | null>(null);
 const showSettings = ref(false);
@@ -46,17 +46,17 @@ async function loadUsers() {
   }
 }
 
-async function loadSessions() {
+async function loadInstances() {
   isLoading.value = true;
   try {
-    const result = await invoke<Session[]>("get_sessions", {
+    const result = await invoke<Instance[]>("get_instances", {
       localUserId: selectedUserId.value,
       limit: 100,
     });
-    sessions.value = result;
+    instances.value = result;
   } catch (err) {
-    console.error("Failed to load sessions:", err);
-    showError(`${t('error.sessionLoad')}: ${err}`);
+    console.error("Failed to load instances:", err);
+    showError(`${t('error.instanceLoad')}: ${err}`);
   } finally {
     isLoading.value = false;
   }
@@ -65,7 +65,7 @@ async function loadSessions() {
 function selectUser(userId: number | null) {
   selectedUserId.value = userId;
   showUserDropdown.value = false;
-  loadSessions();
+  loadInstances();
 }
 
 function navigateToView(view: NavigationView) {
@@ -79,11 +79,11 @@ function handleClickOutside(event: MouseEvent) {
   }
 }
 
-async function openInviteUrl(session: Session) {
+async function openInviteUrl(instance: Instance) {
   try {
     const url = await invoke<string>("open_invite_url", {
-      worldId: session.worldId,
-      instanceId: session.instanceId,
+      worldId: instance.worldId,
+      instanceId: instance.instanceId,
     });
 
     success(`${t('notification.inviteOpened')}: ${url}`);
@@ -132,7 +132,7 @@ onMounted(async () => {
       // 既に準備完了の場合（F5リロードなど）
       isBackendReady.value = true;
       await loadUsers();
-      await loadSessions();
+      await loadInstances();
     }
   } catch (err) {
     console.error("Failed to check backend ready status:", err);
@@ -143,7 +143,7 @@ onMounted(async () => {
     if (!isBackendReady.value) {
       isBackendReady.value = true;
       await loadUsers();
-      await loadSessions();
+      await loadInstances();
     }
   });
 
@@ -155,22 +155,22 @@ onMounted(async () => {
         loadUsers();
         break;
 
-      case "SessionCreated":
-        loadSessions();
+      case "InstanceCreated":
+        loadInstances();
         break;
 
-      case "SessionEnded":
-        const endedSession = sessions.value.find(s => s.id === processedEvent.session_id);
-        if (endedSession) {
-          endedSession.endedAt = processedEvent.ended_at;
-          endedSession.status = 'completed';
+      case "InstanceEnded":
+        const endedInstance = instances.value.find(s => s.id === processedEvent.instance_id);
+        if (endedInstance) {
+          endedInstance.endedAt = processedEvent.ended_at;
+          endedInstance.status = 'completed';
         }
         break;
 
       case "PlayerJoined":
       case "PlayerLeft":
-        // セッションをリロードしてプレイヤー数を更新
-        loadSessions();
+        // インスタンスをリロードしてプレイヤー数を更新
+        loadInstances();
         break;
     }
   });
@@ -239,9 +239,9 @@ onUnmounted(() => {
       />
 
       <main class="main-content">
-        <SessionList
+        <InstancesView
           v-if="currentView === 'timeline'"
-          :sessions="sessions"
+          :instances="instances"
           :is-loading="isLoading || !isBackendReady"
           @open-invite="openInviteUrl"
           @open-user-page="openUserPage"

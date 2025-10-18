@@ -27,7 +27,7 @@ function formatScreenshotTime(dateStr: string): string {
 
 <template>
   <div class="screenshot-list">
-    <h4>{{ t('session.screenshots') }}</h4>
+    <h4>{{ t('instance.screenshots') }}</h4>
     <div v-if="screenshots.length > 0" class="screenshot-grid">
       <div
         v-for="screenshot in screenshots"

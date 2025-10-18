@@ -19,7 +19,7 @@ defineProps<Props>();
 const emit = defineEmits<Emits>();
 
 const navItems = computed(() => [
-  { id: 'timeline' as NavigationView, label: t('navigation.sessions'), icon: Calendar },
+  { id: 'timeline' as NavigationView, label: t('navigation.instances'), icon: Calendar },
   { id: 'worlds' as NavigationView, label: t('navigation.worlds'), icon: Globe },
   { id: 'people' as NavigationView, label: t('navigation.people'), icon: Users },
   { id: 'photos' as NavigationView, label: t('navigation.photos'), icon: Camera },

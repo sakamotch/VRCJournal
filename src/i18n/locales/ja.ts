@@ -11,7 +11,7 @@ export default {
     yesterday: '昨日',
   },
   navigation: {
-    sessions: 'セッション',
+    instances: 'インスタンス',
     people: 'プレイヤー',
     worlds: 'ワールド',
     photos: 'スクリーンショット',
@@ -34,16 +34,16 @@ export default {
       en: 'English',
     },
   },
-  session: {
-    title: 'セッション',
+  instance: {
+    title: 'インスタンス',
     duration: '滞在時間',
     players: 'プレイヤー',
     screenshots: 'スクリーンショット',
-    noSessions: 'セッションがありません',
+    noInstances: 'インスタンスがありません',
     joinHistory: 'Join履歴',
     joined: '入室',
     left: '退室',
-    inSession: '在室中',
+    inInstance: '在室中',
     loading: '読み込み中...',
     openWorld: 'ワールドを開く',
     showPlayers: 'プレイヤーを表示',
@@ -65,7 +65,7 @@ export default {
   },
   screenshot: {
     title: 'スクリーンショット',
-    noScreenshots: 'このセッションではスクリーンショットが撮影されていません',
+    noScreenshots: 'このインスタンスではスクリーンショットが撮影されていません',
     deleted: '削除済み',
     description: '写真ギャラリー・アルバム機能を実装予定',
   },
@@ -83,7 +83,7 @@ export default {
     allAccounts: '全アカウント',
   },
   error: {
-    sessionLoad: 'セッション読み込みエラー',
+    instanceLoad: 'インスタンス読み込みエラー',
     openDirectory: 'ディレクトリを開けませんでした',
   },
   notification: {

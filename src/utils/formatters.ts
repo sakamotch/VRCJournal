@@ -1,4 +1,4 @@
-import type { Session, Player } from "@/types";
+import type { Instance, Player } from "@/types";
 import dayjs from "dayjs";
 
 export function formatPlayerName(player: Player): string {
@@ -9,9 +9,9 @@ export function formatPlayerName(player: Player): string {
   return player.displayName;
 }
 
-export function isPlayerStayedUntilEnd(player: Player, session: Session): boolean {
-  // セッションが進行中の場合はleftAtで判定
-  if (!session.endedAt) {
+export function isPlayerStayedUntilEnd(player: Player, instance: Instance): boolean {
+  // インスタンスが進行中の場合はleftAtで判定
+  if (!instance.endedAt) {
     return player.leftAt === null;
   }
 
@@ -20,11 +20,11 @@ export function isPlayerStayedUntilEnd(player: Player, session: Session): boolea
     return true;
   }
 
-  // leftAtがセッション終了時刻と1秒以内なら最後まで在席
+  // leftAtがインスタンス終了時刻と1秒以内なら最後まで在席
   try {
-    const sessionEndTime = dayjs(session.endedAt);
+    const instanceEndTime = dayjs(instance.endedAt);
     const playerLeftTime = dayjs(player.leftAt);
-    return Math.abs(sessionEndTime.diff(playerLeftTime)) <= 1000;
+    return Math.abs(instanceEndTime.diff(playerLeftTime)) <= 1000;
   } catch {
     return false;
   }

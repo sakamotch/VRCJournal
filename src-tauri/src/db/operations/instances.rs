@@ -2,7 +2,7 @@ use rusqlite::{Connection, Result, OptionalExtension};
 use chrono::{DateTime, Utc};
 
 #[derive(Debug, Clone)]
-pub struct Session {
+pub struct Instance {
     pub id: i64,
     pub player_id: i64,  // ローカルプレイヤー (is_local=1のplayer)
     pub started_at: DateTime<Utc>,
@@ -13,8 +13,8 @@ pub struct Session {
     pub status: String,  // active, completed, interrupted
 }
 
-/// 新しいセッションを作成
-pub fn create_session(
+/// 新しいインスタンスを作成
+pub fn create_instance(
     conn: &Connection,
     player_id: i64,
     started_at: DateTime<Utc>,
@@ -23,7 +23,7 @@ pub fn create_session(
     instance_id: &str,
 ) -> Result<i64> {
     conn.execute(
-        "INSERT INTO sessions (player_id, started_at, world_id, world_name, instance_id)
+        "INSERT INTO instances (player_id, started_at, world_id, world_name, instance_id)
          VALUES (?1, ?2, ?3, ?4, ?5)",
         (
             player_id,
@@ -36,29 +36,29 @@ pub fn create_session(
     Ok(conn.last_insert_rowid())
 }
 
-/// セッションの終了時刻を更新し、状態をcompletedに設定
-pub fn end_session(conn: &Connection, session_id: i64, ended_at: DateTime<Utc>) -> Result<()> {
+/// インスタンスの終了時刻を更新し、状態をcompletedに設定
+pub fn end_instance(conn: &Connection, instance_id: i64, ended_at: DateTime<Utc>) -> Result<()> {
     conn.execute(
-        "UPDATE sessions SET ended_at = ?1, status = 'completed' WHERE id = ?2",
-        (ended_at.to_rfc3339(), session_id),
+        "UPDATE instances SET ended_at = ?1, status = 'completed' WHERE id = ?2",
+        (ended_at.to_rfc3339(), instance_id),
     )?;
     Ok(())
 }
 
-/// 最新の未終了セッションを取得
-pub fn get_latest_active_session(
+/// 最新の未終了インスタンスを取得
+pub fn get_latest_active_instance(
     conn: &Connection,
     player_id: i64,
-) -> Result<Option<Session>> {
+) -> Result<Option<Instance>> {
     conn.query_row(
         "SELECT id, player_id, started_at, ended_at, world_id, world_name, instance_id, status
-         FROM sessions
+         FROM instances
          WHERE player_id = ?1 AND ended_at IS NULL
          ORDER BY started_at DESC
          LIMIT 1",
         [player_id],
         |row| {
-            Ok(Session {
+            Ok(Instance {
                 id: row.get(0)?,
                 player_id: row.get(1)?,
                 started_at: DateTime::parse_from_rfc3339(&row.get::<_, String>(2)?)
@@ -77,24 +77,24 @@ pub fn get_latest_active_session(
     .optional()
 }
 
-/// 指定したローカルプレイヤーのセッション一覧を取得
-pub fn get_sessions_by_player(
+/// 指定したローカルプレイヤーのインスタンス一覧を取得
+pub fn get_instances_by_player(
     conn: &Connection,
     player_id: i64,
     limit: usize,
     offset: usize,
-) -> Result<Vec<Session>> {
+) -> Result<Vec<Instance>> {
     let mut stmt = conn.prepare(
         "SELECT id, player_id, started_at, ended_at, world_id, world_name, instance_id, status
-         FROM sessions
+         FROM instances
          WHERE player_id = ?1
          ORDER BY started_at DESC
          LIMIT ?2 OFFSET ?3",
     )?;
 
-    let sessions = stmt
+    let instances = stmt
         .query_map((player_id, limit, offset), |row| {
-            Ok(Session {
+            Ok(Instance {
                 id: row.get(0)?,
                 player_id: row.get(1)?,
                 started_at: DateTime::parse_from_rfc3339(&row.get::<_, String>(2)?)
@@ -111,5 +111,5 @@ pub fn get_sessions_by_player(
         })?
         .collect::<Result<Vec<_>>>()?;
 
-    Ok(sessions)
+    Ok(instances)
 }
