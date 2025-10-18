@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { useI18n } from "vue-i18n";
 import Navigation from "@/components/layout/Navigation.vue";
-import ScreenshotModal from "@/components/features/screenshot/ScreenshotModal.vue";
 import Settings from "@/components/settings/Settings.vue";
 import NotificationContainer from "@/components/layout/NotificationContainer.vue";
 import UserSelector from "@/components/layout/UserSelector.vue";
@@ -10,7 +9,6 @@ import { Settings as SettingsIcon } from "lucide-vue-next";
 import { useUsers } from "@/composables/useUsers";
 import { useUserSelection } from "@/stores/userStore";
 import { useBackendEvents } from "@/composables/useBackendEvents";
-import { useScreenshot } from "@/composables/useScreenshot";
 import { useAppState } from "@/composables/useAppState";
 import { useViewRouter } from "@/composables/useViewRouter";
 
@@ -18,7 +16,6 @@ const { t } = useI18n();
 
 const { localUsers, loadUsers } = useUsers();
 const { selectedUserId, selectUser } = useUserSelection();
-const { selectedScreenshot, closeScreenshotModal } = useScreenshot();
 const { showSettings, currentView, navigateToView } = useAppState();
 const { currentComponent } = useViewRouter(currentView);
 
@@ -56,11 +53,6 @@ useBackendEvents({
         <component :is="currentComponent" />
       </main>
     </div>
-
-    <ScreenshotModal
-      :file-path="selectedScreenshot"
-      @close="closeScreenshotModal"
-    />
 
     <Settings
       :show="showSettings"

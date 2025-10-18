@@ -2,6 +2,7 @@
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import InstanceCard from "@/components/features/instance/InstanceCard.vue";
+import ScreenshotModal from "@/components/features/screenshot/ScreenshotModal.vue";
 import { useInstances } from "@/composables/useInstances";
 import { useScreenshot } from "@/composables/useScreenshot";
 import { useBackendEvents } from "@/composables/useBackendEvents";
@@ -20,7 +21,9 @@ const {
   updateInstanceEnd,
 } = useInstances();
 const {
+  selectedScreenshot,
   viewScreenshot,
+  closeScreenshotModal,
   openScreenshotDirectory,
 } = useScreenshot();
 
@@ -95,6 +98,11 @@ function formatDateHeader(date: dayjs.Dayjs): string {
         </div>
       </div>
     </div>
+
+    <ScreenshotModal
+      :file-path="selectedScreenshot"
+      @close="closeScreenshotModal"
+    />
   </div>
 </template>
 
