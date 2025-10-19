@@ -12,7 +12,7 @@ use std::time::Duration;
 pub fn start_watching(
     log_dir: PathBuf,
     file_states: Arc<Mutex<HashMap<PathBuf, u64>>>,
-    event_tx: Sender<Vec<(PathBuf, LogEvent)>>,
+    event_tx: Sender<Vec<LogEvent>>,
 ) -> Result<(), String> {
     // ファイルサイズを記録するマップ（ポーリング用）
     let file_sizes: Arc<Mutex<HashMap<PathBuf, u64>>> = Arc::new(Mutex::new(HashMap::new()));
@@ -95,7 +95,7 @@ fn handle_file_change(
     log_path: &PathBuf,
     file_states: &Arc<Mutex<HashMap<PathBuf, u64>>>,
     parser: &VRChatLogParser,
-    event_tx: &Sender<Vec<(PathBuf, LogEvent)>>,
+    event_tx: &Sender<Vec<LogEvent>>,
 ) -> Result<(), String> {
     let mut file =
         File::open(log_path).map_err(|e| format!("Failed to open log file: {}", e))?;
@@ -124,7 +124,7 @@ fn handle_file_change(
     let mut events = Vec::new();
     for line in content.lines() {
         if let Some(event) = parser.parse_line(line) {
-            events.push((log_path.clone(), event));
+            events.push(event);
         }
     }
 

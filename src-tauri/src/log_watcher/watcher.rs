@@ -12,8 +12,8 @@ pub struct LogWatcher {
     log_dir: PathBuf,
     file_states: Arc<Mutex<HashMap<PathBuf, u64>>>,
     parser: VRChatLogParser,
-    event_tx: Sender<Vec<(PathBuf, LogEvent)>>,
-    event_rx: Arc<Mutex<Receiver<Vec<(PathBuf, LogEvent)>>>>,
+    event_tx: Sender<Vec<LogEvent>>,
+    event_rx: Arc<Mutex<Receiver<Vec<LogEvent>>>>,
 }
 
 impl LogWatcher {
@@ -50,7 +50,7 @@ impl LogWatcher {
     }
 
     /// バックログイベント読み込み：前回位置からログを読み込んでイベント一覧を返す
-    pub fn read_backlog_events(&mut self) -> Result<Vec<(PathBuf, LogEvent)>, String> {
+    pub fn read_backlog_events(&mut self) -> Result<Vec<LogEvent>, String> {
         let file_positions = self.file_states.lock().unwrap().clone();
 
         self.read_all_logs(file_positions)
@@ -66,7 +66,7 @@ impl LogWatcher {
     }
 
     /// リアルタイムイベント受信：ファイル変更で検知したイベント一覧を受信
-    pub fn recv_realtime_events(&self) -> Result<Vec<(PathBuf, LogEvent)>, String> {
+    pub fn recv_realtime_events(&self) -> Result<Vec<LogEvent>, String> {
         self.event_rx
             .lock()
             .unwrap()
@@ -83,7 +83,7 @@ impl LogWatcher {
     fn read_all_logs(
         &self,
         file_positions: HashMap<PathBuf, u64>,
-    ) -> Result<Vec<(PathBuf, LogEvent)>, String> {
+    ) -> Result<Vec<LogEvent>, String> {
         let log_files = get_all_log_files(&self.log_dir)?;
         let mut all_events = Vec::new();
 
@@ -97,9 +97,7 @@ impl LogWatcher {
                 .unwrap()
                 .insert(log_file.clone(), final_position);
 
-            for event in events {
-                all_events.push((log_file.clone(), event));
-            }
+            all_events.extend(events);
         }
 
         Ok(all_events)

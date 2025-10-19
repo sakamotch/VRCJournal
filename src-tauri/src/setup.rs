@@ -1,5 +1,4 @@
 use crate::{db, event_processor::EventProcessor, log_watcher::LogWatcher, parser::LogEvent};
-use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use tauri::{App, AppHandle, Emitter, Manager};
 
@@ -133,12 +132,12 @@ fn process_realtime(
 fn process_event_batch(
     conn: &rusqlite::Connection,
     processor: &mut EventProcessor,
-    events: Vec<(PathBuf, LogEvent)>,
+    events: Vec<LogEvent>,
     app_handle: Option<&AppHandle>,
 ) -> usize {
     let mut count = 0;
 
-    for (_file_path, event) in events {
+    for event in events {
         match processor.process_event(conn, event) {
             Ok(Some(processed_event)) => {
                 // フロントエンドに送信（リアルタイムのみ）
