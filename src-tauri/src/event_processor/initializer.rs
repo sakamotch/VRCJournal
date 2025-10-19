@@ -2,7 +2,23 @@ use crate::db::operations;
 use rusqlite::Connection;
 use std::collections::HashMap;
 
-pub fn initialize_from_db(
+/// Restore EventProcessor state from the database
+///
+/// This is necessary because log files are read incrementally from the last processed position.
+/// When the application restarts, we need to restore:
+/// - The currently active local account (my_account)
+/// - The currently active instance
+/// - Users currently in the instance
+///
+/// Without this context, we wouldn't know which account/instance new events belong to
+/// when processing log entries from the middle of a file.
+///
+/// # Example scenario:
+/// 1. Previous session: Processed log file up to byte 5000, user was in instance 123
+/// 2. App restarts: Resume reading from byte 5000
+/// 3. First event: "PlayerJoined: Alice" - which instance did Alice join?
+/// 4. Answer: Instance 123 (restored from DB)
+pub fn restore_previous_state(
     conn: &Connection,
     current_my_account_id: &mut Option<i64>,
     current_user_id: &mut Option<i64>,
@@ -10,7 +26,7 @@ pub fn initialize_from_db(
     user_ids: &mut HashMap<String, i64>,
     instance_user_ids: &mut HashMap<i64, i64>,
 ) -> Result<(), rusqlite::Error> {
-    // Get the most recently authenticated local account
+    // Restore the most recently authenticated local account
     let my_account_result = conn.query_row(
         "SELECT ma.id, ma.user_id
          FROM my_accounts ma

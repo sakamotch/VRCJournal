@@ -1,5 +1,5 @@
-use crate::app_state::AppState;
-use crate::{db, event_processor::EventProcessor, log_watcher};
+use crate::{db, event_processor::EventProcessor, log_watcher::LogWatcher, parser::LogEvent};
+use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use tauri::{App, AppHandle, Emitter, Manager};
 
@@ -13,174 +13,151 @@ pub fn setup_app(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
     let database = db::Database::open(db_path)?;
     database.migrate()?;
 
-    // AppState 作成
-    let app_state = AppState {
-        db: Arc::new(Mutex::new(database)),
-        event_processor: Arc::new(Mutex::new(EventProcessor::new())),
-    };
-
-    app.manage(app_state.clone());
-
     // バックグラウンドでログ監視を開始
     let app_handle = app.handle().clone();
     std::thread::spawn(move || {
-        start_log_watcher(app_state, app_handle);
+        run_event_monitoring(database, app_handle);
     });
 
     Ok(())
 }
 
-/// ログ監視スレッドの実行
-fn start_log_watcher(app_state: AppState, app_handle: AppHandle) {
-    use std::collections::HashMap;
+/// イベント監視の実行
+fn run_event_monitoring(database: db::Database, app_handle: AppHandle) {
+    let db = Arc::new(Mutex::new(database));
 
-    match log_watcher::LogWatcher::new() {
-        Ok(mut watcher) => {
-            // データベースから処理済みファイル位置を取得
-            let file_positions = {
-                let db = app_state.db.lock().unwrap();
-                let conn = db.connection();
-
-                match db::operations::get_all_log_files(conn) {
-                    Ok(tracked_files) => {
-                        let mut positions = HashMap::new();
-                        for (path, _size, position, _modified) in tracked_files {
-                            positions.insert(std::path::PathBuf::from(path), position);
-                        }
-                        positions
-                    }
-                    Err(e) => {
-                        eprintln!("Failed to get tracked files: {}", e);
-                        HashMap::new()
-                    }
-                }
-            };
-
-            // EventProcessorをデータベースから初期化
-            {
-                let db = app_state.db.lock().unwrap();
-                let conn = db.connection();
-                let mut processor = app_state.event_processor.lock().unwrap();
-                if let Err(e) = processor.initialize_from_db(conn) {
-                    eprintln!("Failed to initialize EventProcessor from database: {}", e);
-                }
-            }
-
-            // 全てのログファイルを読み込み
-            match watcher.read_all_logs(file_positions) {
-                Ok(events) => {
-                    let events_count = process_initial_events(&app_state, &mut watcher, events);
-
-                    println!("Initial log processing completed: {} events", events_count);
-
-                    // ファイル監視を開始
-                    if let Err(e) = watcher.start_watching() {
-                        eprintln!("Failed to start watching: {}", e);
-                        return;
-                    }
-
-                    // バックグラウンドでイベントを処理
-                    process_log_events(app_state, app_handle, watcher);
-                }
-                Err(e) => {
-                    eprintln!("Failed to read logs: {}", e);
-                }
-            }
-        }
+    // 1. VRChatディレクトリの検証
+    let mut watcher = match LogWatcher::new() {
+        Ok(w) => w,
         Err(e) => {
             eprintln!("Failed to create log watcher: {}", e);
+            return;
+        }
+    };
+
+    let mut processor = EventProcessor::new();
+
+    // 2. 前回終了時点の状態を復元
+    {
+        let db_guard = db.lock().unwrap();
+        let conn = db_guard.connection();
+
+        if let Err(e) = processor.restore_previous_state(conn) {
+            eprintln!("Failed to restore EventProcessor state: {}", e);
+        }
+
+        if let Err(e) = watcher.restore_file_positions(conn) {
+            eprintln!("Failed to restore file positions: {}", e);
+            return;
         }
     }
+
+    // 3-4. バックログ処理
+    let events_count = process_backlog(&db, &mut watcher, &mut processor);
+    println!("Backlog processing completed: {} events", events_count);
+
+    // 5. バックエンド準備完了を通知
+    if let Err(e) = app_handle.emit("backend-ready", ()) {
+        eprintln!("Failed to emit backend-ready event: {}", e);
+    }
+
+    // 6. ファイル監視を開始
+    if let Err(e) = watcher.start_watching() {
+        eprintln!("Failed to start watching: {}", e);
+        return;
+    }
+
+    // 7. リアルタイム処理ループ
+    process_realtime(db, watcher, processor, app_handle);
 }
 
-/// 初期イベント処理
-fn process_initial_events(
-    app_state: &AppState,
-    watcher: &mut log_watcher::LogWatcher,
-    events: Vec<(std::path::PathBuf, crate::parser::LogEvent)>,
+/// バックログ処理：前回解析しなかった分のログを処理（イベント送信なし）
+fn process_backlog(
+    db: &Arc<Mutex<db::Database>>,
+    watcher: &mut LogWatcher,
+    processor: &mut EventProcessor,
 ) -> usize {
-    use chrono::Utc;
+    let db_guard = db.lock().unwrap();
+    let conn = db_guard.connection();
 
-    let db = app_state.db.lock().unwrap();
-    let conn = db.connection();
-    let mut processor = app_state.event_processor.lock().unwrap();
-
-    let mut events_count = 0;
-    for (_file_path, event) in events {
-        if let Err(e) = processor.process_event(conn, event) {
-            eprintln!("Failed to process event: {}", e);
-        } else {
-            events_count += 1;
+    // 3. 前回位置からログを読み込む -> パース -> イベント一覧を取得
+    let events = match watcher.read_backlog_events() {
+        Ok(events) => events,
+        Err(e) => {
+            eprintln!("Failed to read backlog events: {}", e);
+            return 0;
         }
-    }
+    };
 
-    // ファイル位置をデータベースに保存
-    let file_states = watcher.get_file_states();
-    for (path, position) in file_states.iter() {
-        let path_str = path.to_string_lossy().to_string();
-        if let Ok(metadata) = std::fs::metadata(path) {
-            let file_size = metadata.len();
-            if let Ok(modified) = metadata.modified() {
-                let modified_dt = chrono::DateTime::<Utc>::from(modified);
-                let _ = db::operations::upsert_log_file(conn, &path_str, file_size, modified_dt);
-                let _ = db::operations::update_log_file_position(conn, &path_str, *position);
-            }
-        }
-    }
+    // 4. イベントプロセッサにイベント一覧を渡して処理 -> DBへ保存
+    let count = process_event_batch(conn, processor, events, None);
 
-    events_count
+    // ファイル位置をDBに保存
+    watcher.save_file_states(conn);
+
+    count
 }
 
-/// リアルタイムイベント処理ループ
-fn process_log_events(
-    app_state: AppState,
+/// リアルタイム処理ループ：ファイル変更を監視してイベントを処理
+fn process_realtime(
+    db: Arc<Mutex<db::Database>>,
+    watcher: LogWatcher,
+    mut processor: EventProcessor,
     app_handle: AppHandle,
-    watcher: log_watcher::LogWatcher,
 ) {
-    use chrono::Utc;
-
-    let db_clone = Arc::clone(&app_state.db);
-    let processor_clone = Arc::clone(&app_state.event_processor);
-
     loop {
-        if let Ok((file_path, event)) = watcher.recv_event() {
-            let db = db_clone.lock().unwrap();
-            let conn = db.connection();
-            let mut processor = processor_clone.lock().unwrap();
+        let db_guard = db.lock().unwrap();
+        let conn = db_guard.connection();
 
-            match processor.process_event(conn, event) {
-                Ok(Some(processed_event)) => {
-                    // フロントエンドにイベントを通知（詳細情報付き）
-                    if let Err(e) = app_handle.emit("log-event", &processed_event) {
+        // 7.1-7.2. ファイル変更を検知 -> 変更分をパース -> イベント一覧を取得
+        let events = match watcher.recv_realtime_events() {
+            Ok(events) => events,
+            Err(e) => {
+                eprintln!("Failed to receive realtime events: {}", e);
+                continue;
+            }
+        };
+
+        // 7.3-7.4. イベントプロセッサにイベント一覧を渡す -> DBへ保存 -> フロントエンドに通知
+        process_event_batch(conn, &mut processor, events, Some(&app_handle));
+
+        // ファイル位置をDBに保存
+        watcher.save_file_states(conn);
+    }
+}
+
+/// イベント一覧を処理する統一ヘルパー
+///
+/// - バックログ処理: app_handle = None → イベント送信しない
+/// - リアルタイム処理: app_handle = Some → イベント送信する
+fn process_event_batch(
+    conn: &rusqlite::Connection,
+    processor: &mut EventProcessor,
+    events: Vec<(PathBuf, LogEvent)>,
+    app_handle: Option<&AppHandle>,
+) -> usize {
+    let mut count = 0;
+
+    for (_file_path, event) in events {
+        match processor.process_event(conn, event) {
+            Ok(Some(processed_event)) => {
+                // フロントエンドに送信（リアルタイムのみ）
+                if let Some(handle) = app_handle {
+                    if let Err(e) = handle.emit("log-event", &processed_event) {
                         eprintln!("Failed to emit event: {}", e);
                     }
                 }
-                Ok(None) => {
-                    // 通知不要なイベント
-                }
-                Err(e) => {
-                    eprintln!("Failed to process event: {}", e);
-                    continue;
-                }
+                count += 1;
             }
-
-            // ファイル位置とメタデータを更新
-            let file_states = watcher.get_file_states();
-            if let Some(position) = file_states.get(&file_path) {
-                let path_str = file_path.to_string_lossy().to_string();
-
-                // ファイルサイズと更新日時も更新
-                if let Ok(metadata) = std::fs::metadata(&file_path) {
-                    let file_size = metadata.len();
-                    if let Ok(modified) = metadata.modified() {
-                        let modified_dt = chrono::DateTime::<Utc>::from(modified);
-                        let _ =
-                            db::operations::upsert_log_file(conn, &path_str, file_size, modified_dt);
-                    }
-                }
-
-                let _ = db::operations::update_log_file_position(conn, &path_str, *position);
+            Ok(None) => {
+                // 通知不要なイベント
+                count += 1;
+            }
+            Err(e) => {
+                eprintln!("Failed to process event: {}", e);
             }
         }
     }
+
+    count
 }

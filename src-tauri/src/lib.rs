@@ -1,4 +1,3 @@
-mod app_state;
 mod commands;
 mod db;
 mod event_processor;

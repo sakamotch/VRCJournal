@@ -1,23 +1,28 @@
 use std::path::PathBuf;
 
-/// VRChatログディレクトリのパスを取得
+/// VRChatログディレクトリのパスを取得し、存在を確認
 /// Windows: %USERPROFILE%\AppData\LocalLow\VRChat\VRChat\
 pub fn get_vrchat_log_path() -> Result<PathBuf, String> {
     #[cfg(target_os = "windows")]
     {
-        let userprofile = std::env::var("USERPROFILE")
-            .map_err(|_| "USERPROFILE environment variable not found".to_string())?;
+        match std::env::var("USERPROFILE") {
+            Ok(userprofile) => {
+                let log_path = PathBuf::from(userprofile)
+                    .join("AppData")
+                    .join("LocalLow")
+                    .join("VRChat")
+                    .join("VRChat");
 
-        let log_path = PathBuf::from(userprofile)
-            .join("AppData")
-            .join("LocalLow")
-            .join("VRChat")
-            .join("VRChat");
-
-        if log_path.exists() {
-            Ok(log_path)
-        } else {
-            Err(format!("VRChat log directory not found at {:?}", log_path))
+                if log_path.exists() {
+                    Ok(log_path)
+                } else {
+                    Err(format!(
+                        "VRChat log directory not found at {:?}",
+                        log_path
+                    ))
+                }
+            }
+            Err(_) => Err("USERPROFILE environment variable not found".to_string()),
         }
     }
 
@@ -29,10 +34,8 @@ pub fn get_vrchat_log_path() -> Result<PathBuf, String> {
 
 /// 全てのログファイルを取得
 /// output_log_*.txt の全てを最終更新日時順（古い順）で返す
-pub fn get_all_log_files() -> Result<Vec<PathBuf>, String> {
-    let log_dir = get_vrchat_log_path()?;
-
-    let mut log_files: Vec<PathBuf> = std::fs::read_dir(&log_dir)
+pub fn get_all_log_files(log_dir: &PathBuf) -> Result<Vec<PathBuf>, String> {
+    let mut log_files: Vec<PathBuf> = std::fs::read_dir(log_dir)
         .map_err(|e| format!("Failed to read log directory: {}", e))?
         .filter_map(|entry| entry.ok())
         .map(|entry| entry.path())

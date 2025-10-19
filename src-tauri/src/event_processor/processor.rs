@@ -92,9 +92,9 @@ impl EventProcessor {
         }
     }
 
-    /// Initialize state from database (restore latest session)
-    pub fn initialize_from_db(&mut self, conn: &Connection) -> Result<(), rusqlite::Error> {
-        initializer::initialize_from_db(
+    /// Restore state from the previous session for incremental log processing
+    pub fn restore_previous_state(&mut self, conn: &Connection) -> Result<(), rusqlite::Error> {
+        initializer::restore_previous_state(
             conn,
             &mut self.current_my_account_id,
             &mut self.current_user_id,
