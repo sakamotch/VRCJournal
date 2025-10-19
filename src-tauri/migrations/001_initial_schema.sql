@@ -164,9 +164,7 @@ CREATE TABLE log_files (
     file_size INTEGER NOT NULL,
     last_read_position INTEGER NOT NULL DEFAULT 0,  -- Byte offset for resuming
     last_modified_at TEXT,
-    last_processed_at TEXT NOT NULL,
-    status TEXT NOT NULL DEFAULT 'active'  -- 'active', 'completed', 'archived'
+    last_processed_at TEXT NOT NULL
 );
 
-CREATE INDEX idx_log_files_status ON log_files(status);
 CREATE INDEX idx_log_files_last_processed_at ON log_files(last_processed_at DESC);

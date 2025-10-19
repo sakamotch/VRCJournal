@@ -37,13 +37,30 @@ impl LogWatcher {
     }
 
     /// DBから前回の処理位置を復元
+    ///
+    /// ファイルシステムに存在する全ファイルについて、DBから読み込み位置を取得
+    /// DBに記録されていないファイルは位置0から開始
     pub fn restore_file_positions(&mut self, conn: &Connection) -> Result<(), String> {
-        let file_positions = database::load_file_positions(conn);
+        // ファイルシステムから全ログファイルを取得
+        let log_files = get_all_log_files(&self.log_dir)?;
 
-        // ファイル位置を復元
         let mut states = self.file_states.lock().unwrap();
-        for (path, position) in file_positions {
-            states.insert(path, position);
+
+        for log_file in log_files {
+            let path_str = log_file.to_string_lossy().to_string();
+
+            // DBから位置を取得（なければ0）
+            let position = crate::db::operations::get_log_file_position(conn, &path_str)
+                .unwrap_or(Some(0))
+                .unwrap_or(0);
+
+            states.insert(log_file.clone(), position);
+
+            if position == 0 {
+                println!("New file detected: {:?}", log_file);
+            } else {
+                println!("Restored file: {:?} at position {}", log_file, position);
+            }
         }
 
         Ok(())
