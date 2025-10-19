@@ -46,6 +46,8 @@ function formatScreenshotTime(dateStr: string): string {
           :src="convertFileSrc(screenshot.filePath)"
           :alt="`Screenshot ${screenshot.id}`"
           class="screenshot-thumbnail"
+          loading="lazy"
+          decoding="async"
         >
         <div
           v-else
