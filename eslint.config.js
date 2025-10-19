@@ -70,6 +70,7 @@ export default [
       'src-tauri/**',
       '*.config.js',
       '*.config.ts',
+      '*.cjs',
     ],
   },
 ];
