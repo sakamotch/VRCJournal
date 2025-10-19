@@ -1,23 +1,13 @@
-use chrono::{DateTime, Utc};
 use rusqlite::{Connection, OptionalExtension, Result};
 
-#[derive(Debug, Clone)]
-pub struct Avatar {
-    pub id: i64,
-    pub avatar_id: Option<String>,
-    pub avatar_name: String,
-    pub first_seen_at: DateTime<Utc>,
-    pub last_seen_at: DateTime<Utc>,
-}
-
-/// アバターを作成または更新（名前ベース）
-pub fn upsert_avatar_by_name(
+/// Upsert an avatar by name (avatar_id may be null) and return the avatar ID
+pub fn upsert_avatar(
     conn: &Connection,
     avatar_name: &str,
     avatar_id: Option<&str>,
-    seen_at: DateTime<Utc>,
+    timestamp: &str,
 ) -> Result<i64> {
-    // 既存のアバターを確認（名前で検索）
+    // Check if avatar exists by name
     let existing: Option<i64> = conn
         .query_row(
             "SELECT id FROM avatars WHERE avatar_name = ?1",
@@ -27,80 +17,42 @@ pub fn upsert_avatar_by_name(
         .optional()?;
 
     if let Some(id) = existing {
-        // 既存アバターの最終確認時刻を更新
-        // avatar_idが提供された場合は更新
+        // Update last_seen_at and avatar_id if provided
         if let Some(aid) = avatar_id {
             conn.execute(
                 "UPDATE avatars SET last_seen_at = ?1, avatar_id = ?2 WHERE id = ?3",
-                (seen_at.to_rfc3339(), aid, id),
+                (timestamp, aid, id),
             )?;
         } else {
             conn.execute(
                 "UPDATE avatars SET last_seen_at = ?1 WHERE id = ?2",
-                (seen_at.to_rfc3339(), id),
+                (timestamp, id),
             )?;
         }
         Ok(id)
     } else {
-        // 新規アバターを作成
+        // Insert new avatar
         conn.execute(
             "INSERT INTO avatars (avatar_id, avatar_name, first_seen_at, last_seen_at)
-             VALUES (?1, ?2, ?3, ?4)",
-            (
-                avatar_id,
-                avatar_name,
-                seen_at.to_rfc3339(),
-                seen_at.to_rfc3339(),
-            ),
+             VALUES (?1, ?2, ?3, ?3)",
+            (avatar_id, avatar_name, timestamp),
         )?;
         Ok(conn.last_insert_rowid())
     }
 }
 
-/// アバター使用履歴を記録
-pub fn record_avatar_usage(
+/// Record avatar usage in avatar_history
+pub fn record_avatar_history(
     conn: &Connection,
-    instance_player_id: i64, // NOT NULL: instance_playersテーブルへの参照
-    avatar_id: i64,           // NOT NULL: avatarsテーブルへの参照
-    changed_at: DateTime<Utc>,
+    instance_id: i64,
+    user_id: i64,
+    avatar_id: i64,
+    changed_at: &str,
 ) -> Result<()> {
     conn.execute(
-        "INSERT INTO avatar_usages (instance_player_id, avatar_id, changed_at)
-         VALUES (?1, ?2, ?3)",
-        (instance_player_id, avatar_id, changed_at.to_rfc3339()),
+        "INSERT INTO avatar_history (instance_id, user_id, avatar_id, changed_at)
+         VALUES (?1, ?2, ?3, ?4)",
+        (instance_id, user_id, avatar_id, changed_at),
     )?;
     Ok(())
-}
-
-/// プレイヤーセッション内のアバター使用履歴を取得
-#[derive(Debug, Clone, serde::Serialize)]
-pub struct AvatarUsage {
-    pub avatar_name: String,
-    pub changed_at: DateTime<Utc>,
-}
-
-pub fn get_avatar_usages_for_session(
-    conn: &Connection,
-    instance_player_id: i64,
-) -> Result<Vec<AvatarUsage>> {
-    let mut stmt = conn.prepare(
-        "SELECT a.avatar_name, au.changed_at
-         FROM avatar_usages au
-         INNER JOIN avatars a ON au.avatar_id = a.id
-         WHERE au.instance_player_id = ?1
-         ORDER BY au.changed_at",
-    )?;
-
-    let usages = stmt
-        .query_map([instance_player_id], |row| {
-            Ok(AvatarUsage {
-                avatar_name: row.get(0)?,
-                changed_at: DateTime::parse_from_rfc3339(&row.get::<_, String>(1)?)
-                    .unwrap()
-                    .with_timezone(&Utc),
-            })
-        })?
-        .collect::<Result<Vec<_>>>()?;
-
-    Ok(usages)
 }

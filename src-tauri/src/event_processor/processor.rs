@@ -1,474 +1,200 @@
-use crate::db::operations;
 use crate::parser::LogEvent;
-use chrono::{DateTime, Utc};
 use rusqlite::Connection;
 use std::collections::HashMap;
 
-/// プロセッサーが発行するイベント
+use super::{handlers, initializer};
+
+/// Events emitted by the processor - designed for reactive UI updates without re-querying
 #[derive(Debug, Clone, serde::Serialize)]
 #[serde(tag = "type")]
 pub enum ProcessedEvent {
-    LocalPlayerUpdated, // ローカルプレイヤー（アカウント）が追加・更新された
-    InstanceCreated { instance_id: i64 },
-    InstanceEnded { instance_id: i64, ended_at: String },
-    PlayerJoined { instance_id: i64 },
-    PlayerLeft { instance_id: i64 },
+    /// Local user authenticated
+    UserAuthenticated {
+        my_account_id: i64,
+        user_id: i64,
+        display_name: String,
+        vrchat_user_id: String,
+    },
+
+    /// Instance created (add new instance to list)
+    InstanceCreated {
+        instance_id: i64,
+        my_account_id: i64,
+        world_id: String,
+        world_name: String,
+        vrchat_instance_id: String,
+        started_at: String,
+        status: String,
+    },
+
+    /// Instance ended (update instance status)
+    InstanceEnded {
+        instance_id: i64,
+        ended_at: String,
+        status: String,
+    },
+
+    /// User joined instance (increment player count)
+    UserJoined {
+        instance_id: i64,
+        instance_user_id: i64,
+        user_id: i64,
+        display_name: String,
+        joined_at: String,
+    },
+
+    /// User left instance (decrement player count)
+    UserLeft {
+        instance_id: i64,
+        instance_user_id: i64,
+        left_at: String,
+    },
+
+    /// Avatar changed (update avatar in player list if visible)
+    AvatarChanged {
+        instance_id: i64,
+        user_id: i64,
+        display_name: String,
+        avatar_id: i64,
+        avatar_name: String,
+        changed_at: String,
+    },
+
+    /// Screenshot taken (increment screenshot count)
+    ScreenshotTaken {
+        instance_id: i64,
+        screenshot_id: i64,
+        file_path: String,
+        taken_at: String,
+    },
 }
 
-/// イベントプロセッサー：LogEventをデータベースに保存
+/// Event processor: Processes LogEvents and stores them in the database
 pub struct EventProcessor {
-    current_local_player_id: Option<i64>, // ローカルプレイヤー (is_local=1)
-    current_instance_id: Option<i64>,
-    player_ids: HashMap<String, i64>, // user_id -> player_id のマッピング
-    instance_player_ids: HashMap<i64, i64>, // player_id -> instance_player_id のマッピング
-    pending_avatars: HashMap<String, (i64, DateTime<Utc>)>, // display_name -> (avatar_id, timestamp) のマッピング（PlayerJoined前のアバター情報）
+    current_my_account_id: Option<i64>,  // Current local account
+    current_user_id: Option<i64>,        // Current user (corresponds to my_account)
+    current_instance_id: Option<i64>,    // Current active instance
+    user_ids: HashMap<String, i64>,      // vrchat_user_id -> users.id mapping
+    instance_user_ids: HashMap<i64, i64>, // user_id -> instance_users.id mapping
+    pending_avatars: HashMap<String, (i64, String)>, // display_name -> (avatar_id, timestamp) for avatars seen before PlayerJoined
 }
 
 impl EventProcessor {
     pub fn new() -> Self {
         Self {
-            current_local_player_id: None,
+            current_my_account_id: None,
+            current_user_id: None,
             current_instance_id: None,
-            player_ids: HashMap::new(),
-            instance_player_ids: HashMap::new(),
+            user_ids: HashMap::new(),
+            instance_user_ids: HashMap::new(),
             pending_avatars: HashMap::new(),
         }
     }
 
-    /// データベースから最新のローカルプレイヤーとインスタンス情報を取得して状態を初期化
+    /// Initialize state from database (restore latest session)
     pub fn initialize_from_db(&mut self, conn: &Connection) -> Result<(), rusqlite::Error> {
-        // 1. 最後に認証されたローカルプレイヤーを取得
-        let local_player_result = conn.query_row(
-            "SELECT id FROM players WHERE is_local = 1 ORDER BY last_authenticated_at DESC LIMIT 1",
-            [],
-            |row| row.get::<_, i64>(0),
-        );
-
-        match local_player_result {
-            Ok(player_id) => {
-                self.current_local_player_id = Some(player_id);
-                println!(
-                    "EventProcessor initialized with local player ID: {}",
-                    player_id
-                );
-
-                // 2. 進行中のインスタンスを取得（そのプレイヤーの最新の in_progress インスタンス）
-                let instance_result = conn.query_row(
-                    "SELECT id FROM instances WHERE player_id = ?1 AND status = 'active' ORDER BY started_at DESC LIMIT 1",
-                    [player_id],
-                    |row| row.get::<_, i64>(0),
-                );
-
-                match instance_result {
-                    Ok(instance_id) => {
-                        self.current_instance_id = Some(instance_id);
-                        println!("Found in-progress instance: {}", instance_id);
-
-                        // 3. インスタンスに参加中のプレイヤー（left_atがNULL）のマッピングを復元
-                        let mut stmt = conn.prepare(
-                            "SELECT p.user_id, ip.player_id, ip.id as instance_player_id
-                             FROM instance_players ip
-                             JOIN players p ON ip.player_id = p.id
-                             WHERE ip.instance_id = ?1 AND ip.left_at IS NULL",
-                        )?;
-
-                        let player_rows = stmt.query_map([instance_id], |row| {
-                            Ok((
-                                row.get::<_, String>(0)?, // user_id
-                                row.get::<_, i64>(1)?,    // player_id
-                                row.get::<_, i64>(2)?,    // instance_player_id
-                            ))
-                        })?;
-
-                        for row in player_rows {
-                            let (user_id, player_id, instance_player_id) = row?;
-                            self.player_ids.insert(user_id.clone(), player_id);
-                            self.instance_player_ids.insert(player_id, instance_player_id);
-                        }
-
-                        println!(
-                            "Restored {} players in current instance",
-                            self.player_ids.len()
-                        );
-                    }
-                    Err(rusqlite::Error::QueryReturnedNoRows) => {
-                        println!("No in-progress instance found. Ready to start new instance.");
-                    }
-                    Err(e) => return Err(e),
-                }
-            }
-            Err(rusqlite::Error::QueryReturnedNoRows) => {
-                println!("No local player found in database. Waiting for authentication event.");
-            }
-            Err(e) => return Err(e),
-        }
-
-        Ok(())
+        initializer::initialize_from_db(
+            conn,
+            &mut self.current_my_account_id,
+            &mut self.current_user_id,
+            &mut self.current_instance_id,
+            &mut self.user_ids,
+            &mut self.instance_user_ids,
+        )
     }
 
-    /// LogEventを処理してデータベースに保存し、フロントエンドに通知すべきイベントを返す
+    /// Process a log event
     pub fn process_event(
         &mut self,
         conn: &Connection,
         event: LogEvent,
     ) -> Result<Option<ProcessedEvent>, rusqlite::Error> {
-        let processed_event = match event {
-            LogEvent::UserAuthenticated {
-                timestamp,
-                display_name,
-                user_id,
-            } => {
-                // ローカルプレイヤー（自分）を作成または更新
-                let local_player_id =
-                    operations::upsert_local_player(conn, &display_name, &user_id, timestamp)?;
-                self.current_local_player_id = Some(local_player_id);
-                println!("User authenticated: {} ({})", display_name, user_id);
-                Some(ProcessedEvent::LocalPlayerUpdated) // サイドバーのアカウントリストを更新
+        match event {
+            LogEvent::UserAuthenticated { timestamp, user_id, display_name } => {
+                handlers::user_authenticated::handle(
+                    conn,
+                    &timestamp.to_rfc3339(),
+                    &user_id,
+                    &display_name,
+                    &mut self.current_my_account_id,
+                    &mut self.current_user_id,
+                    &mut self.user_ids,
+                )
             }
-
-            LogEvent::JoiningWorld {
-                timestamp,
-                world_id,
-                instance_id,
-                world_name,
-            } => {
-                if let Some(local_player_id) = self.current_local_player_id {
-                    // 前のインスタンスが終了していない場合、interrupted状態にする
-                    if let Some(previous_instance_id) = self.current_instance_id {
-                        conn.execute(
-                            "UPDATE instances SET status = 'interrupted' WHERE id = ?1",
-                            [previous_instance_id],
-                        )?;
-                        println!(
-                            "Previous instance {} marked as interrupted",
-                            previous_instance_id
-                        );
-                    }
-
-                    // 新しいインスタンスを作成
-                    let world_name_opt = if world_name.is_empty() {
-                        None
-                    } else {
-                        Some(world_name.as_str())
-                    };
-                    let instance_id_db = operations::create_instance(
-                        conn,
-                        local_player_id,
-                        timestamp,
-                        &world_id,
-                        world_name_opt,
-                        &instance_id,
-                    )?;
-                    self.current_instance_id = Some(instance_id_db);
-                    self.player_ids.clear(); // 新しいインスタンスなのでプレイヤーマップをクリア
-                    self.instance_player_ids.clear(); // instance_player_idマップもクリア
-                    self.pending_avatars.clear(); // 保留中のアバター情報もクリア
-
-                    // ローカルプレイヤー自身をinstance_playersに追加
-                    let local_display_name = conn.query_row(
-                        "SELECT display_name FROM players WHERE id = ?1",
-                        [local_player_id],
-                        |row| row.get::<_, String>(0),
-                    )?;
-
-                    // 名前履歴を作成または更新
-                    let display_name_history_id = operations::upsert_player_name_history(
-                        conn,
-                        local_player_id,
-                        &local_display_name,
-                        timestamp,
-                    )?;
-
-                    // ローカルプレイヤーをinstance_playersに追加
-                    let local_instance_player_id = operations::add_player_to_instance(
-                        conn,
-                        instance_id_db,
-                        local_player_id,
-                        display_name_history_id,
-                        timestamp,
-                    )?;
-
-                    // instance_player_idsマップに登録
-                    self.instance_player_ids.insert(local_player_id, local_instance_player_id);
-
-                    println!(
-                        "Joined world: {} (instance: {}, local instance_player_id: {})",
-                        world_id, instance_id_db, local_instance_player_id
-                    );
-
-                    Some(ProcessedEvent::InstanceCreated {
-                        instance_id: instance_id_db,
-                    })
-                } else {
-                    eprintln!("Warning: JoiningWorld event without authenticated user");
-                    None
-                }
+            LogEvent::JoiningWorld { timestamp, world_id, world_name, instance_id } => {
+                handlers::joining_world::handle(
+                    conn,
+                    &timestamp.to_rfc3339(),
+                    &world_id,
+                    &world_name,
+                    &instance_id,
+                    self.current_my_account_id,
+                    self.current_user_id,
+                    &mut self.current_instance_id,
+                    &mut self.instance_user_ids,
+                    &mut self.pending_avatars,
+                )
             }
-
-            LogEvent::EnteringRoom { world_name, .. } => {
-                // 最後に作成したインスタンスのworld_nameを更新
-                if let Some(instance_id) = self.current_instance_id {
-                    conn.execute(
-                        "UPDATE instances SET world_name = ?1 WHERE id = ?2",
-                        rusqlite::params![world_name, instance_id],
-                    )?;
-                    println!(
-                        "World name updated: {} (instance: {})",
-                        world_name, instance_id
-                    );
-                }
-                None // ワールド名更新は通知不要（インスタンス作成時に既に通知済み）
+            LogEvent::EnteringRoom { timestamp, world_name } => {
+                handlers::entering_room::handle(
+                    conn,
+                    &timestamp.to_rfc3339(),
+                    &world_name,
+                    self.current_instance_id,
+                )
             }
-
-            LogEvent::PlayerJoined {
-                timestamp,
-                display_name,
-                user_id,
-            } => {
-                if let Some(instance_id) = self.current_instance_id {
-                    // プレイヤーを作成または更新
-                    let player_id =
-                        operations::upsert_player(conn, &display_name, &user_id, timestamp)?;
-
-                    // 名前履歴を作成または更新
-                    let display_name_history_id = operations::upsert_player_name_history(
-                        conn,
-                        player_id,
-                        &display_name,
-                        timestamp,
-                    )?;
-
-                    // インスタンスにプレイヤーを追加（名前履歴IDと共に）
-                    let instance_player_id = operations::add_player_to_instance(
-                        conn,
-                        instance_id,
-                        player_id,
-                        display_name_history_id,
-                        timestamp,
-                    )?;
-
-                    self.player_ids.insert(user_id.clone(), player_id);
-                    self.instance_player_ids.insert(player_id, instance_player_id);
-
-                    // 保留中のアバター情報があれば記録
-                    if let Some((avatar_id, avatar_timestamp)) =
-                        self.pending_avatars.remove(&display_name)
-                    {
-                        operations::record_avatar_usage(
-                            conn,
-                            instance_player_id,
-                            avatar_id,
-                            avatar_timestamp,
-                        )?;
-                        println!(
-                            "Player joined: {} ({}) with pending avatar",
-                            display_name, user_id
-                        );
-                    } else {
-                        println!("Player joined: {} ({})", display_name, user_id);
-                    }
-
-                    Some(ProcessedEvent::PlayerJoined { instance_id })
-                } else {
-                    eprintln!("Warning: PlayerJoined event without active instance");
-                    None
-                }
+            LogEvent::DestroyingPlayer { timestamp, display_name } => {
+                handlers::destroying_player::handle(
+                    conn,
+                    &timestamp.to_rfc3339(),
+                    &display_name,
+                    self.current_user_id,
+                    &mut self.current_instance_id,
+                    &self.user_ids,
+                    &mut self.instance_user_ids,
+                    &mut self.pending_avatars,
+                )
             }
-
-            LogEvent::ScreenshotTaken {
-                timestamp,
-                file_path,
-            } => {
-                if let Some(instance_id) = self.current_instance_id {
-                    operations::record_screenshot(conn, instance_id, &file_path, &timestamp)?;
-                    println!("Screenshot taken: {}", file_path);
-                } else {
-                    eprintln!("Warning: Screenshot taken without active instance");
-                }
-                None // スクリーンショットはリアルタイム通知不要（将来的にUI表示するかも）
+            LogEvent::PlayerJoined { timestamp, display_name, user_id } => {
+                handlers::player_joined::handle(
+                    conn,
+                    &timestamp.to_rfc3339(),
+                    &display_name,
+                    &user_id,
+                    self.current_instance_id,
+                    &mut self.user_ids,
+                    &mut self.instance_user_ids,
+                    &mut self.pending_avatars,
+                )
             }
-
-            LogEvent::DestroyingPlayer {
-                timestamp,
-                display_name,
-            } => {
-                if let Some(instance_id) = self.current_instance_id {
-                    // 自分のdisplay_nameかチェック
-                    let is_local_player =
-                        if let Some(local_player_id) = self.current_local_player_id {
-                            conn.query_row(
-                                "SELECT display_name FROM players WHERE id = ?1 AND is_local = 1",
-                                [local_player_id],
-                                |row| row.get::<_, String>(0),
-                            )
-                            .ok()
-                                == Some(display_name.clone())
-                        } else {
-                            false
-                        };
-
-                    if is_local_player {
-                        // 自分が退出 = インスタンス終了
-                        // Destroying順序が不定なため、left_atがまだ設定されていない全プレイヤーを一括更新
-                        conn.execute(
-                            "UPDATE instance_players
-                             SET left_at = ?1
-                             WHERE instance_id = ?2
-                             AND left_at IS NULL",
-                            rusqlite::params![timestamp.to_rfc3339(), instance_id],
-                        )?;
-
-                        operations::end_instance(conn, instance_id, timestamp)?;
-                        println!("Leaving instance: instance {} ended, all remaining players marked as left", instance_id);
-                        self.current_instance_id = None;
-                        self.player_ids.clear();
-                        self.instance_player_ids.clear();
-                        Some(ProcessedEvent::InstanceEnded {
-                            instance_id,
-                            ended_at: timestamp.to_rfc3339(),
-                        })
-                    } else {
-                        // 他のプレイヤーが退出
-                        // display_nameからplayer_idを取得してleft_atを更新
-                        if let Some((_user_id, &player_id)) =
-                            self.player_ids.iter().find(|(user_id, _)| {
-                                conn.query_row(
-                                    "SELECT display_name FROM players WHERE user_id = ?1",
-                                    [user_id.as_str()],
-                                    |row| row.get::<_, String>(0),
-                                )
-                                .ok()
-                                    == Some(display_name.clone())
-                            })
-                        {
-                            operations::remove_player_from_instance(
-                                conn,
-                                instance_id,
-                                player_id,
-                                timestamp,
-                            )?;
-                            println!("Player {} left (destroying)", display_name);
-                            Some(ProcessedEvent::PlayerLeft { instance_id })
-                        } else {
-                            None
-                        }
-                    }
-                } else {
-                    None
-                }
+            LogEvent::AvatarChanged { timestamp, display_name, avatar_name } => {
+                handlers::avatar_changed::handle(
+                    conn,
+                    &timestamp.to_rfc3339(),
+                    &display_name,
+                    &avatar_name,
+                    self.current_user_id,
+                    self.current_instance_id,
+                    &self.user_ids,
+                    &mut self.pending_avatars,
+                )
             }
-
-            LogEvent::AvatarChanged {
-                timestamp,
-                display_name,
-                avatar_name,
-            } => {
-                if let Some(instance_id) = self.current_instance_id {
-                    // アバターを作成または更新
-                    let avatar_id =
-                        operations::upsert_avatar_by_name(conn, &avatar_name, None, timestamp)?;
-
-                    // display_nameから誰のアバター変更かを判定
-                    // 1. まず自分（local_player）のdisplay_nameと比較
-                    let is_local_player =
-                        if let Some(local_player_id) = self.current_local_player_id {
-                            conn.query_row(
-                                "SELECT display_name FROM players WHERE id = ?1 AND is_local = 1",
-                                [local_player_id],
-                                |row| row.get::<_, String>(0),
-                            )
-                            .ok()
-                            .map(|name| name == display_name)
-                            .unwrap_or(false)
-                        } else {
-                            false
-                        };
-
-                    if is_local_player {
-                        // 自分のアバター変更
-                        if let Some(&instance_player_id) =
-                            self.instance_player_ids.get(&self.current_local_player_id.unwrap())
-                        {
-                            operations::record_avatar_usage(
-                                conn,
-                                instance_player_id,
-                                avatar_id,
-                                timestamp,
-                            )?;
-                            println!("Avatar changed (self): {} -> {}", display_name, avatar_name);
-                        } else {
-                            eprintln!("Warning: Local player not in instance_player_ids map");
-                        }
-                    } else {
-                        // 他プレイヤーのアバター変更
-                        // display_nameでplayer_idを探す（逆引き）
-                        if let Some((_user_id, &player_id)) =
-                            self.player_ids.iter().find(|(user_id, _)| {
-                                // players テーブルから display_name を取得して比較
-                                conn.query_row(
-                                    "SELECT display_name FROM players WHERE user_id = ?1",
-                                    [user_id.as_str()],
-                                    |row| row.get::<_, String>(0),
-                                )
-                                .ok()
-                                .map(|name| name == display_name)
-                                .unwrap_or(false)
-                            })
-                        {
-                            if let Some(&instance_player_id) =
-                                self.instance_player_ids.get(&player_id)
-                            {
-                                operations::record_avatar_usage(
-                                    conn,
-                                    instance_player_id,
-                                    avatar_id,
-                                    timestamp,
-                                )?;
-                                println!(
-                                    "Avatar changed (player): {} -> {}",
-                                    display_name, avatar_name
-                                );
-                            } else {
-                                eprintln!("Warning: Player {} not in instance_player_ids map", player_id);
-                            }
-                        } else {
-                            // プレイヤーがまだ登録されていない場合、保留中として保存
-                            // （OnPlayerJoinedイベントが後で来る）
-                            self.pending_avatars
-                                .insert(display_name.clone(), (avatar_id, timestamp));
-                            println!(
-                                "Avatar changed (pending): {} -> {} (player not yet joined)",
-                                display_name, avatar_name
-                            );
-                        }
-                    }
-                } else {
-                    eprintln!("Warning: AvatarChanged event without active instance");
-                }
-                None // アバター変更は通知不要（将来的にアバター履歴機能で使うかも）
+            LogEvent::ScreenshotTaken { timestamp, file_path } => {
+                handlers::screenshot_taken::handle(
+                    conn,
+                    &timestamp.to_rfc3339(),
+                    &file_path,
+                    self.current_instance_id,
+                )
             }
-
             LogEvent::EventSyncFailed { timestamp } => {
-                // イベント同期失敗：現在のインスタンスのステータスをevent_sync_failedにマーク
-                // インスタンスの終了は後続のDestroyingPlayerイベントで行われる
-                if let Some(instance_id) = self.current_instance_id {
-                    conn.execute(
-                        "UPDATE instances SET status = 'event_sync_failed' WHERE id = ?1",
-                        [instance_id],
-                    )?;
-                    println!(
-                        "Instance {} marked as event_sync_failed at {}",
-                        instance_id,
-                        timestamp.to_rfc3339()
-                    );
-                } else {
-                    eprintln!("Warning: EventSyncFailed without active instance");
-                }
-                None // ステータス変更のみ、通知不要
+                handlers::event_sync_failed::handle(
+                    conn,
+                    &timestamp.to_rfc3339(),
+                    self.current_instance_id,
+                )
             }
-        };
-
-        Ok(processed_event)
+        }
     }
 }
 

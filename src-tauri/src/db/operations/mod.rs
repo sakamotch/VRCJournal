@@ -1,13 +1,15 @@
 pub mod avatars;
 pub mod instances;
 pub mod log_files;
-pub mod player_name_history;
-pub mod players;
+pub mod my_accounts;
 pub mod screenshots;
+pub mod users;
+pub mod worlds;
 
 pub use avatars::*;
 pub use instances::*;
 pub use log_files::*;
-pub use player_name_history::*;
-pub use players::*;
+pub use my_accounts::*;
 pub use screenshots::*;
+pub use users::*;
+pub use worlds::*;
