@@ -25,7 +25,7 @@ pub fn setup_app(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
 fn run_event_monitoring(database: db::Database, app_handle: AppHandle) {
     let db = Arc::new(Mutex::new(database));
 
-    // 1. VRChatディレクトリの検証
+    // VRChatディレクトリの検証
     let mut watcher = match LogWatcher::new() {
         Ok(w) => w,
         Err(e) => {
@@ -36,27 +36,27 @@ fn run_event_monitoring(database: db::Database, app_handle: AppHandle) {
 
     let mut processor = EventProcessor::new();
 
-    // 2. 前回終了時点の状態を復元
+    // 前回終了時点の状態を復元
     if !restore_previous_state(&db, &mut watcher, &mut processor) {
         return;
     }
 
-    // 3-4. バックログ処理
+    // バックログ処理
     let events_count = process_backlog(&db, &mut watcher, &mut processor);
     println!("Backlog processing completed: {} events", events_count);
 
-    // 5. バックエンド準備完了を通知
+    // バックエンド準備完了を通知
     if let Err(e) = app_handle.emit("backend-ready", ()) {
         eprintln!("Failed to emit backend-ready event: {}", e);
     }
 
-    // 6. ファイル監視を開始
+    // ファイル監視を開始
     if let Err(e) = watcher.start_watching() {
         eprintln!("Failed to start watching: {}", e);
         return;
     }
 
-    // 7. リアルタイム処理ループ
+    // リアルタイム処理ループ
     process_realtime(db, watcher, processor, app_handle);
 }
 
@@ -92,7 +92,7 @@ fn process_backlog(
     let db_guard = db.lock().unwrap();
     let conn = db_guard.connection();
 
-    // 3. 前回位置からログを読み込む -> パース -> イベント一覧を取得
+    // 前回位置からログを読み込む -> パース -> イベント一覧を取得
     let events = match watcher.read_backlog_events() {
         Ok(events) => events,
         Err(e) => {
@@ -101,7 +101,7 @@ fn process_backlog(
         }
     };
 
-    // 4. イベントプロセッサにイベント一覧を渡して処理 -> DBへ保存
+    // イベントプロセッサにイベント一覧を渡して処理 -> DBへ保存
     let count = process_event_batch(conn, processor, events, None);
 
     // ファイル位置をDBに保存
@@ -121,7 +121,7 @@ fn process_realtime(
         let db_guard = db.lock().unwrap();
         let conn = db_guard.connection();
 
-        // 7.1-7.2. ファイル変更を検知 -> 変更分をパース -> イベント一覧を取得
+        // ファイル変更を検知 -> 変更分をパース -> イベント一覧を取得
         let events = match watcher.recv_realtime_events() {
             Ok(events) => events,
             Err(e) => {
@@ -130,7 +130,7 @@ fn process_realtime(
             }
         };
 
-        // 7.3-7.4. イベントプロセッサにイベント一覧を渡す -> DBへ保存 -> フロントエンドに通知
+        // イベントプロセッサにイベント一覧を渡す -> DBへ保存 -> フロントエンドに通知
         process_event_batch(conn, &mut processor, events, Some(&app_handle));
 
         // ファイル位置をDBに保存
