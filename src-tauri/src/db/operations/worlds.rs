@@ -26,25 +26,6 @@ pub fn upsert_world(
     Ok(id)
 }
 
-/// Get world ID by VRChat world_id
-pub fn get_world_id(conn: &Connection, world_id: &str) -> Result<Option<i64>> {
-    conn.query_row(
-        "SELECT id FROM worlds WHERE world_id = ?1",
-        [world_id],
-        |row| row.get(0),
-    )
-    .optional()
-}
-
-/// Get world name by internal ID
-pub fn get_world_name(conn: &Connection, id: i64) -> Result<String> {
-    conn.query_row(
-        "SELECT world_name FROM worlds WHERE id = ?1",
-        [id],
-        |row| row.get(0),
-    )
-}
-
 /// Update world name
 pub fn update_world_name(
     conn: &Connection,

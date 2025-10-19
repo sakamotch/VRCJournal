@@ -26,16 +26,6 @@ pub fn upsert_user(
     Ok(id)
 }
 
-/// Get user ID by VRChat user_id
-pub fn get_user_id(conn: &Connection, user_id: &str) -> Result<Option<i64>> {
-    conn.query_row(
-        "SELECT id FROM users WHERE user_id = ?1",
-        [user_id],
-        |row| row.get(0),
-    )
-    .optional()
-}
-
 /// Get user display name by internal ID
 pub fn get_user_display_name(conn: &Connection, id: i64) -> Result<String> {
     conn.query_row(

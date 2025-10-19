@@ -1,5 +1,5 @@
 use chrono::{DateTime, Utc};
-use rusqlite::{Connection, OptionalExtension, Result};
+use rusqlite::{Connection, Result};
 
 /// ログファイルの情報を登録または更新
 pub fn upsert_log_file(
@@ -38,19 +38,6 @@ pub fn update_log_file_position(conn: &Connection, file_path: &str, position: u6
     Ok(())
 }
 
-/// ログファイルの処理位置を取得
-pub fn get_log_file_position(conn: &Connection, file_path: &str) -> Result<Option<u64>> {
-    let position: Option<i64> = conn
-        .query_row(
-            "SELECT last_processed_position FROM log_files WHERE file_path = ?1",
-            [file_path],
-            |row| row.get(0),
-        )
-        .optional()?;
-
-    Ok(position.map(|p| p as u64))
-}
-
 /// 全てのログファイル情報を取得
 pub fn get_all_log_files(conn: &Connection) -> Result<Vec<(String, u64, u64, DateTime<Utc>)>> {
     let mut stmt = conn.prepare(
@@ -72,26 +59,4 @@ pub fn get_all_log_files(conn: &Connection) -> Result<Vec<(String, u64, u64, Dat
     })?;
 
     rows.collect()
-}
-
-/// ログファイルが完全に処理済みかチェック
-pub fn is_log_file_fully_processed(
-    conn: &Connection,
-    file_path: &str,
-    current_file_size: u64,
-) -> Result<bool> {
-    let result: Option<(i64, i64)> = conn
-        .query_row(
-            "SELECT file_size, last_processed_position FROM log_files WHERE file_path = ?1",
-            [file_path],
-            |row| Ok((row.get(0)?, row.get(1)?)),
-        )
-        .optional()?;
-
-    match result {
-        Some((stored_size, position)) => {
-            Ok(stored_size as u64 == current_file_size && position as u64 >= current_file_size)
-        }
-        None => Ok(false),
-    }
 }

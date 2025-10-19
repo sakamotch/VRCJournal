@@ -10,7 +10,6 @@ use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 pub struct LogWatcher {
-    log_dir: PathBuf,
     file_states: Arc<Mutex<HashMap<PathBuf, u64>>>,
     parser: VRChatLogParser,
     event_tx: Sender<(PathBuf, LogEvent)>,
@@ -20,11 +19,12 @@ pub struct LogWatcher {
 impl LogWatcher {
     /// 新しいLogWatcherを作成
     pub fn new() -> Result<Self, String> {
-        let log_dir = get_vrchat_log_path()?;
+        // Verify VRChat log directory exists before creating watcher
+        get_vrchat_log_path()?;
+
         let (event_tx, event_rx) = channel();
 
         Ok(Self {
-            log_dir,
             file_states: Arc::new(Mutex::new(HashMap::new())),
             parser: VRChatLogParser::new(),
             event_tx,
@@ -95,7 +95,6 @@ impl LogWatcher {
 
     /// ディレクトリ監視を開始（独自ポーリングでファイルサイズをチェック）
     pub fn start_watching(&self) -> Result<(), String> {
-        let log_dir = self.log_dir.clone();
         let file_states = Arc::clone(&self.file_states);
         let parser = VRChatLogParser::new();
         let event_tx = self.event_tx.clone();
@@ -183,14 +182,6 @@ impl LogWatcher {
         Ok(())
     }
 
-    /// output_log_*.txt ファイルかどうか判定
-    fn is_log_file(path: &PathBuf) -> bool {
-        path.file_name()
-            .and_then(|name| name.to_str())
-            .map(|name| name.starts_with("output_log") && name.ends_with(".txt"))
-            .unwrap_or(false)
-    }
-
     /// ファイル変更を処理
     fn handle_file_change(
         log_path: &PathBuf,
@@ -240,11 +231,6 @@ impl LogWatcher {
             .unwrap()
             .recv()
             .map_err(|e| format!("Failed to receive event: {}", e))
-    }
-
-    /// 受信したイベントを非ブロッキングで取得
-    pub fn try_recv_event(&self) -> Option<(PathBuf, LogEvent)> {
-        self.event_rx.lock().unwrap().try_recv().ok()
     }
 
     /// 現在のファイル状態を取得（外部でDB保存するため）

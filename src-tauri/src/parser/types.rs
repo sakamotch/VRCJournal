@@ -49,18 +49,3 @@ pub enum LogEvent {
         timestamp: DateTime<Utc>,
     },
 }
-
-impl LogEvent {
-    pub fn timestamp(&self) -> &DateTime<Utc> {
-        match self {
-            LogEvent::UserAuthenticated { timestamp, .. } => timestamp,
-            LogEvent::JoiningWorld { timestamp, .. } => timestamp,
-            LogEvent::EnteringRoom { timestamp, .. } => timestamp,
-            LogEvent::PlayerJoined { timestamp, .. } => timestamp,
-            LogEvent::AvatarChanged { timestamp, .. } => timestamp,
-            LogEvent::ScreenshotTaken { timestamp, .. } => timestamp,
-            LogEvent::DestroyingPlayer { timestamp, .. } => timestamp,
-            LogEvent::EventSyncFailed { timestamp, .. } => timestamp,
-        }
-    }
-}

@@ -1,4 +1,4 @@
-use rusqlite::{Connection, OptionalExtension, Result};
+use rusqlite::{Connection, Result};
 
 /// Upsert a local account and return the my_account ID
 pub fn upsert_my_account(
@@ -21,21 +21,4 @@ pub fn upsert_my_account(
     )?;
 
     Ok(id)
-}
-
-/// Get my_account ID by user ID
-pub fn get_my_account_id(conn: &Connection, user_id: i64) -> Result<Option<i64>> {
-    conn.query_row(
-        "SELECT id FROM my_accounts WHERE user_id = ?1",
-        [user_id],
-        |row| row.get(0),
-    )
-    .optional()
-}
-
-/// Get all local account IDs
-pub fn get_all_my_account_ids(conn: &Connection) -> Result<Vec<i64>> {
-    let mut stmt = conn.prepare("SELECT id FROM my_accounts")?;
-    let rows = stmt.query_map([], |row| row.get(0))?;
-    rows.collect()
 }

@@ -53,14 +53,3 @@ pub fn get_all_log_files() -> Result<Vec<PathBuf>, String> {
 
     Ok(log_files)
 }
-
-/// 最新のログファイルを取得
-/// output_log_*.txt の中で最新のものを返す
-pub fn get_latest_log_file() -> Result<PathBuf, String> {
-    let log_files = get_all_log_files()?;
-
-    log_files
-        .last()
-        .cloned()
-        .ok_or_else(|| "Failed to get latest log file".to_string())
-}

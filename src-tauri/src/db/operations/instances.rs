@@ -99,23 +99,6 @@ pub fn set_user_left_instance(
     Ok(())
 }
 
-/// Get the instance_user ID for a user in a specific instance who hasn't left yet
-pub fn get_active_instance_user(
-    conn: &Connection,
-    instance_id: i64,
-    user_id: i64,
-) -> Result<Option<i64>> {
-    conn.query_row(
-        "SELECT id FROM instance_users
-         WHERE instance_id = ?1 AND user_id = ?2 AND left_at IS NULL
-         ORDER BY joined_at DESC
-         LIMIT 1",
-        (instance_id, user_id),
-        |row| row.get(0),
-    )
-    .optional()
-}
-
 /// Mark all remaining users in an instance as left
 pub fn set_all_users_left_instance(
     conn: &Connection,
