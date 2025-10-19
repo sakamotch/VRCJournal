@@ -1,5 +1,6 @@
 use crate::{db, event_processor::EventProcessor, log_watcher::LogWatcher, parser::LogEvent};
 use std::sync::{Arc, Mutex};
+use std::time::Duration;
 use tauri::{App, AppHandle, Emitter, Manager};
 
 /// Tauriアプリケーションのセットアップ処理
@@ -48,12 +49,6 @@ fn run_event_monitoring(database: db::Database, app_handle: AppHandle) {
     // バックエンド準備完了を通知
     if let Err(e) = app_handle.emit("backend-ready", ()) {
         eprintln!("Failed to emit backend-ready event: {}", e);
-    }
-
-    // ファイル監視を開始
-    if let Err(e) = watcher.start_watching() {
-        eprintln!("Failed to start watching: {}", e);
-        return;
     }
 
     // リアルタイム処理ループ
@@ -110,30 +105,32 @@ fn process_backlog(
     count
 }
 
-/// リアルタイム処理ループ：ファイル変更を監視してイベントを処理
+/// リアルタイム処理ループ：ファイル変更をポーリングしてイベントを処理
 fn process_realtime(
     db: Arc<Mutex<db::Database>>,
-    watcher: LogWatcher,
+    mut watcher: LogWatcher,
     mut processor: EventProcessor,
     app_handle: AppHandle,
 ) {
     loop {
-        let db_guard = db.lock().unwrap();
-        let conn = db_guard.connection();
+        // 500ミリ秒ごとにポーリング
+        std::thread::sleep(Duration::from_millis(500));
 
-        // ファイル変更を検知 -> 変更分をパース -> イベント一覧を取得
-        let events = match watcher.recv_realtime_events() {
-            Ok(events) => events,
+        // 新しいイベントをポーリング
+        let events = match watcher.poll_new_events() {
+            Ok(events) if !events.is_empty() => events,
+            Ok(_) => continue,
             Err(e) => {
-                eprintln!("Failed to receive realtime events: {}", e);
+                eprintln!("Failed to poll events: {}", e);
                 continue;
             }
         };
 
-        // イベントプロセッサにイベント一覧を渡す -> DBへ保存 -> フロントエンドに通知
-        process_event_batch(conn, &mut processor, events, Some(&app_handle));
+        // イベント処理とDB保存
+        let db_guard = db.lock().unwrap();
+        let conn = db_guard.connection();
 
-        // ファイル位置をDBに保存
+        process_event_batch(conn, &mut processor, events, Some(&app_handle));
         watcher.save_file_states(conn);
     }
 }

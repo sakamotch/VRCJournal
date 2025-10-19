@@ -1,38 +1,27 @@
-use super::{database, monitor, path::{get_all_log_files, get_vrchat_log_path}};
-use crate::parser::{log_parser::VRChatLogParser, types::LogEvent};
+use super::path::{get_all_log_files, get_vrchat_log_path};
+use crate::{db, parser::{log_parser::VRChatLogParser, types::LogEvent}};
+use chrono::Utc;
 use rusqlite::Connection;
 use std::collections::HashMap;
-use std::fs::File;
+use std::fs::{self, File};
 use std::io::{Read, Seek, SeekFrom};
 use std::path::PathBuf;
-use std::sync::mpsc::{channel, Receiver, Sender};
-use std::sync::{Arc, Mutex};
 
 pub struct LogWatcher {
     log_dir: PathBuf,
-    file_states: Arc<Mutex<HashMap<PathBuf, u64>>>,
+    file_states: HashMap<PathBuf, u64>,
     parser: VRChatLogParser,
-    event_tx: Sender<Vec<LogEvent>>,
-    event_rx: Arc<Mutex<Receiver<Vec<LogEvent>>>>,
 }
 
 impl LogWatcher {
     /// 新しいLogWatcherを作成
     pub fn new() -> Result<Self, String> {
-        // Verify VRChat log directory exists and store the path
-        let log_dir = match get_vrchat_log_path() {
-            Ok(path) => path,
-            Err(e) => return Err(e),
-        };
-
-        let (event_tx, event_rx) = channel();
+        let log_dir = get_vrchat_log_path()?;
 
         Ok(Self {
             log_dir,
-            file_states: Arc::new(Mutex::new(HashMap::new())),
+            file_states: HashMap::new(),
             parser: VRChatLogParser::new(),
-            event_tx,
-            event_rx: Arc::new(Mutex::new(event_rx)),
         })
     }
 
@@ -41,20 +30,16 @@ impl LogWatcher {
     /// ファイルシステムに存在する全ファイルについて、DBから読み込み位置を取得
     /// DBに記録されていないファイルは位置0から開始
     pub fn restore_file_positions(&mut self, conn: &Connection) -> Result<(), String> {
-        // ファイルシステムから全ログファイルを取得
         let log_files = get_all_log_files(&self.log_dir)?;
-
-        let mut states = self.file_states.lock().unwrap();
 
         for log_file in log_files {
             let path_str = log_file.to_string_lossy().to_string();
 
-            // DBから位置を取得（なければ0）
-            let position = crate::db::operations::get_log_file_position(conn, &path_str)
+            let position = db::operations::get_log_file_position(conn, &path_str)
                 .unwrap_or(Some(0))
                 .unwrap_or(0);
 
-            states.insert(log_file.clone(), position);
+            self.file_states.insert(log_file.clone(), position);
 
             if position == 0 {
                 println!("New file detected: {:?}", log_file);
@@ -68,52 +53,66 @@ impl LogWatcher {
 
     /// バックログイベント読み込み：前回位置からログを読み込んでイベント一覧を返す
     pub fn read_backlog_events(&mut self) -> Result<Vec<LogEvent>, String> {
-        let file_positions = self.file_states.lock().unwrap().clone();
-
-        self.read_all_logs(file_positions)
+        self.read_all_logs()
     }
 
-    /// ディレクトリ監視を開始（独自ポーリングでファイルサイズをチェック）
-    pub fn start_watching(&self) -> Result<(), String> {
-        monitor::start_watching(
-            self.log_dir.clone(),
-            Arc::clone(&self.file_states),
-            self.event_tx.clone(),
-        )
-    }
+    /// 新しいイベントをポーリング：ファイルサイズをチェックして変更があれば読み込む
+    pub fn poll_new_events(&mut self) -> Result<Vec<LogEvent>, String> {
+        let log_files = get_all_log_files(&self.log_dir)?;
+        let mut all_events = Vec::new();
 
-    /// リアルタイムイベント受信：ファイル変更で検知したイベント一覧を受信
-    pub fn recv_realtime_events(&self) -> Result<Vec<LogEvent>, String> {
-        self.event_rx
-            .lock()
-            .unwrap()
-            .recv()
-            .map_err(|e| format!("Failed to receive events: {}", e))
+        for file_path in log_files {
+            // ファイルサイズを取得
+            let metadata = match fs::metadata(&file_path) {
+                Ok(m) => m,
+                Err(_) => continue,
+            };
+            let current_size = metadata.len();
+
+            // 現在の読み込み位置を取得
+            let position = self.file_states.get(&file_path).copied().unwrap_or(0);
+
+            // 新しいデータがあるかチェック
+            if current_size > position {
+                if position == 0 {
+                    println!("New log file detected: {:?}", file_path);
+                }
+
+                // ファイルを読み込む
+                let (events, final_position) = self.read_file_from_position(&file_path, position)?;
+                self.file_states.insert(file_path.clone(), final_position);
+                all_events.extend(events);
+            }
+        }
+
+        Ok(all_events)
     }
 
     /// ファイル状態をDBに保存
     pub fn save_file_states(&self, conn: &Connection) {
-        database::save_file_states(&self.file_states, conn);
+        for (path, position) in self.file_states.iter() {
+            let path_str = path.to_string_lossy().to_string();
+            if let Ok(metadata) = fs::metadata(path) {
+                let file_size = metadata.len();
+                if let Ok(modified) = metadata.modified() {
+                    let modified_dt = chrono::DateTime::<Utc>::from(modified);
+                    let _ = db::operations::upsert_log_file(conn, &path_str, file_size, modified_dt);
+                    let _ = db::operations::update_log_file_position(conn, &path_str, *position);
+                }
+            }
+        }
     }
 
-    /// 全てのログファイルを初期読み込み（指定した位置から）
-    fn read_all_logs(
-        &self,
-        file_positions: HashMap<PathBuf, u64>,
-    ) -> Result<Vec<LogEvent>, String> {
+    /// 全てのログファイルを初期読み込み（file_statesに記録された位置から）
+    fn read_all_logs(&mut self) -> Result<Vec<LogEvent>, String> {
         let log_files = get_all_log_files(&self.log_dir)?;
         let mut all_events = Vec::new();
 
         for log_file in log_files {
-            let start_position = file_positions.get(&log_file).copied().unwrap_or(0);
+            let start_position = self.file_states.get(&log_file).copied().unwrap_or(0);
             let (events, final_position) = self.read_file_from_position(&log_file, start_position)?;
 
-            // ファイルの状態を記録
-            self.file_states
-                .lock()
-                .unwrap()
-                .insert(log_file.clone(), final_position);
-
+            self.file_states.insert(log_file.clone(), final_position);
             all_events.extend(events);
         }
 
