@@ -52,6 +52,7 @@ export default {
     hidePhotos: '写真を非表示',
     playerCount: '{count}人',
     photoCount: '{count}枚',
+    avatarCount: '{count}体',
     ongoing: '進行中',
     unknown: '不明',
     interruptedWarning: 'VRChatが予期せず終了した可能性があります',

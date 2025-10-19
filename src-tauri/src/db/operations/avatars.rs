@@ -60,50 +60,42 @@ pub fn upsert_avatar_by_name(
 /// アバター使用履歴を記録
 pub fn record_avatar_usage(
     conn: &Connection,
-    instance_id: i64,
-    player_id: i64, // NOT NULL: ローカルプレイヤー or リモートプレイヤー
-    avatar_id: i64, // NOT NULL: avatarsテーブルへの参照
+    instance_player_id: i64, // NOT NULL: instance_playersテーブルへの参照
+    avatar_id: i64,           // NOT NULL: avatarsテーブルへの参照
     changed_at: DateTime<Utc>,
 ) -> Result<()> {
     conn.execute(
-        "INSERT INTO avatar_usages (instance_id, player_id, avatar_id, changed_at)
-         VALUES (?1, ?2, ?3, ?4)",
-        (instance_id, player_id, avatar_id, changed_at.to_rfc3339()),
+        "INSERT INTO avatar_usages (instance_player_id, avatar_id, changed_at)
+         VALUES (?1, ?2, ?3)",
+        (instance_player_id, avatar_id, changed_at.to_rfc3339()),
     )?;
     Ok(())
 }
 
-/// インスタンス内のアバター使用履歴を取得
-#[derive(Debug, Clone)]
+/// プレイヤーセッション内のアバター使用履歴を取得
+#[derive(Debug, Clone, serde::Serialize)]
 pub struct AvatarUsage {
-    pub player_id: i64,
-    pub display_name: String,
-    pub is_local: bool, // ローカルプレイヤーかどうか
     pub avatar_name: String,
     pub changed_at: DateTime<Utc>,
 }
 
-pub fn get_avatar_usages_in_instance(
+pub fn get_avatar_usages_for_session(
     conn: &Connection,
-    instance_id: i64,
+    instance_player_id: i64,
 ) -> Result<Vec<AvatarUsage>> {
     let mut stmt = conn.prepare(
-        "SELECT au.player_id, p.display_name, p.is_local, a.avatar_name, au.changed_at
+        "SELECT a.avatar_name, au.changed_at
          FROM avatar_usages au
-         INNER JOIN players p ON au.player_id = p.id
          INNER JOIN avatars a ON au.avatar_id = a.id
-         WHERE au.instance_id = ?1
+         WHERE au.instance_player_id = ?1
          ORDER BY au.changed_at",
     )?;
 
     let usages = stmt
-        .query_map([instance_id], |row| {
+        .query_map([instance_player_id], |row| {
             Ok(AvatarUsage {
-                player_id: row.get(0)?,
-                display_name: row.get(1)?,
-                is_local: row.get(2)?,
-                avatar_name: row.get(3)?,
-                changed_at: DateTime::parse_from_rfc3339(&row.get::<_, String>(4)?)
+                avatar_name: row.get(0)?,
+                changed_at: DateTime::parse_from_rfc3339(&row.get::<_, String>(1)?)
                     .unwrap()
                     .with_timezone(&Utc),
             })

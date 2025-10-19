@@ -20,6 +20,7 @@ pub struct EventProcessor {
     current_local_player_id: Option<i64>, // ローカルプレイヤー (is_local=1)
     current_instance_id: Option<i64>,
     player_ids: HashMap<String, i64>, // user_id -> player_id のマッピング
+    instance_player_ids: HashMap<i64, i64>, // player_id -> instance_player_id のマッピング
     pending_avatars: HashMap<String, (i64, DateTime<Utc>)>, // display_name -> (avatar_id, timestamp) のマッピング（PlayerJoined前のアバター情報）
 }
 
@@ -29,6 +30,7 @@ impl EventProcessor {
             current_local_player_id: None,
             current_instance_id: None,
             player_ids: HashMap::new(),
+            instance_player_ids: HashMap::new(),
             pending_avatars: HashMap::new(),
         }
     }
@@ -64,7 +66,7 @@ impl EventProcessor {
 
                         // 3. インスタンスに参加中のプレイヤー（left_atがNULL）のマッピングを復元
                         let mut stmt = conn.prepare(
-                            "SELECT p.user_id, ip.player_id
+                            "SELECT p.user_id, ip.player_id, ip.id as instance_player_id
                              FROM instance_players ip
                              JOIN players p ON ip.player_id = p.id
                              WHERE ip.instance_id = ?1 AND ip.left_at IS NULL",
@@ -74,12 +76,14 @@ impl EventProcessor {
                             Ok((
                                 row.get::<_, String>(0)?, // user_id
                                 row.get::<_, i64>(1)?,    // player_id
+                                row.get::<_, i64>(2)?,    // instance_player_id
                             ))
                         })?;
 
                         for row in player_rows {
-                            let (user_id, player_id) = row?;
+                            let (user_id, player_id, instance_player_id) = row?;
                             self.player_ids.insert(user_id.clone(), player_id);
+                            self.instance_player_ids.insert(player_id, instance_player_id);
                         }
 
                         println!(
@@ -157,8 +161,40 @@ impl EventProcessor {
                     )?;
                     self.current_instance_id = Some(instance_id_db);
                     self.player_ids.clear(); // 新しいインスタンスなのでプレイヤーマップをクリア
+                    self.instance_player_ids.clear(); // instance_player_idマップもクリア
                     self.pending_avatars.clear(); // 保留中のアバター情報もクリア
-                    println!("Joined world: {} (instance: {})", world_id, instance_id_db);
+
+                    // ローカルプレイヤー自身をinstance_playersに追加
+                    let local_display_name = conn.query_row(
+                        "SELECT display_name FROM players WHERE id = ?1",
+                        [local_player_id],
+                        |row| row.get::<_, String>(0),
+                    )?;
+
+                    // 名前履歴を作成または更新
+                    let display_name_history_id = operations::upsert_player_name_history(
+                        conn,
+                        local_player_id,
+                        &local_display_name,
+                        timestamp,
+                    )?;
+
+                    // ローカルプレイヤーをinstance_playersに追加
+                    let local_instance_player_id = operations::add_player_to_instance(
+                        conn,
+                        instance_id_db,
+                        local_player_id,
+                        display_name_history_id,
+                        timestamp,
+                    )?;
+
+                    // instance_player_idsマップに登録
+                    self.instance_player_ids.insert(local_player_id, local_instance_player_id);
+
+                    println!(
+                        "Joined world: {} (instance: {}, local instance_player_id: {})",
+                        world_id, instance_id_db, local_instance_player_id
+                    );
 
                     Some(ProcessedEvent::InstanceCreated {
                         instance_id: instance_id_db,
@@ -203,7 +239,7 @@ impl EventProcessor {
                     )?;
 
                     // インスタンスにプレイヤーを追加（名前履歴IDと共に）
-                    operations::add_player_to_instance(
+                    let instance_player_id = operations::add_player_to_instance(
                         conn,
                         instance_id,
                         player_id,
@@ -212,6 +248,7 @@ impl EventProcessor {
                     )?;
 
                     self.player_ids.insert(user_id.clone(), player_id);
+                    self.instance_player_ids.insert(player_id, instance_player_id);
 
                     // 保留中のアバター情報があれば記録
                     if let Some((avatar_id, avatar_timestamp)) =
@@ -219,8 +256,7 @@ impl EventProcessor {
                     {
                         operations::record_avatar_usage(
                             conn,
-                            instance_id,
-                            player_id,
+                            instance_player_id,
                             avatar_id,
                             avatar_timestamp,
                         )?;
@@ -286,6 +322,7 @@ impl EventProcessor {
                         println!("Leaving instance: instance {} ended, all remaining players marked as left", instance_id);
                         self.current_instance_id = None;
                         self.player_ids.clear();
+                        self.instance_player_ids.clear();
                         Some(ProcessedEvent::InstanceEnded {
                             instance_id,
                             ended_at: timestamp.to_rfc3339(),
@@ -348,15 +385,20 @@ impl EventProcessor {
                         };
 
                     if is_local_player {
-                        // 自分のアバター変更（local_player_id使用）
-                        operations::record_avatar_usage(
-                            conn,
-                            instance_id,
-                            self.current_local_player_id.unwrap(),
-                            avatar_id,
-                            timestamp,
-                        )?;
-                        println!("Avatar changed (self): {} -> {}", display_name, avatar_name);
+                        // 自分のアバター変更
+                        if let Some(&instance_player_id) =
+                            self.instance_player_ids.get(&self.current_local_player_id.unwrap())
+                        {
+                            operations::record_avatar_usage(
+                                conn,
+                                instance_player_id,
+                                avatar_id,
+                                timestamp,
+                            )?;
+                            println!("Avatar changed (self): {} -> {}", display_name, avatar_name);
+                        } else {
+                            eprintln!("Warning: Local player not in instance_player_ids map");
+                        }
                     } else {
                         // 他プレイヤーのアバター変更
                         // display_nameでplayer_idを探す（逆引き）
@@ -373,17 +415,22 @@ impl EventProcessor {
                                 .unwrap_or(false)
                             })
                         {
-                            operations::record_avatar_usage(
-                                conn,
-                                instance_id,
-                                player_id,
-                                avatar_id,
-                                timestamp,
-                            )?;
-                            println!(
-                                "Avatar changed (player): {} -> {}",
-                                display_name, avatar_name
-                            );
+                            if let Some(&instance_player_id) =
+                                self.instance_player_ids.get(&player_id)
+                            {
+                                operations::record_avatar_usage(
+                                    conn,
+                                    instance_player_id,
+                                    avatar_id,
+                                    timestamp,
+                                )?;
+                                println!(
+                                    "Avatar changed (player): {} -> {}",
+                                    display_name, avatar_name
+                                );
+                            } else {
+                                eprintln!("Warning: Player {} not in instance_player_ids map", player_id);
+                            }
                         } else {
                             // プレイヤーがまだ登録されていない場合、保留中として保存
                             // （OnPlayerJoinedイベントが後で来る）

@@ -122,13 +122,14 @@ pub fn upsert_local_player(
 
 /// インスタンスにプレイヤーを追加
 /// 同じプレイヤーが複数回出入りする場合も、それぞれ別のレコードとして記録される
+/// 作成されたinstance_player_idを返す
 pub fn add_player_to_instance(
     conn: &Connection,
     instance_id: i64,
     player_id: i64,
     display_name_history_id: i64,
     joined_at: DateTime<Utc>,
-) -> Result<()> {
+) -> Result<i64> {
     conn.execute(
         "INSERT INTO instance_players (instance_id, player_id, joined_at, display_name_history_id)
          VALUES (?1, ?2, ?3, ?4)",
@@ -139,7 +140,7 @@ pub fn add_player_to_instance(
             display_name_history_id,
         ),
     )?;
-    Ok(())
+    Ok(conn.last_insert_rowid())
 }
 
 /// インスタンスからプレイヤーを退出させる

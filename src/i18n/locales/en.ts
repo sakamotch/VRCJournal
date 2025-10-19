@@ -52,6 +52,7 @@ export default {
     hidePhotos: 'Hide Photos',
     playerCount: '{count} player(s)',
     photoCount: '{count} photo(s)',
+    avatarCount: '{count} avatar(s)',
     ongoing: 'Ongoing',
     unknown: 'Unknown',
     interruptedWarning: 'VRChat may have exited unexpectedly',

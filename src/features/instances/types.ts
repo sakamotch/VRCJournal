@@ -13,6 +13,7 @@ export interface Instance {
 }
 
 export interface Player {
+  instancePlayerId: number;
   id: number;
   displayName: string;
   displayNameAtJoin: string;
@@ -21,6 +22,13 @@ export interface Player {
   lastSeenAt: string;
   joinedAt: string;
   leftAt: string | null;
+  lastAvatarName: string | null;
+  avatarChangeCount: number;
+}
+
+export interface AvatarChange {
+  avatarName: string;
+  changedAt: string;
 }
 
 export interface Screenshot {

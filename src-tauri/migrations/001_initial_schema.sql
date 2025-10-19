@@ -75,21 +75,18 @@ CREATE INDEX idx_instance_players_player ON instance_players(player_id);
 CREATE INDEX idx_instance_players_joined_at ON instance_players(joined_at);
 
 -- 6. Avatar Usages (アバター使用履歴)
--- インスタンス内での各プレイヤー（自分含む）のアバター変更を記録
+-- インスタンス内での各プレイヤーセッション（自分含む）のアバター変更を記録
 CREATE TABLE avatar_usages (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    instance_id INTEGER NOT NULL,
-    player_id INTEGER NOT NULL,            -- アバターを変更したプレイヤー（自分も含む）
+    instance_player_id INTEGER NOT NULL,  -- instance_playersテーブルへの参照（どのセッション中か）
     avatar_id INTEGER NOT NULL,            -- avatarsテーブルへの参照
     changed_at TEXT NOT NULL,              -- ISO 8601 / RFC3339形式
-    FOREIGN KEY (instance_id) REFERENCES instances(id) ON DELETE CASCADE,
-    FOREIGN KEY (player_id) REFERENCES players(id) ON DELETE CASCADE,
+    FOREIGN KEY (instance_player_id) REFERENCES instance_players(id) ON DELETE CASCADE,
     FOREIGN KEY (avatar_id) REFERENCES avatars(id) ON DELETE CASCADE
 );
-CREATE INDEX idx_avatar_usages_instance ON avatar_usages(instance_id);
-CREATE INDEX idx_avatar_usages_player ON avatar_usages(player_id);
+CREATE INDEX idx_avatar_usages_instance_player ON avatar_usages(instance_player_id);
 CREATE INDEX idx_avatar_usages_avatar ON avatar_usages(avatar_id);
-CREATE INDEX idx_avatar_usages_instance_changed ON avatar_usages(instance_id, changed_at);  -- インスタンス内時系列
+CREATE INDEX idx_avatar_usages_instance_player_changed ON avatar_usages(instance_player_id, changed_at);  -- セッション内時系列
 
 -- 7. Tags (タグマスター)
 CREATE TABLE tags (

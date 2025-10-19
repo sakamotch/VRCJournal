@@ -291,26 +291,51 @@ async fn get_instance_players(
     let db = state.db.lock().unwrap();
     let conn = db.connection();
 
-    let players = db::operations::get_players_in_instance(conn, instance_id)
-        .map_err(|e| format!("Failed to get players: {}", e))?;
+    // プレイヤー情報 + instance_player_id + 最後のアバター名 + アバター変更回数を取得
+    let mut stmt = conn
+        .prepare(
+            "SELECT ip.id as instance_player_id,
+                    p.id, p.display_name, pnh.display_name as display_name_at_join, p.user_id,
+                    p.first_seen_at, p.last_seen_at,
+                    ip.joined_at, ip.left_at,
+                    (SELECT a.avatar_name
+                     FROM avatar_usages au
+                     INNER JOIN avatars a ON au.avatar_id = a.id
+                     WHERE au.instance_player_id = ip.id
+                     ORDER BY au.changed_at DESC
+                     LIMIT 1) as last_avatar_name,
+                    (SELECT COUNT(*)
+                     FROM avatar_usages au
+                     WHERE au.instance_player_id = ip.id) as avatar_change_count
+             FROM instance_players ip
+             INNER JOIN players p ON ip.player_id = p.id
+             INNER JOIN player_name_history pnh ON ip.display_name_history_id = pnh.id
+             WHERE ip.instance_id = ?1
+             ORDER BY ip.joined_at",
+        )
+        .map_err(|e| format!("Failed to prepare statement: {}", e))?;
 
-    let json = serde_json::json!(players
-        .into_iter()
-        .map(|p| {
-            serde_json::json!({
-                "id": p.id,
-                "displayName": p.display_name,
-                "displayNameAtJoin": p.display_name_at_join,
-                "userId": p.user_id,
-                "firstSeenAt": p.first_seen_at.to_rfc3339(),
-                "lastSeenAt": p.last_seen_at.to_rfc3339(),
-                "joinedAt": p.joined_at.to_rfc3339(),
-                "leftAt": p.left_at.map(|dt| dt.to_rfc3339()),
-            })
+    let players = stmt
+        .query_map([instance_id], |row| {
+            Ok(serde_json::json!({
+                "instancePlayerId": row.get::<_, i64>(0)?,
+                "id": row.get::<_, i64>(1)?,
+                "displayName": row.get::<_, String>(2)?,
+                "displayNameAtJoin": row.get::<_, String>(3)?,
+                "userId": row.get::<_, String>(4)?,
+                "firstSeenAt": row.get::<_, String>(5)?,
+                "lastSeenAt": row.get::<_, String>(6)?,
+                "joinedAt": row.get::<_, String>(7)?,
+                "leftAt": row.get::<_, Option<String>>(8)?,
+                "lastAvatarName": row.get::<_, Option<String>>(9)?,
+                "avatarChangeCount": row.get::<_, i64>(10)?,
+            }))
         })
-        .collect::<Vec<_>>());
+        .map_err(|e| format!("Failed to query players: {}", e))?
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| format!("Failed to collect players: {}", e))?;
 
-    Ok(json)
+    Ok(serde_json::json!(players))
 }
 
 /// プレイヤーのVRChatユーザーページをデフォルトブラウザで開く
@@ -324,6 +349,80 @@ async fn open_user_page(app: tauri::AppHandle, user_id: String) -> Result<String
         .map_err(|e| format!("Failed to open URL: {}", e))?;
 
     Ok(url)
+}
+
+/// プレイヤーセッションのアバター変更履歴を取得
+#[tauri::command]
+async fn get_player_avatar_history(
+    state: tauri::State<'_, AppState>,
+    instance_player_id: i64,
+) -> Result<serde_json::Value, String> {
+    let db = state.db.lock().unwrap();
+    let conn = db.connection();
+
+    let history = db::operations::get_avatar_usages_for_session(conn, instance_player_id)
+        .map_err(|e| format!("Failed to get avatar history: {}", e))?;
+
+    let json = serde_json::json!(history
+        .into_iter()
+        .map(|usage| {
+            serde_json::json!({
+                "avatarName": usage.avatar_name,
+                "changedAt": usage.changed_at.to_rfc3339(),
+            })
+        })
+        .collect::<Vec<_>>());
+
+    Ok(json)
+}
+
+/// インスタンス全体のアバター使用履歴を一括取得
+#[tauri::command]
+async fn get_instance_avatar_histories(
+    state: tauri::State<'_, AppState>,
+    instance_id: i64,
+) -> Result<serde_json::Value, String> {
+    let db = state.db.lock().unwrap();
+    let conn = db.connection();
+
+    let mut stmt = conn
+        .prepare(
+            "SELECT au.instance_player_id, a.avatar_name, au.changed_at
+             FROM avatar_usages au
+             INNER JOIN avatars a ON au.avatar_id = a.id
+             INNER JOIN instance_players ip ON au.instance_player_id = ip.id
+             WHERE ip.instance_id = ?1
+             ORDER BY au.instance_player_id, au.changed_at",
+        )
+        .map_err(|e| format!("Failed to prepare statement: {}", e))?;
+
+    let rows = stmt
+        .query_map([instance_id], |row| {
+            Ok((
+                row.get::<_, i64>(0)?,      // instance_player_id
+                row.get::<_, String>(1)?,   // avatar_name
+                row.get::<_, String>(2)?,   // changed_at
+            ))
+        })
+        .map_err(|e| format!("Failed to query avatar histories: {}", e))?;
+
+    // instance_player_id ごとにグループ化
+    use std::collections::HashMap;
+    let mut histories: HashMap<i64, Vec<serde_json::Value>> = HashMap::new();
+
+    for row in rows {
+        let (instance_player_id, avatar_name, changed_at) = row.map_err(|e| format!("Failed to collect row: {}", e))?;
+
+        histories
+            .entry(instance_player_id)
+            .or_insert_with(Vec::new)
+            .push(serde_json::json!({
+                "avatarName": avatar_name,
+                "changedAt": changed_at,
+            }));
+    }
+
+    Ok(serde_json::json!(histories))
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -535,7 +634,9 @@ pub fn run() {
             open_screenshot_directory,
             get_database_stats,
             get_instance_players,
-            open_user_page
+            open_user_page,
+            get_player_avatar_history,
+            get_instance_avatar_histories
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
