@@ -10,6 +10,7 @@ pub struct VRChatLogParser {
     avatar_changed_regex: Regex,
     screenshot_regex: Regex,
     leaving_instance_regex: Regex,
+    event_sync_failed_regex: Regex,
 }
 
 impl VRChatLogParser {
@@ -48,6 +49,11 @@ impl VRChatLogParser {
             // 2025.10.15 15:49:00 Debug      -  [Behaviour] Destroying DisplayName
             leaving_instance_regex: Regex::new(
                 r"(\d{4}\.\d{2}\.\d{2} \d{2}:\d{2}:\d{2}) .* \[Behaviour\] Destroying (.+)"
+            ).unwrap(),
+
+            // 2025.10.19 08:10:44 Error      -  [Behaviour] Master is not sending any events! Moving to a new instance.
+            event_sync_failed_regex: Regex::new(
+                r"(\d{4}\.\d{2}\.\d{2} \d{2}:\d{2}:\d{2}) .* \[Behaviour\] Master is not sending any events! Moving to a new instance\."
             ).unwrap(),
         }
     }
@@ -104,6 +110,12 @@ impl VRChatLogParser {
             return Some(LogEvent::DestroyingPlayer {
                 timestamp: parse_timestamp(&caps[1])?,
                 display_name: caps[2].to_string(),
+            });
+        }
+
+        if let Some(caps) = self.event_sync_failed_regex.captures(line) {
+            return Some(LogEvent::EventSyncFailed {
+                timestamp: parse_timestamp(&caps[1])?,
             });
         }
 
@@ -280,6 +292,21 @@ mod tests {
                 assert_eq!(display_name, "TestPlayer");
             }
             _ => panic!("Expected DestroyingPlayer event"),
+        }
+    }
+
+    #[test]
+    fn test_parse_event_sync_failed() {
+        let parser = VRChatLogParser::new();
+        let line = "2025.10.19 08:10:44 Error      -  [Behaviour] Master is not sending any events! Moving to a new instance.";
+
+        let event = parser.parse_line(line).expect("Failed to parse");
+
+        match event {
+            LogEvent::EventSyncFailed { .. } => {
+                // Success
+            }
+            _ => panic!("Expected EventSyncFailed event"),
         }
     }
 

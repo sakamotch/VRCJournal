@@ -400,6 +400,25 @@ impl EventProcessor {
                 }
                 None // アバター変更は通知不要（将来的にアバター履歴機能で使うかも）
             }
+
+            LogEvent::EventSyncFailed { timestamp } => {
+                // イベント同期失敗：現在のインスタンスのステータスをevent_sync_failedにマーク
+                // インスタンスの終了は後続のDestroyingPlayerイベントで行われる
+                if let Some(instance_id) = self.current_instance_id {
+                    conn.execute(
+                        "UPDATE instances SET status = 'event_sync_failed' WHERE id = ?1",
+                        [instance_id],
+                    )?;
+                    println!(
+                        "Instance {} marked as event_sync_failed at {}",
+                        instance_id,
+                        timestamp.to_rfc3339()
+                    );
+                } else {
+                    eprintln!("Warning: EventSyncFailed without active instance");
+                }
+                None // ステータス変更のみ、通知不要
+            }
         };
 
         Ok(processed_event)

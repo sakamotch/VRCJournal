@@ -55,6 +55,8 @@ export default {
     ongoing: '進行中',
     unknown: '不明',
     interruptedWarning: 'VRChatが予期せず終了した可能性があります',
+    connectionError: '接続エラー',
+    eventSyncFailedWarning: 'VRChatがインスタンスのイベント同期に失敗しました。プレイヤー情報は記録されていません。',
     durationHours: '{hours}時間{minutes}分',
     durationMinutes: '{minutes}分',
   },

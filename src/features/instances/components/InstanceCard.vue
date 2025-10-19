@@ -102,11 +102,19 @@ async function toggleScreenshots() {
 <template>
   <BaseCard
     class="instance-card"
+    :class="{ 'event-sync-failed': instance.status === 'event_sync_failed' }"
+    :title="instance.status === 'event_sync_failed' ? t('instance.eventSyncFailedWarning') : ''"
     :hoverable="false"
   >
     <div class="instance-header">
       <h3 class="world-name">
         {{ instance.worldName || instance.worldId }}
+        <span
+          v-if="instance.status === 'event_sync_failed'"
+          class="error-badge"
+        >
+          {{ t('instance.connectionError') }}
+        </span>
       </h3>
       <span class="user-name">{{ instance.userName }}</span>
     </div>
@@ -121,14 +129,15 @@ async function toggleScreenshots() {
       >
         <Clock :size="16" />
         {{ instanceStartTime }}
-        <template v-if="instance.endedAt">
+        <template v-if="instance.endedAt && instance.status !== 'event_sync_failed'">
           〜 {{ instanceEndTime }} ({{ instanceDuration }})
         </template>
-        <template v-else>
+        <template v-else-if="instance.status !== 'event_sync_failed'">
           〜 {{ instanceDuration }}
         </template>
       </span>
       <span
+        v-if="instance.status !== 'event_sync_failed'"
         class="info-item player-count clickable"
         :title="playersExpanded ? t('instance.hidePlayers') : t('instance.showPlayers')"
         @click="togglePlayers"
@@ -145,7 +154,7 @@ async function toggleScreenshots() {
         />
       </span>
       <span
-        v-if="instance.screenshotCount > 0"
+        v-if="instance.screenshotCount > 0 && instance.status !== 'event_sync_failed'"
         class="info-item screenshot-count clickable"
         :title="screenshotsExpanded ? t('instance.hidePhotos') : t('instance.showPhotos')"
         @click="toggleScreenshots"
@@ -163,44 +172,46 @@ async function toggleScreenshots() {
       </span>
     </div>
 
-    <!-- プレイヤーリスト -->
-    <PlayerList
-      v-if="playersExpanded && players"
-      :players="players"
-      :instance="instance"
-      @open-user-page="(userId) => emit('openUserPage', userId)"
-    />
-    <div
-      v-else-if="playersExpanded"
-      class="loading"
-    >
-      {{ t('instance.loading') }}
-    </div>
-
-    <!-- スクリーンショットリスト -->
-    <ScreenshotList
-      v-if="screenshotsExpanded && screenshots"
-      :screenshots="screenshots"
-      @view-screenshot="(filePath) => emit('viewScreenshot', filePath)"
-      @open-directory="(filePath) => emit('openDirectory', filePath)"
-    />
-    <div
-      v-else-if="screenshotsExpanded"
-      class="loading"
-    >
-      {{ t('instance.loading') }}
-    </div>
-
-    <div class="instance-details">
-      <div class="detail-item">
-        <span class="label">Instance:</span>
-        <span class="value">{{ instance.instanceId }}</span>
+    <template v-if="instance.status !== 'event_sync_failed'">
+      <!-- プレイヤーリスト -->
+      <PlayerList
+        v-if="playersExpanded && players"
+        :players="players"
+        :instance="instance"
+        @open-user-page="(userId) => emit('openUserPage', userId)"
+      />
+      <div
+        v-else-if="playersExpanded"
+        class="loading"
+      >
+        {{ t('instance.loading') }}
       </div>
-      <BaseButton @click="emit('openInvite', instance)">
-        <ExternalLink :size="16" />
-        <span>{{ t('instance.openWorld') }}</span>
-      </BaseButton>
-    </div>
+
+      <!-- スクリーンショットリスト -->
+      <ScreenshotList
+        v-if="screenshotsExpanded && screenshots"
+        :screenshots="screenshots"
+        @view-screenshot="(filePath) => emit('viewScreenshot', filePath)"
+        @open-directory="(filePath) => emit('openDirectory', filePath)"
+      />
+      <div
+        v-else-if="screenshotsExpanded"
+        class="loading"
+      >
+        {{ t('instance.loading') }}
+      </div>
+
+      <div class="instance-details">
+        <div class="detail-item">
+          <span class="label">Instance:</span>
+          <span class="value">{{ instance.instanceId }}</span>
+        </div>
+        <BaseButton @click="emit('openInvite', instance)">
+          <ExternalLink :size="16" />
+          <span>{{ t('instance.openWorld') }}</span>
+        </BaseButton>
+      </div>
+    </template>
   </BaseCard>
 </template>
 
@@ -300,5 +311,21 @@ async function toggleScreenshots() {
 .value {
   font-family: monospace;
   font-size: 0.8rem;
+}
+
+.instance-card.event-sync-failed {
+  opacity: 0.7;
+}
+
+.error-badge {
+  display: inline-block;
+  margin-left: 0.5rem;
+  padding: 0.125rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--bg-sunken);
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
 }
 </style>

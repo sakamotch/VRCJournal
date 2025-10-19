@@ -43,6 +43,11 @@ pub enum LogEvent {
         timestamp: DateTime<Utc>,
         display_name: String,
     },
+    /// イベント同期失敗（マスターからイベントが送信されない）
+    /// 次のJoiningWorldイベントが代替インスタンスとなる
+    EventSyncFailed {
+        timestamp: DateTime<Utc>,
+    },
 }
 
 impl LogEvent {
@@ -55,6 +60,7 @@ impl LogEvent {
             LogEvent::AvatarChanged { timestamp, .. } => timestamp,
             LogEvent::ScreenshotTaken { timestamp, .. } => timestamp,
             LogEvent::DestroyingPlayer { timestamp, .. } => timestamp,
+            LogEvent::EventSyncFailed { timestamp, .. } => timestamp,
         }
     }
 }

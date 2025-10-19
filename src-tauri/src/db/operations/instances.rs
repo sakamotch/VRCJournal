@@ -37,9 +37,10 @@ pub fn create_instance(
 }
 
 /// インスタンスの終了時刻を更新し、状態をcompletedに設定
+/// ただし、既にactive以外のstatusが設定されている場合は上書きしない（event_sync_failedなど）
 pub fn end_instance(conn: &Connection, instance_id: i64, ended_at: DateTime<Utc>) -> Result<()> {
     conn.execute(
-        "UPDATE instances SET ended_at = ?1, status = 'completed' WHERE id = ?2",
+        "UPDATE instances SET ended_at = ?1, status = CASE WHEN status = 'active' THEN 'completed' ELSE status END WHERE id = ?2",
         (ended_at.to_rfc3339(), instance_id),
     )?;
     Ok(())

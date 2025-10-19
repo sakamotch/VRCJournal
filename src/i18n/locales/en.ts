@@ -55,6 +55,8 @@ export default {
     ongoing: 'Ongoing',
     unknown: 'Unknown',
     interruptedWarning: 'VRChat may have exited unexpectedly',
+    connectionError: 'Connection Error',
+    eventSyncFailedWarning: 'VRChat failed to sync instance events. Player information was not recorded.',
     durationHours: '{hours}h {minutes}m',
     durationMinutes: '{minutes}m',
   },
