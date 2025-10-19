@@ -22,3 +22,23 @@ pub fn upsert_my_account(
 
     Ok(id)
 }
+
+/// Get the most recently authenticated local account
+///
+/// Returns (my_account_id, user_id)
+pub fn get_latest_authenticated_account(conn: &Connection) -> Result<Option<(i64, i64)>> {
+    let result = conn.query_row(
+        "SELECT ma.id, ma.user_id
+         FROM my_accounts ma
+         ORDER BY ma.last_authenticated_at DESC
+         LIMIT 1",
+        [],
+        |row| Ok((row.get::<_, i64>(0)?, row.get::<_, i64>(1)?)),
+    );
+
+    match result {
+        Ok(data) => Ok(Some(data)),
+        Err(rusqlite::Error::QueryReturnedNoRows) => Ok(None),
+        Err(e) => Err(e),
+    }
+}

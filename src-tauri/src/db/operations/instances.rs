@@ -125,3 +125,33 @@ pub fn get_instance_world_id(
         |row| row.get(0),
     )
 }
+
+/// Get all active users in an instance
+///
+/// Returns Vec<(vrchat_user_id, user_id, instance_user_id)>
+pub fn get_instance_active_users(
+    conn: &Connection,
+    instance_id: i64,
+) -> Result<Vec<(String, i64, i64)>> {
+    let mut stmt = conn.prepare(
+        "SELECT u.user_id, iu.user_id, iu.id
+         FROM instance_users iu
+         JOIN users u ON iu.user_id = u.id
+         WHERE iu.instance_id = ?1 AND iu.left_at IS NULL",
+    )?;
+
+    let rows = stmt.query_map([instance_id], |row| {
+        Ok((
+            row.get::<_, String>(0)?, // vrchat user_id
+            row.get::<_, i64>(1)?,    // users.id
+            row.get::<_, i64>(2)?,    // instance_users.id
+        ))
+    })?;
+
+    let mut users = Vec::new();
+    for row in rows {
+        users.push(row?);
+    }
+
+    Ok(users)
+}
