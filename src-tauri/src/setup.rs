@@ -37,18 +37,8 @@ fn run_event_monitoring(database: db::Database, app_handle: AppHandle) {
     let mut processor = EventProcessor::new();
 
     // 2. 前回終了時点の状態を復元
-    {
-        let db_guard = db.lock().unwrap();
-        let conn = db_guard.connection();
-
-        if let Err(e) = processor.restore_previous_state(conn) {
-            eprintln!("Failed to restore EventProcessor state: {}", e);
-        }
-
-        if let Err(e) = watcher.restore_file_positions(conn) {
-            eprintln!("Failed to restore file positions: {}", e);
-            return;
-        }
+    if !restore_previous_state(&db, &mut watcher, &mut processor) {
+        return;
     }
 
     // 3-4. バックログ処理
@@ -68,6 +58,29 @@ fn run_event_monitoring(database: db::Database, app_handle: AppHandle) {
 
     // 7. リアルタイム処理ループ
     process_realtime(db, watcher, processor, app_handle);
+}
+
+/// 前回終了時点の状態を復元
+///
+/// 戻り値: 成功時true、失敗時false
+fn restore_previous_state(
+    db: &Arc<Mutex<db::Database>>,
+    watcher: &mut LogWatcher,
+    processor: &mut EventProcessor,
+) -> bool {
+    let db_guard = db.lock().unwrap();
+    let conn = db_guard.connection();
+
+    if let Err(e) = processor.restore_previous_state(conn) {
+        eprintln!("Failed to restore EventProcessor state: {}", e);
+    }
+
+    if let Err(e) = watcher.restore_file_positions(conn) {
+        eprintln!("Failed to restore file positions: {}", e);
+        return false;
+    }
+
+    true
 }
 
 /// バックログ処理：前回解析しなかった分のログを処理（イベント送信なし）
