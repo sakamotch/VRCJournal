@@ -1,4 +1,4 @@
-use crate::db::operations;
+use crate::db::{operations, InstanceStatus};
 use crate::event_processor::ProcessedEvent;
 use rusqlite::Connection;
 use std::collections::HashMap;
@@ -34,7 +34,7 @@ pub fn handle(
 
     // End previous instance if exists (mark as interrupted)
     if let Some(prev_instance_id) = *current_instance_id {
-        operations::update_instance_status(conn, prev_instance_id, "interrupted")?;
+        operations::update_instance_status(conn, prev_instance_id, InstanceStatus::Interrupted)?;
         println!("Previous instance {} marked as interrupted", prev_instance_id);
     }
 
@@ -88,6 +88,6 @@ pub fn handle(
         world_name: world_name.to_string(),
         vrchat_instance_id: instance_id.to_string(),
         started_at: timestamp.to_string(),
-        status: "active".to_string(),
+        status: InstanceStatus::Active,
     }))
 }

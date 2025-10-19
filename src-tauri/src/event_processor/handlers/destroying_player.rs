@@ -1,4 +1,4 @@
-use crate::db::operations;
+use crate::db::{operations, InstanceStatus};
 use crate::event_processor::ProcessedEvent;
 use rusqlite::Connection;
 use std::collections::HashMap;
@@ -39,7 +39,7 @@ pub fn handle(
         let result = Some(ProcessedEvent::InstanceEnded {
             instance_id,
             ended_at: timestamp.to_string(),
-            status: "completed".to_string(),
+            status: InstanceStatus::Completed,
         });
 
         *current_instance_id = None;

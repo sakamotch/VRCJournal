@@ -1,3 +1,4 @@
+use crate::db::InstanceStatus;
 use rusqlite::{Connection, OptionalExtension, Result};
 
 /// Create a new instance and return its ID
@@ -44,11 +45,11 @@ pub fn end_instance(
 pub fn update_instance_status(
     conn: &Connection,
     instance_id: i64,
-    status: &str,
+    status: InstanceStatus,
 ) -> Result<()> {
     conn.execute(
         "UPDATE instances SET status = ?1 WHERE id = ?2",
-        (status, instance_id),
+        (status.as_str(), instance_id),
     )?;
     Ok(())
 }

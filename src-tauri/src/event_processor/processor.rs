@@ -1,3 +1,4 @@
+use crate::db::InstanceStatus;
 use crate::parser::LogEvent;
 use rusqlite::Connection;
 use std::collections::HashMap;
@@ -24,14 +25,14 @@ pub enum ProcessedEvent {
         world_name: String,
         vrchat_instance_id: String,
         started_at: String,
-        status: String,
+        status: InstanceStatus,
     },
 
     /// Instance ended (update instance status)
     InstanceEnded {
         instance_id: i64,
         ended_at: String,
-        status: String,
+        status: InstanceStatus,
     },
 
     /// User joined instance (increment player count)
