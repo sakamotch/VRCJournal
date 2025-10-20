@@ -1,11 +1,11 @@
 use crate::db::operations;
-use crate::event_processor::processor::ProcessorContext;
+use crate::handler::core::HandlerContext;
 use crate::types::{InstanceStatus, ProcessedEvent};
 use rusqlite::Connection;
 
 pub fn handle(
     conn: &Connection,
-    ctx: &ProcessorContext,
+    ctx: &HandlerContext,
     timestamp: &str,
 ) -> Result<Option<ProcessedEvent>, rusqlite::Error> {
     let instance_id = match ctx.current_instance_id.as_ref().copied() {

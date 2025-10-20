@@ -1,11 +1,11 @@
 use crate::db::operations;
-use crate::event_processor::processor::ProcessorContext;
+use crate::handler::core::HandlerContext;
 use crate::types::ProcessedEvent;
 use rusqlite::Connection;
 
 pub fn handle(
     conn: &Connection,
-    ctx: &ProcessorContext,
+    ctx: &HandlerContext,
     timestamp: &str,
     world_name: &str,
 ) -> Result<Option<ProcessedEvent>, rusqlite::Error> {

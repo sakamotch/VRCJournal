@@ -1,11 +1,11 @@
 use crate::db::operations;
-use crate::event_processor::processor::ProcessorContext;
+use crate::handler::core::HandlerContext;
 use crate::types::ProcessedEvent;
 use rusqlite::Connection;
 
 pub fn handle(
     conn: &Connection,
-    ctx: &mut ProcessorContext,
+    ctx: &mut HandlerContext,
     timestamp: &str,
     display_name: &str,
     avatar_name: &str,

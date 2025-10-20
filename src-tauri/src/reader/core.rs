@@ -1,5 +1,5 @@
 use super::path::{get_all_log_files, get_vrchat_log_path};
-use crate::{db, parser::vrchat::VRChatLogParser, types::LogEvent};
+use crate::{db, parser::LogParser, types::LogEvent};
 use chrono::Utc;
 use rusqlite::Connection;
 use std::collections::HashMap;
@@ -7,21 +7,21 @@ use std::fs::{self, File};
 use std::io::{Read, Seek, SeekFrom};
 use std::path::PathBuf;
 
-pub struct LogWatcher {
+pub struct LogReader {
     log_dir: PathBuf,
     file_states: HashMap<PathBuf, u64>,
-    parser: VRChatLogParser,
+    parser: LogParser,
 }
 
-impl LogWatcher {
-    /// 新しいLogWatcherを作成
+impl LogReader {
+    /// 新しいLogReaderを作成
     pub fn new() -> Result<Self, String> {
         let log_dir = get_vrchat_log_path()?;
 
         Ok(Self {
             log_dir,
             file_states: HashMap::new(),
-            parser: VRChatLogParser::new(),
+            parser: LogParser::new(),
         })
     }
 
@@ -157,8 +157,8 @@ impl LogWatcher {
     }
 }
 
-impl Default for LogWatcher {
+impl Default for LogReader {
     fn default() -> Self {
-        Self::new().expect("Failed to create LogWatcher")
+        Self::new().expect("Failed to create LogReader")
     }
 }

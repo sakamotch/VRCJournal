@@ -5,8 +5,8 @@ use std::collections::HashMap;
 
 use super::handlers;
 
-/// Context passed to event handlers containing processor state
-pub(super) struct ProcessorContext<'a> {
+/// Context passed to event handlers containing handler state
+pub(super) struct HandlerContext<'a> {
     pub current_my_account_id: Option<i64>,
     pub current_user_id: Option<i64>,
     pub current_instance_id: &'a mut Option<i64>,
@@ -15,8 +15,8 @@ pub(super) struct ProcessorContext<'a> {
     pub pending_avatars: &'a mut HashMap<String, (i64, String)>,
 }
 
-/// Event processor: Processes LogEvents and stores them in the database
-pub struct EventProcessor {
+/// Event handler: Processes LogEvents and stores them in the database
+pub struct EventHandler {
     current_my_account_id: Option<i64>,   // Current local account
     current_user_id: Option<i64>,         // Current user (corresponds to my_account)
     current_instance_id: Option<i64>,     // Current active instance
@@ -25,7 +25,7 @@ pub struct EventProcessor {
     pending_avatars: HashMap<String, (i64, String)>, // display_name -> (avatar_id, timestamp) for avatars seen before PlayerJoined
 }
 
-impl EventProcessor {
+impl EventHandler {
     pub fn new() -> Self {
         Self {
             current_my_account_id: None,
@@ -45,7 +45,7 @@ impl EventProcessor {
             self.current_my_account_id = Some(my_account_id);
             self.current_user_id = Some(user_id);
             println!(
-                "EventProcessor initialized with my_account_id: {}, user_id: {}",
+                "EventHandler initialized with my_account_id: {}, user_id: {}",
                 my_account_id, user_id
             );
 
@@ -77,7 +77,7 @@ impl EventProcessor {
         conn: &Connection,
         event: LogEvent,
     ) -> Result<Option<ProcessedEvent>, rusqlite::Error> {
-        let mut ctx = ProcessorContext {
+        let mut ctx = HandlerContext {
             current_my_account_id: self.current_my_account_id,
             current_user_id: self.current_user_id,
             current_instance_id: &mut self.current_instance_id,
@@ -164,7 +164,7 @@ impl EventProcessor {
     }
 }
 
-impl Default for EventProcessor {
+impl Default for EventHandler {
     fn default() -> Self {
         Self::new()
     }

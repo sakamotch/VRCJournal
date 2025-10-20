@@ -2,7 +2,7 @@ use crate::types::LogEvent;
 use chrono::{DateTime, Local, NaiveDateTime, TimeZone, Utc};
 use regex::Regex;
 
-pub struct VRChatLogParser {
+pub struct LogParser {
     auth_regex: Regex,
     joining_regex: Regex,
     entering_room_regex: Regex,
@@ -13,7 +13,7 @@ pub struct VRChatLogParser {
     event_sync_failed_regex: Regex,
 }
 
-impl VRChatLogParser {
+impl LogParser {
     pub fn new() -> Self {
         Self {
             // 2025.10.13 09:53:16 Debug      -  User Authenticated: DisplayName (usr_xxx)
@@ -123,7 +123,7 @@ impl VRChatLogParser {
     }
 }
 
-impl Default for VRChatLogParser {
+impl Default for LogParser {
     fn default() -> Self {
         Self::new()
     }
@@ -144,7 +144,7 @@ mod tests {
 
     #[test]
     fn test_parse_user_authenticated() {
-        let parser = VRChatLogParser::new();
+        let parser = LogParser::new();
         let line = "2025.10.13 09:53:16 Debug      -  User Authenticated: TestUser (usr_12345678-abcd-ef01-2345-6789abcdef01)";
 
         let event = parser.parse_line(line).expect("Failed to parse");
@@ -164,7 +164,7 @@ mod tests {
 
     #[test]
     fn test_parse_joining_world() {
-        let parser = VRChatLogParser::new();
+        let parser = LogParser::new();
         let line = "2025.10.13 09:53:22 Debug      -  [Behaviour] Joining wrld_abcdef01-2345-6789-abcd-ef0123456789:11859~friends(usr_xxx)~region(jp)";
 
         let event = parser.parse_line(line).expect("Failed to parse");
@@ -184,7 +184,7 @@ mod tests {
 
     #[test]
     fn test_parse_joining_world_simple() {
-        let parser = VRChatLogParser::new();
+        let parser = LogParser::new();
         let line = "2025.10.13 09:53:22 Debug      -  [Behaviour] Joining wrld_abcdef01-2345-6789-abcd-ef0123456789:84455~region(jp)";
 
         let event = parser.parse_line(line).expect("Failed to parse");
@@ -204,7 +204,7 @@ mod tests {
 
     #[test]
     fn test_parse_player_joined() {
-        let parser = VRChatLogParser::new();
+        let parser = LogParser::new();
         let line = "2025.10.13 11:02:36 Debug      -  [Behaviour] OnPlayerJoined TestPlayer (usr_12345678-abcd-ef01-2345-6789abcdef01)";
 
         let event = parser.parse_line(line).expect("Failed to parse");
@@ -224,7 +224,7 @@ mod tests {
 
     #[test]
     fn test_parse_avatar_changed() {
-        let parser = VRChatLogParser::new();
+        let parser = LogParser::new();
         let line =
             "2025.10.13 11:02:36 Debug      -  [Behaviour] Switching TestUser to avatar TestAvatar";
 
@@ -245,7 +245,7 @@ mod tests {
 
     #[test]
     fn test_parse_entering_room() {
-        let parser = VRChatLogParser::new();
+        let parser = LogParser::new();
         let line =
             "2025.10.13 10:55:55 Debug      -  [Behaviour] Joining or Creating Room: VRChat Home";
 
@@ -261,7 +261,7 @@ mod tests {
 
     #[test]
     fn test_parse_screenshot_taken() {
-        let parser = VRChatLogParser::new();
+        let parser = LogParser::new();
         let line = "2025.10.15 15:48:41 Debug      -  [VRC Camera] Took screenshot to: D:\\VRChat\\Screenshots\\VRChat_2025-10-15_15-48-41.png";
 
         let event = parser.parse_line(line).expect("Failed to parse");
@@ -279,7 +279,7 @@ mod tests {
 
     #[test]
     fn test_parse_destroying_player() {
-        let parser = VRChatLogParser::new();
+        let parser = LogParser::new();
         let line = "2025.10.15 15:49:00 Debug      -  [Behaviour] Destroying TestPlayer";
 
         let event = parser.parse_line(line).expect("Failed to parse");
@@ -294,7 +294,7 @@ mod tests {
 
     #[test]
     fn test_parse_event_sync_failed() {
-        let parser = VRChatLogParser::new();
+        let parser = LogParser::new();
         let line = "2025.10.19 08:10:44 Error      -  [Behaviour] Master is not sending any events! Moving to a new instance.";
 
         let event = parser.parse_line(line).expect("Failed to parse");
@@ -309,7 +309,7 @@ mod tests {
 
     #[test]
     fn test_parse_invalid_line() {
-        let parser = VRChatLogParser::new();
+        let parser = LogParser::new();
         let line = "2025.10.13 11:02:36 Debug      -  Some random log line";
 
         let event = parser.parse_line(line);
