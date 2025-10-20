@@ -5,6 +5,16 @@ use std::collections::HashMap;
 
 use super::{handlers, types::ProcessedEvent};
 
+/// Context passed to event handlers containing processor state
+pub(super) struct ProcessorContext<'a> {
+    pub current_my_account_id: Option<i64>,
+    pub current_user_id: Option<i64>,
+    pub current_instance_id: &'a mut Option<i64>,
+    pub user_ids: &'a mut HashMap<String, i64>,
+    pub instance_user_ids: &'a mut HashMap<i64, i64>,
+    pub pending_avatars: &'a mut HashMap<String, (i64, String)>,
+}
+
 /// Event processor: Processes LogEvents and stores them in the database
 pub struct EventProcessor {
     current_my_account_id: Option<i64>,   // Current local account
@@ -67,20 +77,32 @@ impl EventProcessor {
         conn: &Connection,
         event: LogEvent,
     ) -> Result<Option<ProcessedEvent>, rusqlite::Error> {
+        let mut ctx = ProcessorContext {
+            current_my_account_id: self.current_my_account_id,
+            current_user_id: self.current_user_id,
+            current_instance_id: &mut self.current_instance_id,
+            user_ids: &mut self.user_ids,
+            instance_user_ids: &mut self.instance_user_ids,
+            pending_avatars: &mut self.pending_avatars,
+        };
+
         match event {
             LogEvent::UserAuthenticated {
                 timestamp,
                 user_id,
                 display_name,
-            } => handlers::user_authenticated::handle(
-                conn,
-                &timestamp.to_rfc3339(),
-                &user_id,
-                &display_name,
-                &mut self.current_my_account_id,
-                &mut self.current_user_id,
-                &mut self.user_ids,
-            ),
+            } => {
+                let result = handlers::user_authenticated::handle(
+                    conn,
+                    &mut ctx,
+                    &timestamp.to_rfc3339(),
+                    &user_id,
+                    &display_name,
+                )?;
+                self.current_my_account_id = ctx.current_my_account_id;
+                self.current_user_id = ctx.current_user_id;
+                Ok(result)
+            }
             LogEvent::JoiningWorld {
                 timestamp,
                 world_id,
@@ -88,37 +110,24 @@ impl EventProcessor {
                 instance_id,
             } => handlers::joining_world::handle(
                 conn,
+                &mut ctx,
                 &timestamp.to_rfc3339(),
                 &world_id,
                 &world_name,
                 &instance_id,
-                self.current_my_account_id,
-                self.current_user_id,
-                &mut self.current_instance_id,
-                &mut self.instance_user_ids,
-                &mut self.pending_avatars,
             ),
             LogEvent::EnteringRoom {
                 timestamp,
                 world_name,
-            } => handlers::entering_room::handle(
-                conn,
-                &timestamp.to_rfc3339(),
-                &world_name,
-                self.current_instance_id,
-            ),
+            } => handlers::entering_room::handle(conn, &ctx, &timestamp.to_rfc3339(), &world_name),
             LogEvent::DestroyingPlayer {
                 timestamp,
                 display_name,
             } => handlers::destroying_player::handle(
                 conn,
+                &mut ctx,
                 &timestamp.to_rfc3339(),
                 &display_name,
-                self.current_user_id,
-                &mut self.current_instance_id,
-                &self.user_ids,
-                &mut self.instance_user_ids,
-                &mut self.pending_avatars,
             ),
             LogEvent::PlayerJoined {
                 timestamp,
@@ -126,13 +135,10 @@ impl EventProcessor {
                 user_id,
             } => handlers::player_joined::handle(
                 conn,
+                &mut ctx,
                 &timestamp.to_rfc3339(),
                 &display_name,
                 &user_id,
-                self.current_instance_id,
-                &mut self.user_ids,
-                &mut self.instance_user_ids,
-                &mut self.pending_avatars,
             ),
             LogEvent::AvatarChanged {
                 timestamp,
@@ -140,28 +146,20 @@ impl EventProcessor {
                 avatar_name,
             } => handlers::avatar_changed::handle(
                 conn,
+                &mut ctx,
                 &timestamp.to_rfc3339(),
                 &display_name,
                 &avatar_name,
-                self.current_user_id,
-                self.current_instance_id,
-                &self.user_ids,
-                &mut self.pending_avatars,
             ),
             LogEvent::ScreenshotTaken {
                 timestamp,
                 file_path,
-            } => handlers::screenshot_taken::handle(
-                conn,
-                &timestamp.to_rfc3339(),
-                &file_path,
-                self.current_instance_id,
-            ),
-            LogEvent::EventSyncFailed { timestamp } => handlers::event_sync_failed::handle(
-                conn,
-                &timestamp.to_rfc3339(),
-                self.current_instance_id,
-            ),
+            } => {
+                handlers::screenshot_taken::handle(conn, &ctx, &timestamp.to_rfc3339(), &file_path)
+            }
+            LogEvent::EventSyncFailed { timestamp } => {
+                handlers::event_sync_failed::handle(conn, &ctx, &timestamp.to_rfc3339())
+            }
         }
     }
 }

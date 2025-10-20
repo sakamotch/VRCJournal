@@ -1,14 +1,14 @@
 use crate::db::operations;
-use crate::event_processor::ProcessedEvent;
+use crate::event_processor::{processor::ProcessorContext, ProcessedEvent};
 use rusqlite::Connection;
 
 pub fn handle(
     conn: &Connection,
+    ctx: &ProcessorContext,
     timestamp: &str,
     file_path: &str,
-    current_instance_id: Option<i64>,
 ) -> Result<Option<ProcessedEvent>, rusqlite::Error> {
-    let instance_id = match current_instance_id {
+    let instance_id = match ctx.current_instance_id.as_ref().copied() {
         Some(id) => id,
         None => {
             eprintln!("Screenshot taken but no active instance");

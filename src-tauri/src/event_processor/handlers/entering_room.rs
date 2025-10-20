@@ -1,26 +1,36 @@
 use crate::db::operations;
-use crate::event_processor::ProcessedEvent;
+use crate::event_processor::{processor::ProcessorContext, ProcessedEvent};
 use rusqlite::Connection;
 
 pub fn handle(
     conn: &Connection,
-    _timestamp: &str,
+    ctx: &ProcessorContext,
+    timestamp: &str,
     world_name: &str,
-    current_instance_id: Option<i64>,
 ) -> Result<Option<ProcessedEvent>, rusqlite::Error> {
     // Update world name for current instance
-    if let Some(instance_id) = current_instance_id {
-        // Get world_id from instance
-        let world_id = operations::get_instance_world_id(conn, instance_id)?;
+    let instance_id = match ctx.current_instance_id.as_ref().copied() {
+        Some(id) => id,
+        None => {
+            eprintln!("EnteringRoom but no active instance");
+            return Ok(None);
+        }
+    };
 
-        // Update world name in worlds table
-        operations::update_world_name(conn, world_id, world_name)?;
+    // Get world_id from instance
+    let world_id = operations::get_instance_world_id(conn, instance_id)?;
 
-        println!(
-            "Updated world name for instance {}: {}",
-            instance_id, world_name
-        );
-    }
+    // Update world name in worlds table
+    operations::update_world_name(conn, world_id, world_name)?;
 
-    Ok(None)
+    println!(
+        "Updated world name for instance {}: {}",
+        instance_id, world_name
+    );
+
+    Ok(Some(ProcessedEvent::WorldNameUpdated {
+        instance_id,
+        world_name: world_name.to_string(),
+        updated_at: timestamp.to_string(),
+    }))
 }

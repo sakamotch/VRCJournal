@@ -1,22 +1,16 @@
 use crate::db::{operations, InstanceStatus};
-use crate::event_processor::ProcessedEvent;
+use crate::event_processor::{processor::ProcessorContext, ProcessedEvent};
 use rusqlite::Connection;
-use std::collections::HashMap;
 
-#[allow(clippy::too_many_arguments)]
 pub fn handle(
     conn: &Connection,
+    ctx: &mut ProcessorContext,
     timestamp: &str,
     world_id: &str,
     world_name: &str,
     instance_id: &str,
-    current_my_account_id: Option<i64>,
-    current_user_id: Option<i64>,
-    current_instance_id: &mut Option<i64>,
-    instance_user_ids: &mut HashMap<i64, i64>,
-    pending_avatars: &mut HashMap<String, (i64, String)>,
 ) -> Result<Option<ProcessedEvent>, rusqlite::Error> {
-    let my_account_id = match current_my_account_id {
+    let my_account_id = match ctx.current_my_account_id {
         Some(id) => id,
         None => {
             eprintln!("Cannot join world: no local account authenticated");
@@ -24,7 +18,7 @@ pub fn handle(
         }
     };
 
-    let local_user_id = match current_user_id {
+    let local_user_id = match ctx.current_user_id {
         Some(id) => id,
         None => {
             eprintln!("Cannot join world: no local user ID");
@@ -33,7 +27,7 @@ pub fn handle(
     };
 
     // End previous instance if exists (mark as interrupted)
-    if let Some(prev_instance_id) = *current_instance_id {
+    if let Some(prev_instance_id) = *ctx.current_instance_id {
         operations::update_instance_status(conn, prev_instance_id, InstanceStatus::Interrupted)?;
         println!(
             "Previous instance {} marked as interrupted",
@@ -42,8 +36,8 @@ pub fn handle(
     }
 
     // Clear state
-    instance_user_ids.clear();
-    pending_avatars.clear();
+    ctx.instance_user_ids.clear();
+    ctx.pending_avatars.clear();
 
     // Upsert world
     let world_db_id = operations::upsert_world(conn, world_id, world_name, timestamp)?;
@@ -62,7 +56,7 @@ pub fn handle(
         timestamp,
     )?;
 
-    *current_instance_id = Some(new_instance_id);
+    *ctx.current_instance_id = Some(new_instance_id);
 
     // Add local user to instance
     let local_display_name = operations::get_user_display_name(conn, local_user_id)?;
@@ -77,7 +71,8 @@ pub fn handle(
         timestamp,
     )?;
 
-    instance_user_ids.insert(local_user_id, instance_user_id);
+    ctx.instance_user_ids
+        .insert(local_user_id, instance_user_id);
 
     println!(
         "Created new instance: {} in world: {}",

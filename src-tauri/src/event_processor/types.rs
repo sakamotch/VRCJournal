@@ -63,4 +63,18 @@ pub enum ProcessedEvent {
         file_path: String,
         taken_at: String,
     },
+
+    /// World name updated
+    WorldNameUpdated {
+        instance_id: i64,
+        world_name: String,
+        updated_at: String,
+    },
+
+    /// Instance sync failed
+    InstanceSyncFailed {
+        instance_id: i64,
+        failed_at: String,
+        status: InstanceStatus,
+    },
 }

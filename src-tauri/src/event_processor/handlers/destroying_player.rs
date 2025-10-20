@@ -1,24 +1,19 @@
 use crate::db::{operations, InstanceStatus};
-use crate::event_processor::ProcessedEvent;
+use crate::event_processor::{processor::ProcessorContext, ProcessedEvent};
 use rusqlite::Connection;
-use std::collections::HashMap;
 
 pub fn handle(
     conn: &Connection,
+    ctx: &mut ProcessorContext,
     timestamp: &str,
     display_name: &str,
-    current_user_id: Option<i64>,
-    current_instance_id: &mut Option<i64>,
-    user_ids: &HashMap<String, i64>,
-    instance_user_ids: &mut HashMap<i64, i64>,
-    pending_avatars: &mut HashMap<String, (i64, String)>,
 ) -> Result<Option<ProcessedEvent>, rusqlite::Error> {
-    let instance_id = match *current_instance_id {
+    let instance_id = match *ctx.current_instance_id {
         Some(id) => id,
         None => return Ok(None),
     };
 
-    let local_user_id = match current_user_id {
+    let local_user_id = match ctx.current_user_id {
         Some(id) => id,
         None => return Ok(None),
     };
@@ -42,9 +37,9 @@ pub fn handle(
             status: InstanceStatus::Completed,
         });
 
-        *current_instance_id = None;
-        instance_user_ids.clear();
-        pending_avatars.clear();
+        *ctx.current_instance_id = None;
+        ctx.instance_user_ids.clear();
+        ctx.pending_avatars.clear();
 
         Ok(result)
     } else {
@@ -52,8 +47,8 @@ pub fn handle(
         // Find user by display name
         let placeholder_user_id = format!("unknown_{}", display_name);
 
-        if let Some(&user_id) = user_ids.get(&placeholder_user_id) {
-            if let Some(instance_user_id) = instance_user_ids.remove(&user_id) {
+        if let Some(&user_id) = ctx.user_ids.get(&placeholder_user_id) {
+            if let Some(instance_user_id) = ctx.instance_user_ids.remove(&user_id) {
                 operations::set_user_left_instance(conn, instance_user_id, timestamp)?;
                 println!("Player {} left (destroying)", display_name);
 

@@ -1,19 +1,15 @@
 use crate::db::operations;
-use crate::event_processor::ProcessedEvent;
+use crate::event_processor::{processor::ProcessorContext, ProcessedEvent};
 use rusqlite::Connection;
-use std::collections::HashMap;
 
 pub fn handle(
     conn: &Connection,
+    ctx: &mut ProcessorContext,
     timestamp: &str,
     display_name: &str,
     _vrchat_user_id: &str,
-    current_instance_id: Option<i64>,
-    user_ids: &mut HashMap<String, i64>,
-    instance_user_ids: &mut HashMap<i64, i64>,
-    pending_avatars: &mut HashMap<String, (i64, String)>,
 ) -> Result<Option<ProcessedEvent>, rusqlite::Error> {
-    let instance_id = match current_instance_id {
+    let instance_id = match ctx.current_instance_id.as_ref().copied() {
         Some(id) => id,
         None => {
             eprintln!("PlayerJoined but no active instance");
@@ -26,7 +22,7 @@ pub fn handle(
     let placeholder_user_id = format!("unknown_{}", display_name);
 
     // Check if we already have this user
-    let user_id = if let Some(&existing_user_id) = user_ids.get(&placeholder_user_id) {
+    let user_id = if let Some(&existing_user_id) = ctx.user_ids.get(&placeholder_user_id) {
         // Update display name if changed
         operations::upsert_user(conn, &placeholder_user_id, display_name, timestamp)?;
         existing_user_id
@@ -34,7 +30,8 @@ pub fn handle(
         // Create new user with placeholder ID
         let new_user_id =
             operations::upsert_user(conn, &placeholder_user_id, display_name, timestamp)?;
-        user_ids.insert(placeholder_user_id.clone(), new_user_id);
+        ctx.user_ids
+            .insert(placeholder_user_id.clone(), new_user_id);
         new_user_id
     };
 
@@ -51,10 +48,10 @@ pub fn handle(
         timestamp,
     )?;
 
-    instance_user_ids.insert(user_id, instance_user_id);
+    ctx.instance_user_ids.insert(user_id, instance_user_id);
 
     // Check if there's a pending avatar for this player
-    if let Some((avatar_id, avatar_timestamp)) = pending_avatars.remove(display_name) {
+    if let Some((avatar_id, avatar_timestamp)) = ctx.pending_avatars.remove(display_name) {
         operations::record_avatar_history(
             conn,
             instance_id,
