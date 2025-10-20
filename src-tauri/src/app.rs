@@ -45,7 +45,7 @@ fn start_log_monitor(database: db::Database, app_handle: tauri::AppHandle) {
             match monitor.fetch_new_events() {
                 Ok(events) => {
                     for event in events {
-                        if let Err(e) = app_handle.emit("log-event", &event) {
+                        if let Err(e) = app_handle.emit("vrchat-event", &event) {
                             eprintln!("Failed to emit event: {}", e);
                         }
                     }
