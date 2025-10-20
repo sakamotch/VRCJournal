@@ -13,16 +13,12 @@ pub struct Monitor {
 }
 
 impl Monitor {
-    /// 新しい Monitor を作成
-    pub fn new(database: db::Database) -> Result<Self, String> {
-        let reader = LogReader::new().map_err(|e| format!("Failed to create reader: {}", e))?;
-        let handler = EventHandler::new();
-
-        Ok(Self {
-            reader,
-            handler,
+    pub fn new(database: db::Database) -> Self {
+        Self {
+            reader: LogReader::new(),
+            handler: EventHandler::new(),
             database,
-        })
+        }
     }
 
     /// 監視サービスの初期化
@@ -30,6 +26,9 @@ impl Monitor {
     /// 前回終了時の状態を復元し、バックログイベントを処理する
     /// アプリケーション起動時に一度だけ呼ぶ
     pub fn initialize(&mut self) -> Result<usize, String> {
+        // LogReader の初期化
+        self.reader.initialize()?;
+
         // 状態復元
         self.restore_state()?;
 

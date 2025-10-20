@@ -34,13 +34,7 @@ fn setup_database(app: &App) -> Result<db::Database, Box<dyn std::error::Error>>
 fn start_log_monitor(database: db::Database, app_handle: tauri::AppHandle) {
     std::thread::spawn(move || {
         // Monitor を作成
-        let mut monitor = match Monitor::new(database) {
-            Ok(m) => m,
-            Err(e) => {
-                eprintln!("Failed to create monitor: {}", e);
-                return;
-            }
-        };
+        let mut monitor = Monitor::new(database);
 
         // 初期化（状態復元 + バックログ処理）
         match monitor.initialize() {

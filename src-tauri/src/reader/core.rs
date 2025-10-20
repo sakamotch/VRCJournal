@@ -14,15 +14,23 @@ pub struct LogReader {
 }
 
 impl LogReader {
-    /// 新しいLogReaderを作成
-    pub fn new() -> Result<Self, String> {
-        let log_dir = get_vrchat_log_path()?;
-
-        Ok(Self {
-            log_dir,
+    pub fn new() -> Self {
+        Self {
+            log_dir: PathBuf::new(),
             file_states: HashMap::new(),
             parser: LogParser::new(),
-        })
+        }
+    }
+
+    /// ログディレクトリを検証・設定
+    pub fn initialize(&mut self) -> Result<(), String> {
+        self.log_dir = get_vrchat_log_path()?;
+
+        if !self.log_dir.exists() {
+            return Err(format!("Log directory not found: {:?}", self.log_dir));
+        }
+
+        Ok(())
     }
 
     /// DBから前回の処理位置を復元
@@ -154,11 +162,5 @@ impl LogReader {
         // 新しい位置は元の位置 + 実際に読み込んだバイト数
         let final_position = start_position + bytes_read as u64;
         Ok((events, final_position))
-    }
-}
-
-impl Default for LogReader {
-    fn default() -> Self {
-        Self::new().expect("Failed to create LogReader")
     }
 }

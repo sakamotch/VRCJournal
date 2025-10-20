@@ -123,12 +123,6 @@ impl LogParser {
     }
 }
 
-impl Default for LogParser {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 /// タイムスタンプをパース (2025.10.13 09:53:16)
 /// VRChatのログはローカル時刻で記録されているため、ローカルタイムゾーンとして解釈してUTCに変換
 fn parse_timestamp(s: &str) -> Option<DateTime<Utc>> {
