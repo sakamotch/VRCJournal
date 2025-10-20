@@ -1,9 +1,9 @@
+mod handlers;
+
 use crate::db::operations;
 use crate::types::{LogEvent, ProcessedEvent};
 use rusqlite::Connection;
 use std::collections::HashMap;
-
-use super::handlers;
 
 /// Context passed to event handlers
 pub(super) struct HandlerContext<'a> {

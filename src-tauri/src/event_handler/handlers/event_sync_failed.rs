@@ -1,5 +1,5 @@
 use crate::db::operations;
-use crate::event_handler::core::HandlerContext;
+use crate::event_handler::HandlerContext;
 use crate::types::{InstanceStatus, ProcessedEvent};
 use rusqlite::Connection;
 
