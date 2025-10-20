@@ -1,8 +1,5 @@
 use super::path::{get_all_log_files, get_vrchat_log_path};
-use crate::{
-    db,
-    parser::{vrchat::VRChatLogParser, LogEvent},
-};
+use crate::{db, parser::vrchat::VRChatLogParser, types::LogEvent};
 use chrono::Utc;
 use rusqlite::Connection;
 use std::collections::HashMap;

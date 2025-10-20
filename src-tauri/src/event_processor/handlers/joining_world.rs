@@ -1,5 +1,6 @@
-use crate::db::{operations, InstanceStatus};
-use crate::event_processor::{processor::ProcessorContext, ProcessedEvent};
+use crate::db::operations;
+use crate::event_processor::processor::ProcessorContext;
+use crate::types::{InstanceStatus, ProcessedEvent};
 use rusqlite::Connection;
 
 pub fn handle(

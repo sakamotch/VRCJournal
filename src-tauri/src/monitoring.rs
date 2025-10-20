@@ -1,28 +1,9 @@
-use crate::{db, event_processor::EventProcessor, log_watcher::LogWatcher, parser::LogEvent};
+use crate::{db, event_processor::EventProcessor, log_watcher::LogWatcher, types::LogEvent};
 use std::time::Duration;
-use tauri::{App, AppHandle, Emitter, Manager};
+use tauri::{AppHandle, Emitter};
 
-/// Tauriアプリケーションのセットアップ処理
-pub fn setup_app(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
-    // データベース初期化
-    let app_data_dir = app.path().app_data_dir()?;
-    std::fs::create_dir_all(&app_data_dir)?;
-    let db_path = app_data_dir.join("vrcjournal.db");
-
-    let database = db::Database::open(db_path)?;
-    database.migrate()?;
-
-    // バックグラウンドでログ監視を開始
-    let app_handle = app.handle().clone();
-    std::thread::spawn(move || {
-        run_event_monitoring(database, app_handle);
-    });
-
-    Ok(())
-}
-
-/// イベント監視の実行
-fn run_event_monitoring(database: db::Database, app_handle: AppHandle) {
+/// ログ監視とイベント処理を統合して実行
+pub fn start(database: db::Database, app_handle: AppHandle) {
     // LogWatcherとEventProcessorを作成
     let mut watcher = match LogWatcher::new() {
         Ok(w) => w,

@@ -1,4 +1,4 @@
-use super::types::LogEvent;
+use crate::types::LogEvent;
 use chrono::{DateTime, Local, NaiveDateTime, TimeZone, Utc};
 use regex::Regex;
 

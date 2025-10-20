@@ -1,4 +1,4 @@
-use crate::db::InstanceStatus;
+use crate::types::InstanceStatus;
 use rusqlite::{Connection, OptionalExtension, Result};
 
 /// Create a new instance and return its ID

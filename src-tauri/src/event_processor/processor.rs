@@ -1,9 +1,9 @@
 use crate::db::operations;
-use crate::parser::LogEvent;
+use crate::types::{LogEvent, ProcessedEvent};
 use rusqlite::Connection;
 use std::collections::HashMap;
 
-use super::{handlers, types::ProcessedEvent};
+use super::handlers;
 
 /// Context passed to event handlers containing processor state
 pub(super) struct ProcessorContext<'a> {
