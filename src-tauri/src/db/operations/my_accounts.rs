@@ -7,12 +7,12 @@ pub fn upsert_my_account(conn: &Connection, user_id: i64, timestamp: &str) -> Re
          VALUES (?1, ?2, ?2)
          ON CONFLICT(user_id) DO UPDATE SET
            last_authenticated_at = excluded.last_authenticated_at",
-        [&user_id.to_string(), timestamp],
+        (user_id, timestamp),
     )?;
 
     let id = conn.query_row(
         "SELECT id FROM my_accounts WHERE user_id = ?1",
-        [user_id],
+        (user_id,),
         |row| row.get(0),
     )?;
 
@@ -26,7 +26,7 @@ pub fn get_latest_authenticated_account(conn: &Connection) -> Result<Option<(i64
          FROM my_accounts ma
          ORDER BY ma.last_authenticated_at DESC
          LIMIT 1",
-        [],
+        (),
         |row| Ok((row.get::<_, i64>(0)?, row.get::<_, i64>(1)?)),
     );
 

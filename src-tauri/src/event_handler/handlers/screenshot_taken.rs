@@ -9,7 +9,7 @@ pub fn handle(
     timestamp: &str,
     file_path: &str,
 ) -> Result<Option<ProcessedEvent>, rusqlite::Error> {
-    let instance_id = match ctx.current_instance_id.as_ref().copied() {
+    let instance_id = match *ctx.current_instance_id {
         Some(id) => id,
         None => {
             eprintln!("Screenshot taken but no active instance");

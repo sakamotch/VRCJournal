@@ -10,7 +10,6 @@ pub enum LogEvent {
     },
     JoiningWorld {
         timestamp: DateTime<Utc>,
-        world_name: String,
         world_id: String,
         instance_id: String,
     },

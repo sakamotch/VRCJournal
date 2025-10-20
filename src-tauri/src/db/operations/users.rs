@@ -13,12 +13,12 @@ pub fn upsert_user(
          ON CONFLICT(user_id) DO UPDATE SET
            display_name = excluded.display_name,
            last_seen_at = excluded.last_seen_at",
-        [user_id, display_name, timestamp],
+        (user_id, display_name, timestamp),
     )?;
 
     let id = conn.query_row(
         "SELECT id FROM users WHERE user_id = ?1",
-        [user_id],
+        (user_id,),
         |row| row.get(0),
     )?;
 
@@ -48,7 +48,7 @@ pub fn upsert_user_name_history(
              WHERE user_id = ?1 AND display_name = ?2
              ORDER BY first_seen_at DESC
              LIMIT 1",
-            [user_id.to_string(), display_name.to_string()],
+            (user_id, display_name),
             |row| row.get(0),
         )
         .optional()?;
@@ -57,7 +57,7 @@ pub fn upsert_user_name_history(
         // Update last_seen_at
         conn.execute(
             "UPDATE user_name_history SET last_seen_at = ?1 WHERE id = ?2",
-            [timestamp, &id.to_string()],
+            (timestamp, id),
         )?;
         Ok(id)
     } else {
@@ -65,7 +65,7 @@ pub fn upsert_user_name_history(
         conn.execute(
             "INSERT INTO user_name_history (user_id, display_name, first_seen_at, last_seen_at)
              VALUES (?1, ?2, ?3, ?3)",
-            [&user_id.to_string(), display_name, timestamp],
+            (user_id, display_name, timestamp),
         )?;
         Ok(conn.last_insert_rowid())
     }

@@ -20,7 +20,7 @@ pub fn upsert_log_file(
 
     let id = conn.query_row(
         "SELECT id FROM log_files WHERE file_path = ?1",
-        [file_path],
+        (file_path,),
         |row| row.get(0),
     )?;
 
@@ -42,7 +42,7 @@ pub fn update_log_file_position(conn: &Connection, file_path: &str, position: u6
 pub fn get_log_file_position(conn: &Connection, file_path: &str) -> Result<Option<u64>> {
     let result = conn.query_row(
         "SELECT last_read_position FROM log_files WHERE file_path = ?1",
-        [file_path],
+        (file_path,),
         |row| {
             let position: i64 = row.get(0)?;
             Ok(position as u64)

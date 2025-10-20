@@ -72,7 +72,6 @@ impl LogParser {
                 timestamp: parse_timestamp(&caps[1])?,
                 world_id: caps[2].to_string(),
                 instance_id: caps[3].to_string(),
-                world_name: String::new(),
             });
         }
 

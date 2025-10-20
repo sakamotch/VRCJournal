@@ -7,21 +7,23 @@ use super::handlers;
 
 /// Context passed to event handlers
 pub(super) struct HandlerContext<'a> {
-    pub current_my_account_id: Option<i64>,
-    pub current_user_id: Option<i64>,
+    pub current_my_account_id: &'a mut Option<i64>,
+    pub current_user_id: &'a mut Option<i64>,
     pub current_instance_id: &'a mut Option<i64>,
     pub user_ids: &'a mut HashMap<String, i64>,
     pub instance_user_ids: &'a mut HashMap<i64, i64>,
+    pub display_name_to_user_id: &'a mut HashMap<String, i64>,
     pub pending_avatars: &'a mut HashMap<String, (i64, String)>,
 }
 
 /// Event handler for processing log events
 pub struct EventHandler {
-    current_my_account_id: Option<i64>,   // Current local account
-    current_user_id: Option<i64>,         // Current user (corresponds to my_account)
-    current_instance_id: Option<i64>,     // Current active instance
-    user_ids: HashMap<String, i64>,       // vrchat_user_id -> users.id mapping
-    instance_user_ids: HashMap<i64, i64>, // user_id -> instance_users.id mapping
+    current_my_account_id: Option<i64>,              // Current local account
+    current_user_id: Option<i64>,                    // Current user (corresponds to my_account)
+    current_instance_id: Option<i64>,                // Current active instance
+    user_ids: HashMap<String, i64>,                  // vrchat_user_id -> users.id mapping
+    instance_user_ids: HashMap<i64, i64>,            // user_id -> instance_users.id mapping
+    display_name_to_user_id: HashMap<String, i64>,   // display_name -> users.id mapping
     pending_avatars: HashMap<String, (i64, String)>, // display_name -> (avatar_id, timestamp) for avatars seen before PlayerJoined
 }
 
@@ -33,6 +35,7 @@ impl EventHandler {
             current_instance_id: None,
             user_ids: HashMap::new(),
             instance_user_ids: HashMap::new(),
+            display_name_to_user_id: HashMap::new(),
             pending_avatars: HashMap::new(),
         }
     }
@@ -60,6 +63,10 @@ impl EventHandler {
                 for (vrchat_user_id, user_id, instance_user_id) in users {
                     self.user_ids.insert(vrchat_user_id, user_id);
                     self.instance_user_ids.insert(user_id, instance_user_id);
+
+                    // Restore display_name mapping
+                    let display_name = operations::get_user_display_name(conn, user_id)?;
+                    self.display_name_to_user_id.insert(display_name, user_id);
                 }
 
                 println!("Restored {} users in current instance", self.user_ids.len());
@@ -78,11 +85,12 @@ impl EventHandler {
         event: LogEvent,
     ) -> Result<Option<ProcessedEvent>, rusqlite::Error> {
         let mut ctx = HandlerContext {
-            current_my_account_id: self.current_my_account_id,
-            current_user_id: self.current_user_id,
+            current_my_account_id: &mut self.current_my_account_id,
+            current_user_id: &mut self.current_user_id,
             current_instance_id: &mut self.current_instance_id,
             user_ids: &mut self.user_ids,
             instance_user_ids: &mut self.instance_user_ids,
+            display_name_to_user_id: &mut self.display_name_to_user_id,
             pending_avatars: &mut self.pending_avatars,
         };
 
@@ -91,29 +99,22 @@ impl EventHandler {
                 timestamp,
                 user_id,
                 display_name,
-            } => {
-                let result = handlers::user_authenticated::handle(
-                    conn,
-                    &mut ctx,
-                    &timestamp.to_rfc3339(),
-                    &user_id,
-                    &display_name,
-                )?;
-                self.current_my_account_id = ctx.current_my_account_id;
-                self.current_user_id = ctx.current_user_id;
-                Ok(result)
-            }
+            } => handlers::user_authenticated::handle(
+                conn,
+                &mut ctx,
+                &timestamp.to_rfc3339(),
+                &user_id,
+                &display_name,
+            ),
             LogEvent::JoiningWorld {
                 timestamp,
                 world_id,
-                world_name,
                 instance_id,
             } => handlers::joining_world::handle(
                 conn,
                 &mut ctx,
                 &timestamp.to_rfc3339(),
                 &world_id,
-                &world_name,
                 &instance_id,
             ),
             LogEvent::EnteringRoom {

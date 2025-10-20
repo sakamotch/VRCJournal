@@ -15,7 +15,6 @@ pub enum ProcessedEvent {
         instance_id: i64,
         my_account_id: i64,
         world_id: String,
-        world_name: String,
         vrchat_instance_id: String,
         started_at: String,
         status: InstanceStatus,
@@ -33,6 +32,8 @@ pub enum ProcessedEvent {
         user_id: i64,
         display_name: String,
         joined_at: String,
+        initial_avatar_id: Option<i64>,
+        initial_avatar_name: Option<String>,
     },
 
     UserLeft {

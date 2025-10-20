@@ -8,7 +8,7 @@ pub fn handle(
     ctx: &HandlerContext,
     timestamp: &str,
 ) -> Result<Option<ProcessedEvent>, rusqlite::Error> {
-    let instance_id = match ctx.current_instance_id.as_ref().copied() {
+    let instance_id = match *ctx.current_instance_id {
         Some(id) => id,
         None => {
             eprintln!("EventSyncFailed without active instance");

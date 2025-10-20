@@ -20,8 +20,8 @@ pub fn handle(
     let my_account_id = operations::upsert_my_account(conn, user_id, timestamp)?;
 
     // Update current state
-    ctx.current_my_account_id = Some(my_account_id);
-    ctx.current_user_id = Some(user_id);
+    *ctx.current_my_account_id = Some(my_account_id);
+    *ctx.current_user_id = Some(user_id);
     ctx.user_ids.insert(vrchat_user_id.to_string(), user_id);
 
     println!(

@@ -1,25 +1,18 @@
 use crate::types::InstanceStatus;
 use rusqlite::{Connection, OptionalExtension, Result};
 
-/// Create new instance
+/// Create new instance (world_name_at_join_id will be set later via update_instance_world_name_history)
 pub fn create_instance(
     conn: &Connection,
     my_account_id: i64,
     world_id: i64,
-    world_name_at_join_id: Option<i64>,
     instance_id: &str,
     started_at: &str,
 ) -> Result<i64> {
     conn.execute(
-        "INSERT INTO instances (my_account_id, world_id, world_name_at_join_id, instance_id, started_at)
-         VALUES (?1, ?2, ?3, ?4, ?5)",
-        (
-            my_account_id,
-            world_id,
-            world_name_at_join_id,
-            instance_id,
-            started_at,
-        ),
+        "INSERT INTO instances (my_account_id, world_id, instance_id, started_at)
+         VALUES (?1, ?2, ?3, ?4)",
+        (my_account_id, world_id, instance_id, started_at),
     )?;
     Ok(conn.last_insert_rowid())
 }
@@ -56,7 +49,7 @@ pub fn get_latest_active_instance(conn: &Connection, my_account_id: i64) -> Resu
          WHERE my_account_id = ?1 AND ended_at IS NULL
          ORDER BY started_at DESC
          LIMIT 1",
-        [my_account_id],
+        (my_account_id,),
         |row| row.get(0),
     )
     .optional()
@@ -110,9 +103,22 @@ pub fn set_all_users_left_instance(
 pub fn get_instance_world_id(conn: &Connection, instance_id: i64) -> Result<i64> {
     conn.query_row(
         "SELECT world_id FROM instances WHERE id = ?1",
-        [instance_id],
+        (instance_id,),
         |row| row.get(0),
     )
+}
+
+/// Update instance world_name_at_join_id
+pub fn update_instance_world_name_history(
+    conn: &Connection,
+    instance_id: i64,
+    world_name_history_id: i64,
+) -> Result<()> {
+    conn.execute(
+        "UPDATE instances SET world_name_at_join_id = ?1 WHERE id = ?2",
+        (world_name_history_id, instance_id),
+    )?;
+    Ok(())
 }
 
 /// Get active users in instance
@@ -127,7 +133,7 @@ pub fn get_instance_active_users(
          WHERE iu.instance_id = ?1 AND iu.left_at IS NULL",
     )?;
 
-    let rows = stmt.query_map([instance_id], |row| {
+    let rows = stmt.query_map((instance_id,), |row| {
         Ok((
             row.get::<_, String>(0)?, // vrchat user_id
             row.get::<_, i64>(1)?,    // users.id

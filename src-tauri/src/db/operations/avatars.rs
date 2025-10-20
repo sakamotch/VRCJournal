@@ -11,7 +11,7 @@ pub fn upsert_avatar(
     let existing: Option<i64> = conn
         .query_row(
             "SELECT id FROM avatars WHERE avatar_name = ?1",
-            [avatar_name],
+            (avatar_name,),
             |row| row.get(0),
         )
         .optional()?;
@@ -39,6 +39,15 @@ pub fn upsert_avatar(
         )?;
         Ok(conn.last_insert_rowid())
     }
+}
+
+/// Get avatar name by ID
+pub fn get_avatar_name(conn: &Connection, avatar_id: i64) -> Result<String> {
+    conn.query_row(
+        "SELECT avatar_name FROM avatars WHERE id = ?1",
+        (avatar_id,),
+        |row| row.get(0),
+    )
 }
 
 /// Record avatar usage

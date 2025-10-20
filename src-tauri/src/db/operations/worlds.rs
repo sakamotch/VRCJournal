@@ -1,24 +1,18 @@
 use rusqlite::{Connection, OptionalExtension, Result};
 
 /// Upsert world and return world ID
-pub fn upsert_world(
-    conn: &Connection,
-    world_id: &str,
-    world_name: &str,
-    timestamp: &str,
-) -> Result<i64> {
+pub fn upsert_world(conn: &Connection, world_id: &str, timestamp: &str) -> Result<i64> {
     conn.execute(
         "INSERT INTO worlds (world_id, world_name, first_seen_at, last_seen_at)
-         VALUES (?1, ?2, ?3, ?3)
+         VALUES (?1, '', ?2, ?2)
          ON CONFLICT(world_id) DO UPDATE SET
-           world_name = excluded.world_name,
            last_seen_at = excluded.last_seen_at",
-        [world_id, world_name, timestamp],
+        (world_id, timestamp),
     )?;
 
     let id = conn.query_row(
         "SELECT id FROM worlds WHERE world_id = ?1",
-        [world_id],
+        (world_id,),
         |row| row.get(0),
     )?;
 
@@ -48,7 +42,7 @@ pub fn upsert_world_name_history(
              WHERE world_id = ?1 AND world_name = ?2
              ORDER BY first_seen_at DESC
              LIMIT 1",
-            [world_id.to_string(), world_name.to_string()],
+            (world_id, world_name),
             |row| row.get(0),
         )
         .optional()?;
@@ -57,7 +51,7 @@ pub fn upsert_world_name_history(
         // Update last_seen_at
         conn.execute(
             "UPDATE world_name_history SET last_seen_at = ?1 WHERE id = ?2",
-            [timestamp, &id.to_string()],
+            (timestamp, id),
         )?;
         Ok(id)
     } else {
@@ -65,7 +59,7 @@ pub fn upsert_world_name_history(
         conn.execute(
             "INSERT INTO world_name_history (world_id, world_name, first_seen_at, last_seen_at)
              VALUES (?1, ?2, ?3, ?3)",
-            [&world_id.to_string(), world_name, timestamp],
+            (world_id, world_name, timestamp),
         )?;
         Ok(conn.last_insert_rowid())
     }

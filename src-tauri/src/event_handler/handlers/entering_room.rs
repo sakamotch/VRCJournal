@@ -10,7 +10,7 @@ pub fn handle(
     world_name: &str,
 ) -> Result<Option<ProcessedEvent>, rusqlite::Error> {
     // Update world name for current instance
-    let instance_id = match ctx.current_instance_id.as_ref().copied() {
+    let instance_id = match *ctx.current_instance_id {
         Some(id) => id,
         None => {
             eprintln!("EnteringRoom but no active instance");
@@ -23,6 +23,13 @@ pub fn handle(
 
     // Update world name in worlds table
     operations::update_world_name(conn, world_id, world_name)?;
+
+    // Upsert world name history
+    let world_name_history_id =
+        operations::upsert_world_name_history(conn, world_id, world_name, timestamp)?;
+
+    // Link world_name_history to the instance
+    operations::update_instance_world_name_history(conn, instance_id, world_name_history_id)?;
 
     println!(
         "Updated world name for instance {}: {}",
