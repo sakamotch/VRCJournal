@@ -1,4 +1,9 @@
-use crate::{db, event_handler::EventHandler, log_reader::LogReader, types::{LogEvent, ProcessedEvent}};
+use crate::{
+    db,
+    event_handler::EventHandler,
+    log_reader::LogReader,
+    types::{LogEvent, ProcessedEvent},
+};
 
 /// VRChat log monitoring service
 pub struct Monitor {
@@ -52,10 +57,8 @@ impl Monitor {
             return Ok(());
         }
 
-        self.process_events(events);
-
-        let conn = self.database.connection();
-        self.reader.save_file_states(conn);
+        let processed = self.process_events(events)?;
+        println!("Processed {} backlog events", processed.len());
 
         Ok(())
     }
@@ -71,31 +74,34 @@ impl Monitor {
             return Ok(Vec::new());
         }
 
-        let processed = self.process_events(events);
-
-        let conn = self.database.connection();
-        self.reader.save_file_states(conn);
-
-        Ok(processed)
+        self.process_events(events)
     }
 
-    /// Process events and return processed events
-    fn process_events(&mut self, events: Vec<LogEvent>) -> Vec<ProcessedEvent> {
-        let mut processed = Vec::new();
-        let conn = self.database.connection();
+    /// Process events within a single transaction
+    fn process_events(&mut self, events: Vec<LogEvent>) -> Result<Vec<ProcessedEvent>, String> {
+        let tx = self
+            .database
+            .transaction()
+            .map_err(|e| format!("Failed to begin transaction: {}", e))?;
 
+        let mut processed = Vec::new();
         for event in events {
-            match self.handler.process_event(conn, event) {
+            match self.handler.process_event(&tx, event) {
                 Ok(Some(processed_event)) => {
                     processed.push(processed_event);
                 }
                 Ok(None) => {}
                 Err(e) => {
-                    eprintln!("Failed to process event: {}", e);
+                    return Err(format!("Failed to process event: {}", e));
                 }
             }
         }
 
-        processed
+        self.reader.save_file_states(&tx);
+
+        tx.commit()
+            .map_err(|e| format!("Failed to commit transaction: {}", e))?;
+
+        Ok(processed)
     }
 }

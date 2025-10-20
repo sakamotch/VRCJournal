@@ -1,4 +1,4 @@
-use rusqlite::{Connection, Result};
+use rusqlite::{Connection, Result, Transaction};
 use std::path::PathBuf;
 
 pub struct Database {
@@ -18,6 +18,11 @@ impl Database {
     /// Get database connection reference
     pub fn connection(&self) -> &Connection {
         &self.conn
+    }
+
+    /// Begin a new transaction
+    pub fn transaction(&mut self) -> Result<Transaction<'_>> {
+        self.conn.transaction()
     }
 
     /// Run database migrations
