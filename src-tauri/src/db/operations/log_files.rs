@@ -1,7 +1,7 @@
 use chrono::{DateTime, Utc};
 use rusqlite::{Connection, Result};
 
-/// ログファイルの情報を登録または更新
+/// Register or update log file information
 pub fn upsert_log_file(
     conn: &Connection,
     file_path: &str,
@@ -27,7 +27,7 @@ pub fn upsert_log_file(
     Ok(id)
 }
 
-/// ログファイルの処理位置を更新
+/// Update log file read position
 pub fn update_log_file_position(conn: &Connection, file_path: &str, position: u64) -> Result<()> {
     conn.execute(
         "UPDATE log_files
@@ -38,8 +38,7 @@ pub fn update_log_file_position(conn: &Connection, file_path: &str, position: u6
     Ok(())
 }
 
-/// 特定のログファイルの読み込み位置を取得
-/// 戻り値: Some(position) または None（DBに未登録）
+/// Get log file read position (returns None if not registered)
 pub fn get_log_file_position(conn: &Connection, file_path: &str) -> Result<Option<u64>> {
     let result = conn.query_row(
         "SELECT last_read_position FROM log_files WHERE file_path = ?1",

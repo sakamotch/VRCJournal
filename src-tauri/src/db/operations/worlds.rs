@@ -1,7 +1,6 @@
 use rusqlite::{Connection, OptionalExtension, Result};
 
-/// Upsert a world and return the world ID
-/// Updates last_seen_at if the world already exists
+/// Upsert world and return world ID
 pub fn upsert_world(
     conn: &Connection,
     world_id: &str,
@@ -35,7 +34,7 @@ pub fn update_world_name(conn: &Connection, world_id: i64, world_name: &str) -> 
     Ok(())
 }
 
-/// Upsert world name history and return the history ID
+/// Upsert world name history
 pub fn upsert_world_name_history(
     conn: &Connection,
     world_id: i64,

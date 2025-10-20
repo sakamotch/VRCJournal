@@ -21,7 +21,7 @@ impl LogReader {
         }
     }
 
-    /// ログディレクトリを検証・設定
+    /// Validate and set log directory
     pub fn initialize(&mut self) -> Result<(), String> {
         self.log_dir = Self::get_vrchat_log_path()?;
 
@@ -32,10 +32,7 @@ impl LogReader {
         Ok(())
     }
 
-    /// DBから前回の処理位置を復元
-    ///
-    /// ファイルシステムに存在する全ファイルについて、DBから読み込み位置を取得
-    /// DBに記録されていないファイルは位置0から開始
+    /// Restore file read positions from database
     pub fn restore_file_positions(&mut self, conn: &Connection) -> Result<(), String> {
         let log_files = self.get_all_log_files()?;
 
@@ -58,34 +55,30 @@ impl LogReader {
         Ok(())
     }
 
-    /// バックログイベント読み込み：前回位置からログを読み込んでイベント一覧を返す
+    /// Read events accumulated since last shutdown
     pub fn read_backlog_events(&mut self) -> Result<Vec<LogEvent>, String> {
         self.read_all_logs()
     }
 
-    /// 新しいイベントをポーリング：ファイルサイズをチェックして変更があれば読み込む
+    /// Poll for new events by checking file size changes
     pub fn poll_new_events(&mut self) -> Result<Vec<LogEvent>, String> {
         let log_files = self.get_all_log_files()?;
         let mut all_events = Vec::new();
 
         for file_path in log_files {
-            // ファイルサイズを取得
             let metadata = match fs::metadata(&file_path) {
                 Ok(m) => m,
                 Err(_) => continue,
             };
             let current_size = metadata.len();
 
-            // 現在の読み込み位置を取得
             let position = self.file_states.get(&file_path).copied().unwrap_or(0);
 
-            // 新しいデータがあるかチェック
             if current_size > position {
                 if position == 0 {
                     println!("New log file detected: {:?}", file_path);
                 }
 
-                // ファイルを読み込む
                 let (events, final_position) =
                     self.read_file_from_position(&file_path, position)?;
                 self.file_states.insert(file_path.clone(), final_position);
@@ -96,7 +89,7 @@ impl LogReader {
         Ok(all_events)
     }
 
-    /// ファイル状態をDBに保存
+    /// Save file states to database
     pub fn save_file_states(&self, conn: &Connection) {
         for (path, position) in self.file_states.iter() {
             let path_str = path.to_string_lossy().to_string();
@@ -112,7 +105,6 @@ impl LogReader {
         }
     }
 
-    /// 全てのログファイルを初期読み込み（file_statesに記録された位置から）
     fn read_all_logs(&mut self) -> Result<Vec<LogEvent>, String> {
         let log_files = self.get_all_log_files()?;
         let mut all_events = Vec::new();
@@ -129,7 +121,6 @@ impl LogReader {
         Ok(all_events)
     }
 
-    /// 指定したファイルを指定位置から読み込み
     fn read_file_from_position(
         &self,
         file_path: &PathBuf,
@@ -143,13 +134,11 @@ impl LogReader {
 
         let mut events = Vec::new();
 
-        // バイト列を読み込んで、UTF-8エラーを無視しながら行ごとに処理
         let mut buffer = Vec::new();
         let bytes_read = file
             .read_to_end(&mut buffer)
             .map_err(|e| format!("Failed to read file: {}", e))?;
 
-        // 不正なUTF-8シーケンスを置換して文字列に変換
         let content = String::from_utf8_lossy(&buffer);
 
         for line in content.lines() {
@@ -158,13 +147,11 @@ impl LogReader {
             }
         }
 
-        // 新しい位置は元の位置 + 実際に読み込んだバイト数
         let final_position = start_position + bytes_read as u64;
         Ok((events, final_position))
     }
 
-    /// VRChatログディレクトリのパスを取得し、存在を確認
-    /// Windows: %USERPROFILE%\AppData\LocalLow\VRChat\VRChat\
+    /// Get VRChat log directory path (Windows only)
     fn get_vrchat_log_path() -> Result<PathBuf, String> {
         #[cfg(target_os = "windows")]
         {
@@ -192,8 +179,7 @@ impl LogReader {
         }
     }
 
-    /// 全てのログファイルを取得
-    /// output_log_*.txt の全てを最終更新日時順（古い順）で返す
+    /// Get all log files sorted by modification time (oldest first)
     fn get_all_log_files(&self) -> Result<Vec<PathBuf>, String> {
         let mut log_files: Vec<PathBuf> = std::fs::read_dir(&self.log_dir)
             .map_err(|e| format!("Failed to read log directory: {}", e))?
@@ -211,7 +197,6 @@ impl LogReader {
             return Err("No VRChat log files found".to_string());
         }
 
-        // 最終更新日時でソート（古い順）
         log_files.sort_by_key(|path| std::fs::metadata(path).and_then(|m| m.modified()).ok());
 
         Ok(log_files)

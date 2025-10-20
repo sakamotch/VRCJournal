@@ -1,18 +1,14 @@
 /// Instance status
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum InstanceStatus {
-    /// Instance is active (user is in the world)
     Active,
-    /// Instance completed normally (user left intentionally)
     Completed,
-    /// Instance was interrupted (VRChat crashed or unexpected termination)
     Interrupted,
-    /// Instance encountered sync failure (network synchronization error)
     SyncFailed,
 }
 
 impl InstanceStatus {
-    /// Convert to database string representation
+    /// Convert to database string
     pub fn as_str(&self) -> &'static str {
         match self {
             Self::Active => "active",
@@ -22,7 +18,7 @@ impl InstanceStatus {
         }
     }
 
-    /// Parse from database string representation
+    /// Parse from database string
     pub fn from_str(s: &str) -> Result<Self, String> {
         match s {
             "active" => Ok(Self::Active),

@@ -1,7 +1,6 @@
 use rusqlite::{Connection, OptionalExtension, Result};
 
-/// Upsert a user and return the user ID
-/// Updates last_seen_at if the user already exists
+/// Upsert user and return user ID
 pub fn upsert_user(
     conn: &Connection,
     user_id: &str,
@@ -26,7 +25,7 @@ pub fn upsert_user(
     Ok(id)
 }
 
-/// Get user display name by internal ID
+/// Get user display name
 pub fn get_user_display_name(conn: &Connection, id: i64) -> Result<String> {
     conn.query_row(
         "SELECT display_name FROM users WHERE id = ?1",
@@ -35,7 +34,7 @@ pub fn get_user_display_name(conn: &Connection, id: i64) -> Result<String> {
     )
 }
 
-/// Upsert user name history and return the history ID
+/// Upsert user name history
 pub fn upsert_user_name_history(
     conn: &Connection,
     user_id: i64,

@@ -5,7 +5,7 @@ use std::collections::HashMap;
 
 use super::handlers;
 
-/// Context passed to event handlers containing handler state
+/// Context passed to event handlers
 pub(super) struct HandlerContext<'a> {
     pub current_my_account_id: Option<i64>,
     pub current_user_id: Option<i64>,
@@ -15,7 +15,7 @@ pub(super) struct HandlerContext<'a> {
     pub pending_avatars: &'a mut HashMap<String, (i64, String)>,
 }
 
-/// Event handler: Processes LogEvents and stores them in the database
+/// Event handler for processing log events
 pub struct EventHandler {
     current_my_account_id: Option<i64>,   // Current local account
     current_user_id: Option<i64>,         // Current user (corresponds to my_account)
@@ -37,7 +37,7 @@ impl EventHandler {
         }
     }
 
-    /// Restore state from database to resume incremental log processing.
+    /// Restore state from database
     pub fn restore_previous_state(&mut self, conn: &Connection) -> Result<(), rusqlite::Error> {
         // Restore the most recently authenticated local account
         if let Some((my_account_id, user_id)) = operations::get_latest_authenticated_account(conn)?

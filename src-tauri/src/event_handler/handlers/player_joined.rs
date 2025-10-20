@@ -8,7 +8,7 @@ pub fn handle(
     ctx: &mut HandlerContext,
     timestamp: &str,
     display_name: &str,
-    _vrchat_user_id: &str,
+    vrchat_user_id: &str,
 ) -> Result<Option<ProcessedEvent>, rusqlite::Error> {
     let instance_id = match ctx.current_instance_id.as_ref().copied() {
         Some(id) => id,
@@ -18,21 +18,12 @@ pub fn handle(
         }
     };
 
-    // For remote players, we don't have their VRChat user_id, so we use display_name as identifier
-    // Create a placeholder user_id (we'll use "unknown_<display_name>")
-    let placeholder_user_id = format!("unknown_{}", display_name);
-
-    // Check if we already have this user
-    let user_id = if let Some(&existing_user_id) = ctx.user_ids.get(&placeholder_user_id) {
-        // Update display name if changed
-        operations::upsert_user(conn, &placeholder_user_id, display_name, timestamp)?;
+    let user_id = if let Some(&existing_user_id) = ctx.user_ids.get(vrchat_user_id) {
+        operations::upsert_user(conn, vrchat_user_id, display_name, timestamp)?;
         existing_user_id
     } else {
-        // Create new user with placeholder ID
-        let new_user_id =
-            operations::upsert_user(conn, &placeholder_user_id, display_name, timestamp)?;
-        ctx.user_ids
-            .insert(placeholder_user_id.clone(), new_user_id);
+        let new_user_id = operations::upsert_user(conn, vrchat_user_id, display_name, timestamp)?;
+        ctx.user_ids.insert(vrchat_user_id.to_string(), new_user_id);
         new_user_id
     };
 

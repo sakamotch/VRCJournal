@@ -1,6 +1,6 @@
 use rusqlite::{Connection, Result};
 
-/// Upsert a local account and return the my_account ID
+/// Upsert local account
 pub fn upsert_my_account(conn: &Connection, user_id: i64, timestamp: &str) -> Result<i64> {
     conn.execute(
         "INSERT INTO my_accounts (user_id, first_authenticated_at, last_authenticated_at)
@@ -19,9 +19,7 @@ pub fn upsert_my_account(conn: &Connection, user_id: i64, timestamp: &str) -> Re
     Ok(id)
 }
 
-/// Get the most recently authenticated local account
-///
-/// Returns (my_account_id, user_id)
+/// Get latest authenticated account
 pub fn get_latest_authenticated_account(conn: &Connection) -> Result<Option<(i64, i64)>> {
     let result = conn.query_row(
         "SELECT ma.id, ma.user_id

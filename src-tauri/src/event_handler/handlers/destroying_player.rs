@@ -44,13 +44,12 @@ pub fn handle(
 
         Ok(result)
     } else {
-        // Remote player is leaving
-        // Find user by display name
-        let placeholder_user_id = format!("unknown_{}", display_name);
-
-        if let Some(&user_id) = ctx.user_ids.get(&placeholder_user_id) {
-            if let Some(instance_user_id) = ctx.instance_user_ids.remove(&user_id) {
+        // Remote player is leaving - find by display name
+        for (&user_id, &instance_user_id) in ctx.instance_user_ids.iter() {
+            let user_display_name = operations::get_user_display_name(conn, user_id)?;
+            if user_display_name == display_name {
                 operations::set_user_left_instance(conn, instance_user_id, timestamp)?;
+                ctx.instance_user_ids.remove(&user_id);
                 println!("Player {} left (destroying)", display_name);
 
                 return Ok(Some(ProcessedEvent::UserLeft {
@@ -61,6 +60,7 @@ pub fn handle(
             }
         }
 
+        eprintln!("Player {} left but not found in instance", display_name);
         Ok(None)
     }
 }

@@ -6,22 +6,21 @@ pub struct Database {
 }
 
 impl Database {
-    /// データベースを開く（存在しない場合は作成）
+    /// Open database and enable foreign key constraints
     pub fn open(db_path: PathBuf) -> Result<Self> {
         let conn = Connection::open(db_path)?;
 
-        // Foreign key制約を有効化
         conn.execute_batch("PRAGMA foreign_keys = ON;")?;
 
         Ok(Database { conn })
     }
 
-    /// データベース接続の参照を取得
+    /// Get database connection reference
     pub fn connection(&self) -> &Connection {
         &self.conn
     }
 
-    /// マイグレーションを実行
+    /// Run database migrations
     pub fn migrate(&self) -> Result<()> {
         super::migrations::run_migrations(&self.conn)
     }

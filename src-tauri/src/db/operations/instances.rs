@@ -1,7 +1,7 @@
 use crate::types::InstanceStatus;
 use rusqlite::{Connection, OptionalExtension, Result};
 
-/// Create a new instance and return its ID
+/// Create new instance
 pub fn create_instance(
     conn: &Connection,
     my_account_id: i64,
@@ -24,8 +24,7 @@ pub fn create_instance(
     Ok(conn.last_insert_rowid())
 }
 
-/// End an instance by setting ended_at and status
-/// Only updates status to 'completed' if current status is 'active'
+/// End instance (sets status to 'completed' if currently 'active')
 pub fn end_instance(conn: &Connection, instance_id: i64, ended_at: &str) -> Result<()> {
     conn.execute(
         "UPDATE instances
@@ -50,7 +49,7 @@ pub fn update_instance_status(
     Ok(())
 }
 
-/// Get the latest active instance for a my_account
+/// Get latest active instance
 pub fn get_latest_active_instance(conn: &Connection, my_account_id: i64) -> Result<Option<i64>> {
     conn.query_row(
         "SELECT id FROM instances
@@ -63,7 +62,7 @@ pub fn get_latest_active_instance(conn: &Connection, my_account_id: i64) -> Resu
     .optional()
 }
 
-/// Add a user to an instance and return the instance_user ID
+/// Add user to instance
 pub fn add_user_to_instance(
     conn: &Connection,
     instance_id: i64,
@@ -79,7 +78,7 @@ pub fn add_user_to_instance(
     Ok(conn.last_insert_rowid())
 }
 
-/// Mark a user as having left an instance
+/// Mark user as left
 pub fn set_user_left_instance(
     conn: &Connection,
     instance_user_id: i64,
@@ -92,7 +91,7 @@ pub fn set_user_left_instance(
     Ok(())
 }
 
-/// Mark all remaining users in an instance as left
+/// Mark all users as left
 pub fn set_all_users_left_instance(
     conn: &Connection,
     instance_id: i64,
@@ -107,7 +106,7 @@ pub fn set_all_users_left_instance(
     Ok(())
 }
 
-/// Get world_id from an instance
+/// Get instance world ID
 pub fn get_instance_world_id(conn: &Connection, instance_id: i64) -> Result<i64> {
     conn.query_row(
         "SELECT world_id FROM instances WHERE id = ?1",
@@ -116,9 +115,7 @@ pub fn get_instance_world_id(conn: &Connection, instance_id: i64) -> Result<i64>
     )
 }
 
-/// Get all active users in an instance
-///
-/// Returns Vec<(vrchat_user_id, user_id, instance_user_id)>
+/// Get active users in instance
 pub fn get_instance_active_users(
     conn: &Connection,
     instance_id: i64,

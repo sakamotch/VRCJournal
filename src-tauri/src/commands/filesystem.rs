@@ -1,4 +1,4 @@
-/// スクリーンショットのディレクトリをエクスプローラーで開く
+/// Open screenshot directory in file explorer
 #[tauri::command]
 pub async fn open_screenshot_directory(file_path: String) -> Result<(), String> {
     use std::path::Path;

@@ -1,6 +1,6 @@
 use rusqlite::{Connection, OptionalExtension, Result};
 
-/// Upsert an avatar by name (avatar_id may be null) and return the avatar ID
+/// Upsert avatar by name
 pub fn upsert_avatar(
     conn: &Connection,
     avatar_name: &str,
@@ -41,7 +41,7 @@ pub fn upsert_avatar(
     }
 }
 
-/// Record avatar usage in avatar_history
+/// Record avatar usage
 pub fn record_avatar_history(
     conn: &Connection,
     instance_id: i64,

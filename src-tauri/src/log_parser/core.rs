@@ -72,7 +72,7 @@ impl LogParser {
                 timestamp: parse_timestamp(&caps[1])?,
                 world_id: caps[2].to_string(),
                 instance_id: caps[3].to_string(),
-                world_name: String::new(), // 次の "EnteringRoom" イベントで更新
+                world_name: String::new(),
             });
         }
 
@@ -123,8 +123,7 @@ impl LogParser {
     }
 }
 
-/// タイムスタンプをパース (2025.10.13 09:53:16)
-/// VRChatのログはローカル時刻で記録されているため、ローカルタイムゾーンとして解釈してUTCに変換
+/// Parse VRChat timestamp and convert to UTC
 fn parse_timestamp(s: &str) -> Option<DateTime<Utc>> {
     NaiveDateTime::parse_from_str(s, "%Y.%m.%d %H:%M:%S")
         .ok()
