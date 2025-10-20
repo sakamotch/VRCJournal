@@ -41,7 +41,8 @@ pub fn handle(
             Some(&uid) => uid,
             None => {
                 // Player not yet joined - store as pending
-                pending_avatars.insert(display_name.to_string(), (avatar_id, timestamp.to_string()));
+                pending_avatars
+                    .insert(display_name.to_string(), (avatar_id, timestamp.to_string()));
                 println!(
                     "Avatar changed before join, storing as pending: {} -> {}",
                     display_name, avatar_name

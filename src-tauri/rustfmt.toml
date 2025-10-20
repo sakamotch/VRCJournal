@@ -1,0 +1,6 @@
+# Rustfmt configuration
+
+edition = "2021"
+
+# Import organization (stable features only)
+reorder_imports = true

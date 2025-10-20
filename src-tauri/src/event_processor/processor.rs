@@ -72,10 +72,10 @@ pub enum ProcessedEvent {
 
 /// Event processor: Processes LogEvents and stores them in the database
 pub struct EventProcessor {
-    current_my_account_id: Option<i64>,  // Current local account
-    current_user_id: Option<i64>,        // Current user (corresponds to my_account)
-    current_instance_id: Option<i64>,    // Current active instance
-    user_ids: HashMap<String, i64>,      // vrchat_user_id -> users.id mapping
+    current_my_account_id: Option<i64>,   // Current local account
+    current_user_id: Option<i64>,         // Current user (corresponds to my_account)
+    current_instance_id: Option<i64>,     // Current active instance
+    user_ids: HashMap<String, i64>,       // vrchat_user_id -> users.id mapping
     instance_user_ids: HashMap<i64, i64>, // user_id -> instance_users.id mapping
     pending_avatars: HashMap<String, (i64, String)>, // display_name -> (avatar_id, timestamp) for avatars seen before PlayerJoined
 }
@@ -111,90 +111,100 @@ impl EventProcessor {
         event: LogEvent,
     ) -> Result<Option<ProcessedEvent>, rusqlite::Error> {
         match event {
-            LogEvent::UserAuthenticated { timestamp, user_id, display_name } => {
-                handlers::user_authenticated::handle(
-                    conn,
-                    &timestamp.to_rfc3339(),
-                    &user_id,
-                    &display_name,
-                    &mut self.current_my_account_id,
-                    &mut self.current_user_id,
-                    &mut self.user_ids,
-                )
-            }
-            LogEvent::JoiningWorld { timestamp, world_id, world_name, instance_id } => {
-                handlers::joining_world::handle(
-                    conn,
-                    &timestamp.to_rfc3339(),
-                    &world_id,
-                    &world_name,
-                    &instance_id,
-                    self.current_my_account_id,
-                    self.current_user_id,
-                    &mut self.current_instance_id,
-                    &mut self.instance_user_ids,
-                    &mut self.pending_avatars,
-                )
-            }
-            LogEvent::EnteringRoom { timestamp, world_name } => {
-                handlers::entering_room::handle(
-                    conn,
-                    &timestamp.to_rfc3339(),
-                    &world_name,
-                    self.current_instance_id,
-                )
-            }
-            LogEvent::DestroyingPlayer { timestamp, display_name } => {
-                handlers::destroying_player::handle(
-                    conn,
-                    &timestamp.to_rfc3339(),
-                    &display_name,
-                    self.current_user_id,
-                    &mut self.current_instance_id,
-                    &self.user_ids,
-                    &mut self.instance_user_ids,
-                    &mut self.pending_avatars,
-                )
-            }
-            LogEvent::PlayerJoined { timestamp, display_name, user_id } => {
-                handlers::player_joined::handle(
-                    conn,
-                    &timestamp.to_rfc3339(),
-                    &display_name,
-                    &user_id,
-                    self.current_instance_id,
-                    &mut self.user_ids,
-                    &mut self.instance_user_ids,
-                    &mut self.pending_avatars,
-                )
-            }
-            LogEvent::AvatarChanged { timestamp, display_name, avatar_name } => {
-                handlers::avatar_changed::handle(
-                    conn,
-                    &timestamp.to_rfc3339(),
-                    &display_name,
-                    &avatar_name,
-                    self.current_user_id,
-                    self.current_instance_id,
-                    &self.user_ids,
-                    &mut self.pending_avatars,
-                )
-            }
-            LogEvent::ScreenshotTaken { timestamp, file_path } => {
-                handlers::screenshot_taken::handle(
-                    conn,
-                    &timestamp.to_rfc3339(),
-                    &file_path,
-                    self.current_instance_id,
-                )
-            }
-            LogEvent::EventSyncFailed { timestamp } => {
-                handlers::event_sync_failed::handle(
-                    conn,
-                    &timestamp.to_rfc3339(),
-                    self.current_instance_id,
-                )
-            }
+            LogEvent::UserAuthenticated {
+                timestamp,
+                user_id,
+                display_name,
+            } => handlers::user_authenticated::handle(
+                conn,
+                &timestamp.to_rfc3339(),
+                &user_id,
+                &display_name,
+                &mut self.current_my_account_id,
+                &mut self.current_user_id,
+                &mut self.user_ids,
+            ),
+            LogEvent::JoiningWorld {
+                timestamp,
+                world_id,
+                world_name,
+                instance_id,
+            } => handlers::joining_world::handle(
+                conn,
+                &timestamp.to_rfc3339(),
+                &world_id,
+                &world_name,
+                &instance_id,
+                self.current_my_account_id,
+                self.current_user_id,
+                &mut self.current_instance_id,
+                &mut self.instance_user_ids,
+                &mut self.pending_avatars,
+            ),
+            LogEvent::EnteringRoom {
+                timestamp,
+                world_name,
+            } => handlers::entering_room::handle(
+                conn,
+                &timestamp.to_rfc3339(),
+                &world_name,
+                self.current_instance_id,
+            ),
+            LogEvent::DestroyingPlayer {
+                timestamp,
+                display_name,
+            } => handlers::destroying_player::handle(
+                conn,
+                &timestamp.to_rfc3339(),
+                &display_name,
+                self.current_user_id,
+                &mut self.current_instance_id,
+                &self.user_ids,
+                &mut self.instance_user_ids,
+                &mut self.pending_avatars,
+            ),
+            LogEvent::PlayerJoined {
+                timestamp,
+                display_name,
+                user_id,
+            } => handlers::player_joined::handle(
+                conn,
+                &timestamp.to_rfc3339(),
+                &display_name,
+                &user_id,
+                self.current_instance_id,
+                &mut self.user_ids,
+                &mut self.instance_user_ids,
+                &mut self.pending_avatars,
+            ),
+            LogEvent::AvatarChanged {
+                timestamp,
+                display_name,
+                avatar_name,
+            } => handlers::avatar_changed::handle(
+                conn,
+                &timestamp.to_rfc3339(),
+                &display_name,
+                &avatar_name,
+                self.current_user_id,
+                self.current_instance_id,
+                &self.user_ids,
+                &mut self.pending_avatars,
+            ),
+            LogEvent::ScreenshotTaken {
+                timestamp,
+                file_path,
+            } => handlers::screenshot_taken::handle(
+                conn,
+                &timestamp.to_rfc3339(),
+                &file_path,
+                self.current_instance_id,
+            ),
+            LogEvent::EventSyncFailed { timestamp } => handlers::event_sync_failed::handle(
+                conn,
+                &timestamp.to_rfc3339(),
+                self.current_instance_id,
+            ),
         }
     }
 }

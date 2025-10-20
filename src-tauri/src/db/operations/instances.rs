@@ -26,11 +26,7 @@ pub fn create_instance(
 
 /// End an instance by setting ended_at and status
 /// Only updates status to 'completed' if current status is 'active'
-pub fn end_instance(
-    conn: &Connection,
-    instance_id: i64,
-    ended_at: &str,
-) -> Result<()> {
+pub fn end_instance(conn: &Connection, instance_id: i64, ended_at: &str) -> Result<()> {
     conn.execute(
         "UPDATE instances
          SET ended_at = ?1,
@@ -55,10 +51,7 @@ pub fn update_instance_status(
 }
 
 /// Get the latest active instance for a my_account
-pub fn get_latest_active_instance(
-    conn: &Connection,
-    my_account_id: i64,
-) -> Result<Option<i64>> {
+pub fn get_latest_active_instance(conn: &Connection, my_account_id: i64) -> Result<Option<i64>> {
     conn.query_row(
         "SELECT id FROM instances
          WHERE my_account_id = ?1 AND ended_at IS NULL
@@ -115,10 +108,7 @@ pub fn set_all_users_left_instance(
 }
 
 /// Get world_id from an instance
-pub fn get_instance_world_id(
-    conn: &Connection,
-    instance_id: i64,
-) -> Result<i64> {
+pub fn get_instance_world_id(conn: &Connection, instance_id: i64) -> Result<i64> {
     conn.query_row(
         "SELECT world_id FROM instances WHERE id = ?1",
         [instance_id],

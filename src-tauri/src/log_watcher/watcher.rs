@@ -1,5 +1,8 @@
 use super::path::{get_all_log_files, get_vrchat_log_path};
-use crate::{db, parser::{log_parser::VRChatLogParser, types::LogEvent}};
+use crate::{
+    db,
+    parser::{log_parser::VRChatLogParser, types::LogEvent},
+};
 use chrono::Utc;
 use rusqlite::Connection;
 use std::collections::HashMap;
@@ -79,7 +82,8 @@ impl LogWatcher {
                 }
 
                 // ファイルを読み込む
-                let (events, final_position) = self.read_file_from_position(&file_path, position)?;
+                let (events, final_position) =
+                    self.read_file_from_position(&file_path, position)?;
                 self.file_states.insert(file_path.clone(), final_position);
                 all_events.extend(events);
             }
@@ -96,7 +100,8 @@ impl LogWatcher {
                 let file_size = metadata.len();
                 if let Ok(modified) = metadata.modified() {
                     let modified_dt = chrono::DateTime::<Utc>::from(modified);
-                    let _ = db::operations::upsert_log_file(conn, &path_str, file_size, modified_dt);
+                    let _ =
+                        db::operations::upsert_log_file(conn, &path_str, file_size, modified_dt);
                     let _ = db::operations::update_log_file_position(conn, &path_str, *position);
                 }
             }
@@ -110,7 +115,8 @@ impl LogWatcher {
 
         for log_file in log_files {
             let start_position = self.file_states.get(&log_file).copied().unwrap_or(0);
-            let (events, final_position) = self.read_file_from_position(&log_file, start_position)?;
+            let (events, final_position) =
+                self.read_file_from_position(&log_file, start_position)?;
 
             self.file_states.insert(log_file.clone(), final_position);
             all_events.extend(events);

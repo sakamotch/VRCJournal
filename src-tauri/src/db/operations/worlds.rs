@@ -27,11 +27,7 @@ pub fn upsert_world(
 }
 
 /// Update world name
-pub fn update_world_name(
-    conn: &Connection,
-    world_id: i64,
-    world_name: &str,
-) -> Result<()> {
+pub fn update_world_name(conn: &Connection, world_id: i64, world_name: &str) -> Result<()> {
     conn.execute(
         "UPDATE worlds SET world_name = ?1 WHERE id = ?2",
         (world_name, world_id),

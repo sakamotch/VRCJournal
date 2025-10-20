@@ -16,7 +16,10 @@ pub fn handle(
         // Update world name in worlds table
         operations::update_world_name(conn, world_id, world_name)?;
 
-        println!("Updated world name for instance {}: {}", instance_id, world_name);
+        println!(
+            "Updated world name for instance {}: {}",
+            instance_id, world_name
+        );
     }
 
     Ok(None)

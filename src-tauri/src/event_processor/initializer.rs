@@ -27,9 +27,7 @@ pub fn restore_previous_state(
     instance_user_ids: &mut HashMap<i64, i64>,
 ) -> Result<(), rusqlite::Error> {
     // Restore the most recently authenticated local account
-    if let Some((my_account_id, user_id)) =
-        operations::get_latest_authenticated_account(conn)?
-    {
+    if let Some((my_account_id, user_id)) = operations::get_latest_authenticated_account(conn)? {
         *current_my_account_id = Some(my_account_id);
         *current_user_id = Some(user_id);
         println!(

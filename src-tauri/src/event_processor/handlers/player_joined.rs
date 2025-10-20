@@ -32,7 +32,8 @@ pub fn handle(
         existing_user_id
     } else {
         // Create new user with placeholder ID
-        let new_user_id = operations::upsert_user(conn, &placeholder_user_id, display_name, timestamp)?;
+        let new_user_id =
+            operations::upsert_user(conn, &placeholder_user_id, display_name, timestamp)?;
         user_ids.insert(placeholder_user_id.clone(), new_user_id);
         new_user_id
     };
@@ -54,7 +55,13 @@ pub fn handle(
 
     // Check if there's a pending avatar for this player
     if let Some((avatar_id, avatar_timestamp)) = pending_avatars.remove(display_name) {
-        operations::record_avatar_history(conn, instance_id, user_id, avatar_id, &avatar_timestamp)?;
+        operations::record_avatar_history(
+            conn,
+            instance_id,
+            user_id,
+            avatar_id,
+            &avatar_timestamp,
+        )?;
         println!("Player joined: {} with pending avatar", display_name);
     } else {
         println!("Player joined: {}", display_name);

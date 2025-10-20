@@ -45,7 +45,5 @@ pub enum LogEvent {
     },
     /// イベント同期失敗（マスターからイベントが送信されない）
     /// 次のJoiningWorldイベントが代替インスタンスとなる
-    EventSyncFailed {
-        timestamp: DateTime<Utc>,
-    },
+    EventSyncFailed { timestamp: DateTime<Utc> },
 }

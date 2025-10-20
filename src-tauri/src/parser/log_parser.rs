@@ -280,15 +280,12 @@ mod tests {
     #[test]
     fn test_parse_destroying_player() {
         let parser = VRChatLogParser::new();
-        let line =
-            "2025.10.15 15:49:00 Debug      -  [Behaviour] Destroying TestPlayer";
+        let line = "2025.10.15 15:49:00 Debug      -  [Behaviour] Destroying TestPlayer";
 
         let event = parser.parse_line(line).expect("Failed to parse");
 
         match event {
-            LogEvent::DestroyingPlayer {
-                display_name, ..
-            } => {
+            LogEvent::DestroyingPlayer { display_name, .. } => {
                 assert_eq!(display_name, "TestPlayer");
             }
             _ => panic!("Expected DestroyingPlayer event"),

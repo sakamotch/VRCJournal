@@ -35,7 +35,10 @@ pub fn handle(
     // End previous instance if exists (mark as interrupted)
     if let Some(prev_instance_id) = *current_instance_id {
         operations::update_instance_status(conn, prev_instance_id, InstanceStatus::Interrupted)?;
-        println!("Previous instance {} marked as interrupted", prev_instance_id);
+        println!(
+            "Previous instance {} marked as interrupted",
+            prev_instance_id
+        );
     }
 
     // Clear state

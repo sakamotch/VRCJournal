@@ -16,10 +16,7 @@ pub fn get_vrchat_log_path() -> Result<PathBuf, String> {
                 if log_path.exists() {
                     Ok(log_path)
                 } else {
-                    Err(format!(
-                        "VRChat log directory not found at {:?}",
-                        log_path
-                    ))
+                    Err(format!("VRChat log directory not found at {:?}", log_path))
                 }
             }
             Err(_) => Err("USERPROFILE environment variable not found".to_string()),
