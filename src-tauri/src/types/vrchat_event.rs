@@ -11,7 +11,7 @@ pub enum VRChatEvent {
         vrchat_user_id: String,
     },
 
-    InstanceCreated {
+    InstanceStarted {
         instance_id: i64,
         my_account_id: i64,
         world_id: String,

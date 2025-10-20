@@ -47,7 +47,7 @@ pub fn handle(
         new_instance_id, world_id
     );
 
-    Ok(Some(VRChatEvent::InstanceCreated {
+    Ok(Some(VRChatEvent::InstanceStarted {
         instance_id: new_instance_id,
         my_account_id,
         world_id: world_id.to_string(),

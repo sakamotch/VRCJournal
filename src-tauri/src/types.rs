@@ -1,7 +1,7 @@
 mod log_event;
-mod vrchat_event;
 mod status;
+mod vrchat_event;
 
 pub use log_event::LogEvent;
-pub use vrchat_event::VRChatEvent;
 pub use status::InstanceStatus;
+pub use vrchat_event::VRChatEvent;
