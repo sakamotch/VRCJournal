@@ -1,10 +1,10 @@
 mod app;
 mod commands;
 mod db;
-mod handler;
-mod monitor;
-mod parser;
-mod reader;
+mod event_handler;
+mod log_monitor;
+mod log_parser;
+mod log_reader;
 mod types;
 
 use commands::*;

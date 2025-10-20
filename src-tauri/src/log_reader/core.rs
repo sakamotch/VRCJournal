@@ -1,5 +1,4 @@
-use super::path::{get_all_log_files, get_vrchat_log_path};
-use crate::{db, parser::LogParser, types::LogEvent};
+use crate::{db, log_parser::LogParser, types::LogEvent};
 use chrono::Utc;
 use rusqlite::Connection;
 use std::collections::HashMap;
@@ -24,7 +23,7 @@ impl LogReader {
 
     /// ログディレクトリを検証・設定
     pub fn initialize(&mut self) -> Result<(), String> {
-        self.log_dir = get_vrchat_log_path()?;
+        self.log_dir = Self::get_vrchat_log_path()?;
 
         if !self.log_dir.exists() {
             return Err(format!("Log directory not found: {:?}", self.log_dir));
@@ -38,7 +37,7 @@ impl LogReader {
     /// ファイルシステムに存在する全ファイルについて、DBから読み込み位置を取得
     /// DBに記録されていないファイルは位置0から開始
     pub fn restore_file_positions(&mut self, conn: &Connection) -> Result<(), String> {
-        let log_files = get_all_log_files(&self.log_dir)?;
+        let log_files = self.get_all_log_files()?;
 
         for log_file in log_files {
             let path_str = log_file.to_string_lossy().to_string();
@@ -66,7 +65,7 @@ impl LogReader {
 
     /// 新しいイベントをポーリング：ファイルサイズをチェックして変更があれば読み込む
     pub fn poll_new_events(&mut self) -> Result<Vec<LogEvent>, String> {
-        let log_files = get_all_log_files(&self.log_dir)?;
+        let log_files = self.get_all_log_files()?;
         let mut all_events = Vec::new();
 
         for file_path in log_files {
@@ -115,7 +114,7 @@ impl LogReader {
 
     /// 全てのログファイルを初期読み込み（file_statesに記録された位置から）
     fn read_all_logs(&mut self) -> Result<Vec<LogEvent>, String> {
-        let log_files = get_all_log_files(&self.log_dir)?;
+        let log_files = self.get_all_log_files()?;
         let mut all_events = Vec::new();
 
         for log_file in log_files {
@@ -162,5 +161,59 @@ impl LogReader {
         // 新しい位置は元の位置 + 実際に読み込んだバイト数
         let final_position = start_position + bytes_read as u64;
         Ok((events, final_position))
+    }
+
+    /// VRChatログディレクトリのパスを取得し、存在を確認
+    /// Windows: %USERPROFILE%\AppData\LocalLow\VRChat\VRChat\
+    fn get_vrchat_log_path() -> Result<PathBuf, String> {
+        #[cfg(target_os = "windows")]
+        {
+            match std::env::var("USERPROFILE") {
+                Ok(userprofile) => {
+                    let log_path = PathBuf::from(userprofile)
+                        .join("AppData")
+                        .join("LocalLow")
+                        .join("VRChat")
+                        .join("VRChat");
+
+                    if log_path.exists() {
+                        Ok(log_path)
+                    } else {
+                        Err(format!("VRChat log directory not found at {:?}", log_path))
+                    }
+                }
+                Err(_) => Err("USERPROFILE environment variable not found".to_string()),
+            }
+        }
+
+        #[cfg(not(target_os = "windows"))]
+        {
+            Err("VRChat is only available on Windows".to_string())
+        }
+    }
+
+    /// 全てのログファイルを取得
+    /// output_log_*.txt の全てを最終更新日時順（古い順）で返す
+    fn get_all_log_files(&self) -> Result<Vec<PathBuf>, String> {
+        let mut log_files: Vec<PathBuf> = std::fs::read_dir(&self.log_dir)
+            .map_err(|e| format!("Failed to read log directory: {}", e))?
+            .filter_map(|entry| entry.ok())
+            .map(|entry| entry.path())
+            .filter(|path| {
+                path.file_name()
+                    .and_then(|name| name.to_str())
+                    .map(|name| name.starts_with("output_log") && name.ends_with(".txt"))
+                    .unwrap_or(false)
+            })
+            .collect();
+
+        if log_files.is_empty() {
+            return Err("No VRChat log files found".to_string());
+        }
+
+        // 最終更新日時でソート（古い順）
+        log_files.sort_by_key(|path| std::fs::metadata(path).and_then(|m| m.modified()).ok());
+
+        Ok(log_files)
     }
 }

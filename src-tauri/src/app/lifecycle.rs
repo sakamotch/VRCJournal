@@ -1,4 +1,4 @@
-use crate::{db, monitor::Monitor};
+use crate::{db, log_monitor::Monitor};
 use tauri::{App, Emitter, Manager};
 
 /// Tauriアプリケーションのセットアップ処理
