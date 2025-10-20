@@ -1,4 +1,5 @@
 use crate::{db, log_monitor::Monitor};
+use std::time::Duration;
 use tauri::{App, Emitter, Manager};
 
 /// Initialize database and start log monitoring
@@ -25,19 +26,34 @@ fn start_log_monitor(database: db::Database, app_handle: tauri::AppHandle) {
     std::thread::spawn(move || {
         let mut monitor = Monitor::new(database);
 
-        match monitor.initialize() {
-            Ok(count) => println!("Monitor initialized: {} backlog events processed", count),
-            Err(e) => {
-                eprintln!("Failed to initialize monitor: {}", e);
-                return;
-            }
+        // Initialize monitor
+        if let Err(e) = monitor.initialize() {
+            eprintln!("Failed to initialize monitor: {}", e);
+            return;
         }
 
+        // Signal that backend is ready
         if let Err(e) = app_handle.emit("backend-ready", ()) {
             eprintln!("Failed to emit backend-ready event: {}", e);
             return;
         }
 
-        monitor.run(app_handle);
+        // Real-time monitoring loop
+        loop {
+            std::thread::sleep(Duration::from_millis(1000));
+
+            match monitor.fetch_new_events() {
+                Ok(events) => {
+                    for event in events {
+                        if let Err(e) = app_handle.emit("log-event", &event) {
+                            eprintln!("Failed to emit event: {}", e);
+                        }
+                    }
+                }
+                Err(e) => {
+                    eprintln!("Failed to fetch new events: {}", e);
+                }
+            }
+        }
     });
 }
