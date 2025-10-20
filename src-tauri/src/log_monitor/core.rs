@@ -41,11 +41,11 @@ impl Monitor {
         Ok(())
     }
 
-    /// Process backlog events (save to DB only, don't emit to frontend)
+    /// Process backlog events
     fn process_backlog(&mut self) -> Result<(), String> {
         let events = self
             .reader
-            .read_backlog_events()
+            .read_backlog()
             .map_err(|e| format!("Failed to read backlog: {}", e))?;
 
         if events.is_empty() {
@@ -64,8 +64,8 @@ impl Monitor {
     pub fn fetch_new_events(&mut self) -> Result<Vec<ProcessedEvent>, String> {
         let events = self
             .reader
-            .poll_new_events()
-            .map_err(|e| format!("Failed to poll events: {}", e))?;
+            .read_new_events()
+            .map_err(|e| format!("Failed to read new events: {}", e))?;
 
         if events.is_empty() {
             return Ok(Vec::new());

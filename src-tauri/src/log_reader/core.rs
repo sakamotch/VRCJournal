@@ -55,13 +55,25 @@ impl LogReader {
         Ok(())
     }
 
-    /// Read events accumulated since last shutdown
-    pub fn read_backlog_events(&mut self) -> Result<Vec<LogEvent>, String> {
-        self.read_all_logs()
+    /// Read backlog events accumulated since last shutdown
+    pub fn read_backlog(&mut self) -> Result<Vec<LogEvent>, String> {
+        let log_files = self.get_all_log_files()?;
+        let mut all_events = Vec::new();
+
+        for log_file in log_files {
+            let start_position = self.file_states.get(&log_file).copied().unwrap_or(0);
+            let (events, final_position) =
+                self.read_file_from_position(&log_file, start_position)?;
+
+            self.file_states.insert(log_file.clone(), final_position);
+            all_events.extend(events);
+        }
+
+        Ok(all_events)
     }
 
-    /// Poll for new events by checking file size changes
-    pub fn poll_new_events(&mut self) -> Result<Vec<LogEvent>, String> {
+    /// Read new events by checking file size changes
+    pub fn read_new_events(&mut self) -> Result<Vec<LogEvent>, String> {
         let log_files = self.get_all_log_files()?;
         let mut all_events = Vec::new();
 
@@ -103,22 +115,6 @@ impl LogReader {
                 }
             }
         }
-    }
-
-    fn read_all_logs(&mut self) -> Result<Vec<LogEvent>, String> {
-        let log_files = self.get_all_log_files()?;
-        let mut all_events = Vec::new();
-
-        for log_file in log_files {
-            let start_position = self.file_states.get(&log_file).copied().unwrap_or(0);
-            let (events, final_position) =
-                self.read_file_from_position(&log_file, start_position)?;
-
-            self.file_states.insert(log_file.clone(), final_position);
-            all_events.extend(events);
-        }
-
-        Ok(all_events)
     }
 
     fn read_file_from_position(
