@@ -1,4 +1,4 @@
-pub mod log_parser;
 pub mod types;
+pub mod vrchat;
 
 pub use types::*;

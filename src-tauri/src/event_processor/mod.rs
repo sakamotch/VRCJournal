@@ -1,5 +1,6 @@
 mod handlers;
-mod initializer;
 mod processor;
+pub mod types;
 
-pub use processor::{EventProcessor, ProcessedEvent};
+pub use processor::EventProcessor;
+pub use types::ProcessedEvent;

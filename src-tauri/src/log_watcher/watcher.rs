@@ -1,7 +1,7 @@
 use super::path::{get_all_log_files, get_vrchat_log_path};
 use crate::{
     db,
-    parser::{log_parser::VRChatLogParser, types::LogEvent},
+    parser::{vrchat::VRChatLogParser, LogEvent},
 };
 use chrono::Utc;
 use rusqlite::Connection;

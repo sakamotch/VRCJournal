@@ -1,74 +1,9 @@
-use crate::db::InstanceStatus;
+use crate::db::operations;
 use crate::parser::LogEvent;
 use rusqlite::Connection;
 use std::collections::HashMap;
 
-use super::{handlers, initializer};
-
-/// Events emitted by the processor - designed for reactive UI updates without re-querying
-#[derive(Debug, Clone, serde::Serialize)]
-#[serde(tag = "type")]
-pub enum ProcessedEvent {
-    /// Local user authenticated
-    UserAuthenticated {
-        my_account_id: i64,
-        user_id: i64,
-        display_name: String,
-        vrchat_user_id: String,
-    },
-
-    /// Instance created (add new instance to list)
-    InstanceCreated {
-        instance_id: i64,
-        my_account_id: i64,
-        world_id: String,
-        world_name: String,
-        vrchat_instance_id: String,
-        started_at: String,
-        status: InstanceStatus,
-    },
-
-    /// Instance ended (update instance status)
-    InstanceEnded {
-        instance_id: i64,
-        ended_at: String,
-        status: InstanceStatus,
-    },
-
-    /// User joined instance (increment player count)
-    UserJoined {
-        instance_id: i64,
-        instance_user_id: i64,
-        user_id: i64,
-        display_name: String,
-        joined_at: String,
-    },
-
-    /// User left instance (decrement player count)
-    UserLeft {
-        instance_id: i64,
-        instance_user_id: i64,
-        left_at: String,
-    },
-
-    /// Avatar changed (update avatar in player list if visible)
-    AvatarChanged {
-        instance_id: i64,
-        user_id: i64,
-        display_name: String,
-        avatar_id: i64,
-        avatar_name: String,
-        changed_at: String,
-    },
-
-    /// Screenshot taken (increment screenshot count)
-    ScreenshotTaken {
-        instance_id: i64,
-        screenshot_id: i64,
-        file_path: String,
-        taken_at: String,
-    },
-}
+use super::{handlers, types::ProcessedEvent};
 
 /// Event processor: Processes LogEvents and stores them in the database
 pub struct EventProcessor {
@@ -92,16 +27,38 @@ impl EventProcessor {
         }
     }
 
-    /// Restore state from the previous session for incremental log processing
+    /// Restore state from database to resume incremental log processing.
     pub fn restore_previous_state(&mut self, conn: &Connection) -> Result<(), rusqlite::Error> {
-        initializer::restore_previous_state(
-            conn,
-            &mut self.current_my_account_id,
-            &mut self.current_user_id,
-            &mut self.current_instance_id,
-            &mut self.user_ids,
-            &mut self.instance_user_ids,
-        )
+        // Restore the most recently authenticated local account
+        if let Some((my_account_id, user_id)) = operations::get_latest_authenticated_account(conn)?
+        {
+            self.current_my_account_id = Some(my_account_id);
+            self.current_user_id = Some(user_id);
+            println!(
+                "EventProcessor initialized with my_account_id: {}, user_id: {}",
+                my_account_id, user_id
+            );
+
+            // Find active instance for this account
+            if let Some(instance_id) = operations::get_latest_active_instance(conn, my_account_id)?
+            {
+                self.current_instance_id = Some(instance_id);
+                println!("Found active instance: {}", instance_id);
+
+                // Restore users currently in the instance
+                let users = operations::get_instance_active_users(conn, instance_id)?;
+                for (vrchat_user_id, user_id, instance_user_id) in users {
+                    self.user_ids.insert(vrchat_user_id, user_id);
+                    self.instance_user_ids.insert(user_id, instance_user_id);
+                }
+
+                println!("Restored {} users in current instance", self.user_ids.len());
+            }
+        } else {
+            println!("No local account found. Waiting for authentication event.");
+        }
+
+        Ok(())
     }
 
     /// Process a log event
