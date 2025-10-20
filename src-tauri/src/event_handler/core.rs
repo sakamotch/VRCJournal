@@ -18,12 +18,12 @@ pub(super) struct HandlerContext<'a> {
 
 /// Event handler for processing log events
 pub struct EventHandler {
-    current_my_account_id: Option<i64>,              // Current local account
-    current_user_id: Option<i64>,                    // Current user (corresponds to my_account)
-    current_instance_id: Option<i64>,                // Current active instance
-    user_ids: HashMap<String, i64>,                  // vrchat_user_id -> users.id mapping
-    instance_user_ids: HashMap<i64, i64>,            // user_id -> instance_users.id mapping
-    display_name_to_user_id: HashMap<String, i64>,   // display_name -> users.id mapping
+    current_my_account_id: Option<i64>,   // Current local account
+    current_user_id: Option<i64>,         // Current user (corresponds to my_account)
+    current_instance_id: Option<i64>,     // Current active instance
+    user_ids: HashMap<String, i64>,       // vrchat_user_id -> users.id mapping
+    instance_user_ids: HashMap<i64, i64>, // user_id -> instance_users.id mapping
+    display_name_to_user_id: HashMap<String, i64>, // display_name -> users.id mapping
     pending_avatars: HashMap<String, (i64, String)>, // display_name -> (avatar_id, timestamp) for avatars seen before PlayerJoined
 }
 

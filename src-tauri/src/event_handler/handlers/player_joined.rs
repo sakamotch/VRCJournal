@@ -46,7 +46,8 @@ pub fn handle(
     // Update all context mappings together
     ctx.user_ids.insert(vrchat_user_id.to_string(), user_id);
     ctx.instance_user_ids.insert(user_id, instance_user_id);
-    ctx.display_name_to_user_id.insert(display_name.to_string(), user_id);
+    ctx.display_name_to_user_id
+        .insert(display_name.to_string(), user_id);
 
     // Check if there's a pending avatar for this player
     let (initial_avatar_id, initial_avatar_name) =
