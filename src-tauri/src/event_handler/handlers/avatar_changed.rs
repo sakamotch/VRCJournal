@@ -32,10 +32,18 @@ pub fn handle(
         // Local player
         ctx.current_user_id.expect("Local user should be set")
     } else {
-        // Remote player
-        let placeholder_user_id = format!("unknown_{}", display_name);
-        match ctx.user_ids.get(&placeholder_user_id) {
-            Some(&uid) => uid,
+        // Remote player - find by display name in current instance
+        let mut found_user_id = None;
+        for &uid in ctx.instance_user_ids.keys() {
+            let user_display_name = operations::get_user_display_name(conn, uid)?;
+            if user_display_name == display_name {
+                found_user_id = Some(uid);
+                break;
+            }
+        }
+
+        match found_user_id {
+            Some(uid) => uid,
             None => {
                 // Player not yet joined - store as pending
                 ctx.pending_avatars
