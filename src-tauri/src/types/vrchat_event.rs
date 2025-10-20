@@ -1,9 +1,9 @@
 use super::status::InstanceStatus;
 
-/// Events emitted to frontend for UI updates
+/// VRChat events emitted to frontend for UI updates
 #[derive(Debug, Clone, serde::Serialize)]
 #[serde(tag = "type")]
-pub enum ProcessedEvent {
+pub enum VRChatEvent {
     UserAuthenticated {
         my_account_id: i64,
         user_id: i64,

@@ -1,6 +1,6 @@
 use crate::db::operations;
 use crate::event_handler::HandlerContext;
-use crate::types::ProcessedEvent;
+use crate::types::VRChatEvent;
 use rusqlite::Connection;
 
 pub fn handle(
@@ -8,7 +8,7 @@ pub fn handle(
     ctx: &HandlerContext,
     timestamp: &str,
     file_path: &str,
-) -> Result<Option<ProcessedEvent>, rusqlite::Error> {
+) -> Result<Option<VRChatEvent>, rusqlite::Error> {
     let instance_id = match *ctx.current_instance_id {
         Some(id) => id,
         None => {
@@ -21,7 +21,7 @@ pub fn handle(
 
     println!("Screenshot recorded: {}", file_path);
 
-    Ok(Some(ProcessedEvent::ScreenshotTaken {
+    Ok(Some(VRChatEvent::ScreenshotTaken {
         instance_id,
         screenshot_id,
         file_path: file_path.to_string(),

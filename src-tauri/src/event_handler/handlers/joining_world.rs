@@ -1,6 +1,6 @@
 use crate::db::operations;
 use crate::event_handler::HandlerContext;
-use crate::types::{InstanceStatus, ProcessedEvent};
+use crate::types::{InstanceStatus, VRChatEvent};
 use rusqlite::Connection;
 
 pub fn handle(
@@ -9,7 +9,7 @@ pub fn handle(
     timestamp: &str,
     world_id: &str,
     instance_id: &str,
-) -> Result<Option<ProcessedEvent>, rusqlite::Error> {
+) -> Result<Option<VRChatEvent>, rusqlite::Error> {
     let my_account_id = match *ctx.current_my_account_id {
         Some(id) => id,
         None => {
@@ -47,7 +47,7 @@ pub fn handle(
         new_instance_id, world_id
     );
 
-    Ok(Some(ProcessedEvent::InstanceCreated {
+    Ok(Some(VRChatEvent::InstanceCreated {
         instance_id: new_instance_id,
         my_account_id,
         world_id: world_id.to_string(),

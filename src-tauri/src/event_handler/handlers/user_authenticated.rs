@@ -1,6 +1,6 @@
 use crate::db::operations;
 use crate::event_handler::HandlerContext;
-use crate::types::ProcessedEvent;
+use crate::types::VRChatEvent;
 use rusqlite::Connection;
 
 pub fn handle(
@@ -9,7 +9,7 @@ pub fn handle(
     timestamp: &str,
     vrchat_user_id: &str,
     display_name: &str,
-) -> Result<Option<ProcessedEvent>, rusqlite::Error> {
+) -> Result<Option<VRChatEvent>, rusqlite::Error> {
     // Upsert user
     let user_id = operations::upsert_user(conn, vrchat_user_id, display_name, timestamp)?;
 
@@ -29,7 +29,7 @@ pub fn handle(
         display_name, my_account_id, user_id
     );
 
-    Ok(Some(ProcessedEvent::UserAuthenticated {
+    Ok(Some(VRChatEvent::UserAuthenticated {
         my_account_id,
         user_id,
         display_name: display_name.to_string(),

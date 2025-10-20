@@ -1,6 +1,6 @@
 use crate::db::operations;
 use crate::event_handler::HandlerContext;
-use crate::types::ProcessedEvent;
+use crate::types::VRChatEvent;
 use rusqlite::Connection;
 
 pub fn handle(
@@ -8,7 +8,7 @@ pub fn handle(
     ctx: &HandlerContext,
     timestamp: &str,
     world_name: &str,
-) -> Result<Option<ProcessedEvent>, rusqlite::Error> {
+) -> Result<Option<VRChatEvent>, rusqlite::Error> {
     // Update world name for current instance
     let instance_id = match *ctx.current_instance_id {
         Some(id) => id,
@@ -36,7 +36,7 @@ pub fn handle(
         instance_id, world_name
     );
 
-    Ok(Some(ProcessedEvent::WorldNameUpdated {
+    Ok(Some(VRChatEvent::WorldNameUpdated {
         instance_id,
         world_name: world_name.to_string(),
         updated_at: timestamp.to_string(),

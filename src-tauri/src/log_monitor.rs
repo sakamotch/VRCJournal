@@ -2,7 +2,7 @@ use crate::{
     db,
     event_handler::EventHandler,
     log_reader::LogReader,
-    types::{LogEvent, ProcessedEvent},
+    types::{LogEvent, VRChatEvent},
 };
 
 /// VRChat log monitoring service
@@ -64,7 +64,7 @@ impl Monitor {
     }
 
     /// Fetch new events
-    pub fn fetch_new_events(&mut self) -> Result<Vec<ProcessedEvent>, String> {
+    pub fn fetch_new_events(&mut self) -> Result<Vec<VRChatEvent>, String> {
         let events = self
             .reader
             .read_new_events()
@@ -78,7 +78,7 @@ impl Monitor {
     }
 
     /// Process events within a single transaction
-    fn process_events(&mut self, events: Vec<LogEvent>) -> Result<Vec<ProcessedEvent>, String> {
+    fn process_events(&mut self, events: Vec<LogEvent>) -> Result<Vec<VRChatEvent>, String> {
         let tx = self
             .database
             .transaction()

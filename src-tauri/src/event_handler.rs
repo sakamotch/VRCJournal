@@ -1,7 +1,7 @@
 mod handlers;
 
 use crate::db::operations;
-use crate::types::{LogEvent, ProcessedEvent};
+use crate::types::{LogEvent, VRChatEvent};
 use rusqlite::Connection;
 use std::collections::HashMap;
 
@@ -83,7 +83,7 @@ impl EventHandler {
         &mut self,
         conn: &Connection,
         event: LogEvent,
-    ) -> Result<Option<ProcessedEvent>, rusqlite::Error> {
+    ) -> Result<Option<VRChatEvent>, rusqlite::Error> {
         let mut ctx = HandlerContext {
             current_my_account_id: &mut self.current_my_account_id,
             current_user_id: &mut self.current_user_id,

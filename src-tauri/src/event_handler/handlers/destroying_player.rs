@@ -1,6 +1,6 @@
 use crate::db::operations;
 use crate::event_handler::HandlerContext;
-use crate::types::{InstanceStatus, ProcessedEvent};
+use crate::types::{InstanceStatus, VRChatEvent};
 use rusqlite::Connection;
 
 pub fn handle(
@@ -8,7 +8,7 @@ pub fn handle(
     ctx: &mut HandlerContext,
     timestamp: &str,
     display_name: &str,
-) -> Result<Option<ProcessedEvent>, rusqlite::Error> {
+) -> Result<Option<VRChatEvent>, rusqlite::Error> {
     let instance_id = match *ctx.current_instance_id {
         Some(id) => id,
         None => return Ok(None),
@@ -52,7 +52,7 @@ pub fn handle(
         ctx.display_name_to_user_id.clear();
         ctx.pending_avatars.clear();
 
-        Ok(Some(ProcessedEvent::InstanceEnded {
+        Ok(Some(VRChatEvent::InstanceEnded {
             instance_id,
             ended_at: timestamp.to_string(),
             status: InstanceStatus::Completed,
@@ -62,7 +62,7 @@ pub fn handle(
         operations::set_user_left_instance(conn, instance_user_id, timestamp)?;
         println!("Player {} left (destroying)", display_name);
 
-        Ok(Some(ProcessedEvent::UserLeft {
+        Ok(Some(VRChatEvent::UserLeft {
             instance_id,
             instance_user_id,
             left_at: timestamp.to_string(),
