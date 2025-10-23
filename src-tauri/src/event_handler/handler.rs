@@ -1,12 +1,12 @@
-mod handlers;
-
 use crate::db::operations;
 use crate::types::{LogEvent, VRChatEvent};
 use rusqlite::Connection;
 use std::collections::HashMap;
 
+use super::handlers;
+
 /// Context passed to event handlers
-pub(super) struct HandlerContext<'a> {
+pub struct HandlerContext<'a> {
     pub current_my_account_id: &'a mut Option<i64>,
     pub current_user_id: &'a mut Option<i64>,
     pub current_instance_id: &'a mut Option<i64>,

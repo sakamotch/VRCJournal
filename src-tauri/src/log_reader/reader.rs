@@ -32,30 +32,25 @@ impl LogReader {
         Ok(())
     }
 
-    /// Restore file read positions from database
+    /// Restore file positions from database
     pub fn restore_file_positions(&mut self, conn: &Connection) -> Result<(), String> {
         let log_files = self.get_all_log_files()?;
 
         for log_file in log_files {
             let path_str = log_file.to_string_lossy().to_string();
 
+            // Get position from database
             let position = db::operations::get_log_file_position(conn, &path_str)
                 .unwrap_or(Some(0))
                 .unwrap_or(0);
 
             self.file_states.insert(log_file.clone(), position);
-
-            if position == 0 {
-                println!("New file detected: {:?}", log_file);
-            } else {
-                println!("Restored file: {:?} at position {}", log_file, position);
-            }
         }
 
         Ok(())
     }
 
-    /// Read backlog events accumulated since last shutdown
+    /// Read backlog events (from last position to current)
     pub fn read_backlog(&mut self) -> Result<Vec<LogEvent>, String> {
         let log_files = self.get_all_log_files()?;
         let mut all_events = Vec::new();
@@ -144,6 +139,7 @@ impl LogReader {
         }
 
         let final_position = start_position + bytes_read as u64;
+
         Ok((events, final_position))
     }
 
@@ -151,9 +147,8 @@ impl LogReader {
     fn get_vrchat_log_path() -> Result<PathBuf, String> {
         #[cfg(target_os = "windows")]
         {
-            match std::env::var("USERPROFILE") {
-                Ok(userprofile) => {
-                    let log_path = PathBuf::from(userprofile)
+            if let Ok(user_profile) = std::env::var("USERPROFILE") {
+                let log_path = PathBuf::from(user_profile)
                         .join("AppData")
                         .join("LocalLow")
                         .join("VRChat")
@@ -164,8 +159,8 @@ impl LogReader {
                     } else {
                         Err(format!("VRChat log directory not found at {:?}", log_path))
                     }
-                }
-                Err(_) => Err("USERPROFILE environment variable not found".to_string()),
+            } else {
+                Err("USERPROFILE environment variable not found".to_string())
             }
         }
 
@@ -175,17 +170,21 @@ impl LogReader {
         }
     }
 
-    /// Get all log files sorted by modification time (oldest first)
+    /// Get all log files in directory
     fn get_all_log_files(&self) -> Result<Vec<PathBuf>, String> {
-        let mut log_files: Vec<PathBuf> = std::fs::read_dir(&self.log_dir)
-            .map_err(|e| format!("Failed to read log directory: {}", e))?
+        let entries = fs::read_dir(&self.log_dir)
+            .map_err(|e| format!("Failed to read log directory: {}", e))?;
+
+        let mut log_files: Vec<PathBuf> = entries
             .filter_map(|entry| entry.ok())
             .map(|entry| entry.path())
             .filter(|path| {
-                path.file_name()
-                    .and_then(|name| name.to_str())
-                    .map(|name| name.starts_with("output_log") && name.ends_with(".txt"))
-                    .unwrap_or(false)
+                path.is_file()
+                    && path
+                        .file_name()
+                        .and_then(|n| n.to_str())
+                        .map(|n| n.starts_with("output_log") && n.ends_with(".txt"))
+                        .unwrap_or(false)
             })
             .collect();
 
@@ -193,8 +192,7 @@ impl LogReader {
             return Err("No VRChat log files found".to_string());
         }
 
-        log_files.sort_by_key(|path| std::fs::metadata(path).and_then(|m| m.modified()).ok());
-
+        log_files.sort();
         Ok(log_files)
     }
 }

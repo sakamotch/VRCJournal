@@ -61,7 +61,7 @@ impl LogParser {
     pub fn parse_line(&self, line: &str) -> Option<LogEvent> {
         if let Some(caps) = self.auth_regex.captures(line) {
             return Some(LogEvent::UserAuthenticated {
-                timestamp: parse_timestamp(&caps[1])?,
+                timestamp: parse_timestamp(&caps[1]).ok()?,
                 display_name: caps[2].to_string(),
                 user_id: caps[3].to_string(),
             });
@@ -69,7 +69,7 @@ impl LogParser {
 
         if let Some(caps) = self.joining_regex.captures(line) {
             return Some(LogEvent::JoiningWorld {
-                timestamp: parse_timestamp(&caps[1])?,
+                timestamp: parse_timestamp(&caps[1]).ok()?,
                 world_id: caps[2].to_string(),
                 instance_id: caps[3].to_string(),
             });
@@ -77,14 +77,14 @@ impl LogParser {
 
         if let Some(caps) = self.entering_room_regex.captures(line) {
             return Some(LogEvent::EnteringRoom {
-                timestamp: parse_timestamp(&caps[1])?,
+                timestamp: parse_timestamp(&caps[1]).ok()?,
                 world_name: caps[2].to_string(),
             });
         }
 
         if let Some(caps) = self.player_joined_regex.captures(line) {
             return Some(LogEvent::PlayerJoined {
-                timestamp: parse_timestamp(&caps[1])?,
+                timestamp: parse_timestamp(&caps[1]).ok()?,
                 display_name: caps[2].to_string(),
                 user_id: caps[3].to_string(),
             });
@@ -92,7 +92,7 @@ impl LogParser {
 
         if let Some(caps) = self.avatar_changed_regex.captures(line) {
             return Some(LogEvent::AvatarChanged {
-                timestamp: parse_timestamp(&caps[1])?,
+                timestamp: parse_timestamp(&caps[1]).ok()?,
                 display_name: caps[2].to_string(),
                 avatar_name: caps[3].to_string(),
             });
@@ -100,21 +100,21 @@ impl LogParser {
 
         if let Some(caps) = self.screenshot_regex.captures(line) {
             return Some(LogEvent::ScreenshotTaken {
-                timestamp: parse_timestamp(&caps[1])?,
+                timestamp: parse_timestamp(&caps[1]).ok()?,
                 file_path: caps[2].to_string(),
             });
         }
 
         if let Some(caps) = self.leaving_instance_regex.captures(line) {
             return Some(LogEvent::DestroyingPlayer {
-                timestamp: parse_timestamp(&caps[1])?,
+                timestamp: parse_timestamp(&caps[1]).ok()?,
                 display_name: caps[2].to_string(),
             });
         }
 
         if let Some(caps) = self.event_sync_failed_regex.captures(line) {
             return Some(LogEvent::EventSyncFailed {
-                timestamp: parse_timestamp(&caps[1])?,
+                timestamp: parse_timestamp(&caps[1]).ok()?,
             });
         }
 
@@ -123,11 +123,16 @@ impl LogParser {
 }
 
 /// Parse VRChat timestamp and convert to UTC
-fn parse_timestamp(s: &str) -> Option<DateTime<Utc>> {
-    NaiveDateTime::parse_from_str(s, "%Y.%m.%d %H:%M:%S")
-        .ok()
-        .and_then(|dt| Local.from_local_datetime(&dt).single())
-        .map(|local_dt| local_dt.with_timezone(&Utc))
+fn parse_timestamp(timestamp_str: &str) -> Result<DateTime<Utc>, String> {
+    NaiveDateTime::parse_from_str(timestamp_str, "%Y.%m.%d %H:%M:%S")
+        .map_err(|e| format!("Failed to parse timestamp: {}", e))
+        .and_then(|naive| {
+            Local
+                .from_local_datetime(&naive)
+                .single()
+                .ok_or_else(|| "Ambiguous or invalid local datetime".to_string())
+        })
+        .map(|local| local.with_timezone(&Utc))
 }
 
 #[cfg(test)]
@@ -139,58 +144,61 @@ mod tests {
         let parser = LogParser::new();
         let line = "2025.10.13 09:53:16 Debug      -  User Authenticated: TestUser (usr_12345678-abcd-ef01-2345-6789abcdef01)";
 
-        let event = parser.parse_line(line).expect("Failed to parse");
+        let event = parser.parse_line(line);
+        assert!(event.is_some());
 
-        match event {
-            LogEvent::UserAuthenticated {
-                display_name,
-                user_id,
-                ..
-            } => {
-                assert_eq!(display_name, "TestUser");
-                assert_eq!(user_id, "usr_12345678-abcd-ef01-2345-6789abcdef01");
-            }
-            _ => panic!("Expected UserAuthenticated event"),
+        if let Some(LogEvent::UserAuthenticated {
+            timestamp: _,
+            display_name,
+            user_id,
+        }) = event
+        {
+            assert_eq!(display_name, "TestUser");
+            assert_eq!(user_id, "usr_12345678-abcd-ef01-2345-6789abcdef01");
+        } else {
+            panic!("Expected UserAuthenticated event");
         }
     }
 
     #[test]
-    fn test_parse_joining_world() {
+    fn test_parse_joining_world_with_friends() {
         let parser = LogParser::new();
         let line = "2025.10.13 09:53:22 Debug      -  [Behaviour] Joining wrld_abcdef01-2345-6789-abcd-ef0123456789:11859~friends(usr_xxx)~region(jp)";
 
-        let event = parser.parse_line(line).expect("Failed to parse");
+        let event = parser.parse_line(line);
+        assert!(event.is_some());
 
-        match event {
-            LogEvent::JoiningWorld {
-                world_id,
-                instance_id,
-                ..
-            } => {
-                assert_eq!(world_id, "wrld_abcdef01-2345-6789-abcd-ef0123456789");
-                assert_eq!(instance_id, "11859~friends(usr_xxx)~region(jp)");
-            }
-            _ => panic!("Expected JoiningWorld event"),
+        if let Some(LogEvent::JoiningWorld {
+            timestamp: _,
+            world_id,
+            instance_id,
+        }) = event
+        {
+            assert_eq!(world_id, "wrld_abcdef01-2345-6789-abcd-ef0123456789");
+            assert_eq!(instance_id, "11859~friends(usr_xxx)~region(jp)");
+        } else {
+            panic!("Expected JoiningWorld event");
         }
     }
 
     #[test]
-    fn test_parse_joining_world_simple() {
+    fn test_parse_joining_world_public() {
         let parser = LogParser::new();
         let line = "2025.10.13 09:53:22 Debug      -  [Behaviour] Joining wrld_abcdef01-2345-6789-abcd-ef0123456789:84455~region(jp)";
 
-        let event = parser.parse_line(line).expect("Failed to parse");
+        let event = parser.parse_line(line);
+        assert!(event.is_some());
 
-        match event {
-            LogEvent::JoiningWorld {
-                world_id,
-                instance_id,
-                ..
-            } => {
-                assert_eq!(world_id, "wrld_abcdef01-2345-6789-abcd-ef0123456789");
-                assert_eq!(instance_id, "84455~region(jp)");
-            }
-            _ => panic!("Expected JoiningWorld event"),
+        if let Some(LogEvent::JoiningWorld {
+            timestamp: _,
+            world_id,
+            instance_id,
+        }) = event
+        {
+            assert_eq!(world_id, "wrld_abcdef01-2345-6789-abcd-ef0123456789");
+            assert_eq!(instance_id, "84455~region(jp)");
+        } else {
+            panic!("Expected JoiningWorld event");
         }
     }
 
@@ -199,18 +207,19 @@ mod tests {
         let parser = LogParser::new();
         let line = "2025.10.13 11:02:36 Debug      -  [Behaviour] OnPlayerJoined TestPlayer (usr_12345678-abcd-ef01-2345-6789abcdef01)";
 
-        let event = parser.parse_line(line).expect("Failed to parse");
+        let event = parser.parse_line(line);
+        assert!(event.is_some());
 
-        match event {
-            LogEvent::PlayerJoined {
-                display_name,
-                user_id,
-                ..
-            } => {
-                assert_eq!(display_name, "TestPlayer");
-                assert_eq!(user_id, "usr_12345678-abcd-ef01-2345-6789abcdef01");
-            }
-            _ => panic!("Expected PlayerJoined event"),
+        if let Some(LogEvent::PlayerJoined {
+            timestamp: _,
+            display_name,
+            user_id,
+        }) = event
+        {
+            assert_eq!(display_name, "TestPlayer");
+            assert_eq!(user_id, "usr_12345678-abcd-ef01-2345-6789abcdef01");
+        } else {
+            panic!("Expected PlayerJoined event");
         }
     }
 
@@ -220,18 +229,19 @@ mod tests {
         let line =
             "2025.10.13 11:02:36 Debug      -  [Behaviour] Switching TestUser to avatar TestAvatar";
 
-        let event = parser.parse_line(line).expect("Failed to parse");
+        let event = parser.parse_line(line);
+        assert!(event.is_some());
 
-        match event {
-            LogEvent::AvatarChanged {
-                display_name,
-                avatar_name,
-                ..
-            } => {
-                assert_eq!(display_name, "TestUser");
-                assert_eq!(avatar_name, "TestAvatar");
-            }
-            _ => panic!("Expected AvatarChanged event"),
+        if let Some(LogEvent::AvatarChanged {
+            timestamp: _,
+            display_name,
+            avatar_name,
+        }) = event
+        {
+            assert_eq!(display_name, "TestUser");
+            assert_eq!(avatar_name, "TestAvatar");
+        } else {
+            panic!("Expected AvatarChanged event");
         }
     }
 
@@ -241,31 +251,39 @@ mod tests {
         let line =
             "2025.10.13 10:55:55 Debug      -  [Behaviour] Joining or Creating Room: VRChat Home";
 
-        let event = parser.parse_line(line).expect("Failed to parse");
+        let event = parser.parse_line(line);
+        assert!(event.is_some());
 
-        match event {
-            LogEvent::EnteringRoom { world_name, .. } => {
-                assert_eq!(world_name, "VRChat Home");
-            }
-            _ => panic!("Expected EnteringRoom event"),
+        if let Some(LogEvent::EnteringRoom {
+            timestamp: _,
+            world_name,
+        }) = event
+        {
+            assert_eq!(world_name, "VRChat Home");
+        } else {
+            panic!("Expected EnteringRoom event");
         }
     }
 
     #[test]
-    fn test_parse_screenshot_taken() {
+    fn test_parse_screenshot() {
         let parser = LogParser::new();
         let line = "2025.10.15 15:48:41 Debug      -  [VRC Camera] Took screenshot to: D:\\VRChat\\Screenshots\\VRChat_2025-10-15_15-48-41.png";
 
-        let event = parser.parse_line(line).expect("Failed to parse");
+        let event = parser.parse_line(line);
+        assert!(event.is_some());
 
-        match event {
-            LogEvent::ScreenshotTaken { file_path, .. } => {
-                assert_eq!(
-                    file_path,
-                    "D:\\VRChat\\Screenshots\\VRChat_2025-10-15_15-48-41.png"
-                );
-            }
-            _ => panic!("Expected ScreenshotTaken event"),
+        if let Some(LogEvent::ScreenshotTaken {
+            timestamp: _,
+            file_path,
+        }) = event
+        {
+            assert_eq!(
+                file_path,
+                "D:\\VRChat\\Screenshots\\VRChat_2025-10-15_15-48-41.png"
+            );
+        } else {
+            panic!("Expected ScreenshotTaken event");
         }
     }
 
@@ -274,13 +292,17 @@ mod tests {
         let parser = LogParser::new();
         let line = "2025.10.15 15:49:00 Debug      -  [Behaviour] Destroying TestPlayer";
 
-        let event = parser.parse_line(line).expect("Failed to parse");
+        let event = parser.parse_line(line);
+        assert!(event.is_some());
 
-        match event {
-            LogEvent::DestroyingPlayer { display_name, .. } => {
-                assert_eq!(display_name, "TestPlayer");
-            }
-            _ => panic!("Expected DestroyingPlayer event"),
+        if let Some(LogEvent::DestroyingPlayer {
+            timestamp: _,
+            display_name,
+        }) = event
+        {
+            assert_eq!(display_name, "TestPlayer");
+        } else {
+            panic!("Expected DestroyingPlayer event");
         }
     }
 
@@ -289,18 +311,18 @@ mod tests {
         let parser = LogParser::new();
         let line = "2025.10.19 08:10:44 Error      -  [Behaviour] Master is not sending any events! Moving to a new instance.";
 
-        let event = parser.parse_line(line).expect("Failed to parse");
+        let event = parser.parse_line(line);
+        assert!(event.is_some());
 
-        match event {
-            LogEvent::EventSyncFailed { .. } => {
-                // Success
-            }
-            _ => panic!("Expected EventSyncFailed event"),
+        if let Some(LogEvent::EventSyncFailed { timestamp: _ }) = event {
+            // Success
+        } else {
+            panic!("Expected EventSyncFailed event");
         }
     }
 
     #[test]
-    fn test_parse_invalid_line() {
+    fn test_parse_unknown_line() {
         let parser = LogParser::new();
         let line = "2025.10.13 11:02:36 Debug      -  Some random log line";
 
