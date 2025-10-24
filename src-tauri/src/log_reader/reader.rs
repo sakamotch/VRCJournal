@@ -149,16 +149,16 @@ impl LogReader {
         {
             if let Ok(user_profile) = std::env::var("USERPROFILE") {
                 let log_path = PathBuf::from(user_profile)
-                        .join("AppData")
-                        .join("LocalLow")
-                        .join("VRChat")
-                        .join("VRChat");
+                    .join("AppData")
+                    .join("LocalLow")
+                    .join("VRChat")
+                    .join("VRChat");
 
-                    if log_path.exists() {
-                        Ok(log_path)
-                    } else {
-                        Err(format!("VRChat log directory not found at {:?}", log_path))
-                    }
+                if log_path.exists() {
+                    Ok(log_path)
+                } else {
+                    Err(format!("VRChat log directory not found at {:?}", log_path))
+                }
             } else {
                 Err("USERPROFILE environment variable not found".to_string())
             }
