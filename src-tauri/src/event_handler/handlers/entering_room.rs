@@ -1,14 +1,17 @@
 use crate::db::operations;
 use crate::event_handler::HandlerContext;
 use crate::types::VRChatEvent;
+use chrono::{DateTime, Utc};
 use rusqlite::Connection;
 
 pub fn handle(
     conn: &Connection,
     ctx: &HandlerContext,
-    timestamp: &str,
+    timestamp: DateTime<Utc>,
     world_name: &str,
 ) -> Result<Option<VRChatEvent>, rusqlite::Error> {
+    let timestamp_ms = timestamp.timestamp_millis();
+
     // Update world name for current instance
     let instance_id = match *ctx.current_instance_id {
         Some(id) => id,
@@ -26,7 +29,7 @@ pub fn handle(
 
     // Upsert world name history
     let world_name_history_id =
-        operations::upsert_world_name_history(conn, world_id, world_name, timestamp)?;
+        operations::upsert_world_name_history(conn, world_id, world_name, timestamp_ms)?;
 
     // Link world_name_history to the instance
     operations::update_instance_world_name_history(conn, instance_id, world_name_history_id)?;
@@ -39,6 +42,6 @@ pub fn handle(
     Ok(Some(VRChatEvent::WorldNameUpdated {
         instance_id,
         world_name: world_name.to_string(),
-        updated_at: timestamp.to_string(),
+        updated_at: timestamp_ms,
     }))
 }

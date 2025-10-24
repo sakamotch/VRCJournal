@@ -5,7 +5,7 @@ pub fn upsert_avatar(
     conn: &Connection,
     avatar_name: &str,
     avatar_id: Option<&str>,
-    timestamp: &str,
+    timestamp: i64,
 ) -> Result<i64> {
     // Check if avatar exists by name
     let existing: Option<i64> = conn
@@ -56,7 +56,7 @@ pub fn record_avatar_history(
     instance_id: i64,
     user_id: i64,
     avatar_id: i64,
-    changed_at: &str,
+    changed_at: i64,
 ) -> Result<()> {
     conn.execute(
         "INSERT INTO avatar_history (instance_id, user_id, avatar_id, changed_at)

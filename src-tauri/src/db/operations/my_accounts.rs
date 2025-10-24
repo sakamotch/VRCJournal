@@ -1,7 +1,7 @@
 use rusqlite::{Connection, Result};
 
 /// Upsert local account
-pub fn upsert_my_account(conn: &Connection, user_id: i64, timestamp: &str) -> Result<i64> {
+pub fn upsert_my_account(conn: &Connection, user_id: i64, timestamp: i64) -> Result<i64> {
     conn.execute(
         "INSERT INTO my_accounts (user_id, first_authenticated_at, last_authenticated_at)
          VALUES (?1, ?2, ?2)

@@ -1,14 +1,17 @@
 use crate::db::operations;
 use crate::event_handler::HandlerContext;
 use crate::types::{InstanceStatus, VRChatEvent};
+use chrono::{DateTime, Utc};
 use rusqlite::Connection;
 
 pub fn handle(
     conn: &Connection,
     ctx: &mut HandlerContext,
-    timestamp: &str,
+    timestamp: DateTime<Utc>,
     display_name: &str,
 ) -> Result<Option<VRChatEvent>, rusqlite::Error> {
+    let timestamp_ms = timestamp.timestamp_millis();
+
     let instance_id = match *ctx.current_instance_id {
         Some(id) => id,
         None => return Ok(None),
@@ -40,8 +43,8 @@ pub fn handle(
 
     if is_local_player {
         // Local player is leaving - end the instance
-        operations::set_all_users_left_instance(conn, instance_id, timestamp)?;
-        operations::end_instance(conn, instance_id, timestamp)?;
+        operations::set_all_users_left_instance(conn, instance_id, timestamp_ms)?;
+        operations::end_instance(conn, instance_id, timestamp_ms)?;
 
         println!("Local player left, instance {} ended", instance_id);
 
@@ -54,18 +57,18 @@ pub fn handle(
 
         Ok(Some(VRChatEvent::InstanceEnded {
             instance_id,
-            ended_at: timestamp.to_string(),
+            ended_at: timestamp_ms,
             status: InstanceStatus::Completed,
         }))
     } else {
         // Remote player is leaving
-        operations::set_user_left_instance(conn, instance_user_id, timestamp)?;
+        operations::set_user_left_instance(conn, instance_user_id, timestamp_ms)?;
         println!("Player {} left (destroying)", display_name);
 
         Ok(Some(VRChatEvent::UserLeft {
             instance_id,
             instance_user_id,
-            left_at: timestamp.to_string(),
+            left_at: timestamp_ms,
         }))
     }
 }

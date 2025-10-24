@@ -1,23 +1,26 @@
 use crate::db::operations;
 use crate::event_handler::HandlerContext;
 use crate::types::VRChatEvent;
+use chrono::{DateTime, Utc};
 use rusqlite::Connection;
 
 pub fn handle(
     conn: &Connection,
     ctx: &mut HandlerContext,
-    timestamp: &str,
+    timestamp: DateTime<Utc>,
     vrchat_user_id: &str,
     display_name: &str,
 ) -> Result<Option<VRChatEvent>, rusqlite::Error> {
+    let timestamp_ms = timestamp.timestamp_millis();
+
     // Upsert user
-    let user_id = operations::upsert_user(conn, vrchat_user_id, display_name, timestamp)?;
+    let user_id = operations::upsert_user(conn, vrchat_user_id, display_name, timestamp_ms)?;
 
     // Upsert user name history
-    operations::upsert_user_name_history(conn, user_id, display_name, timestamp)?;
+    operations::upsert_user_name_history(conn, user_id, display_name, timestamp_ms)?;
 
     // Upsert my_account
-    let my_account_id = operations::upsert_my_account(conn, user_id, timestamp)?;
+    let my_account_id = operations::upsert_my_account(conn, user_id, timestamp_ms)?;
 
     // Update current state
     *ctx.current_my_account_id = Some(my_account_id);

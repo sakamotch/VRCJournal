@@ -1,15 +1,18 @@
 use crate::db::operations;
 use crate::event_handler::HandlerContext;
 use crate::types::{InstanceStatus, VRChatEvent};
+use chrono::{DateTime, Utc};
 use rusqlite::Connection;
 
 pub fn handle(
     conn: &Connection,
     ctx: &mut HandlerContext,
-    timestamp: &str,
+    timestamp: DateTime<Utc>,
     world_id: &str,
     instance_id: &str,
 ) -> Result<Option<VRChatEvent>, rusqlite::Error> {
+    let timestamp_ms = timestamp.timestamp_millis();
+
     let my_account_id = match *ctx.current_my_account_id {
         Some(id) => id,
         None => {
@@ -34,11 +37,11 @@ pub fn handle(
     ctx.pending_avatars.clear();
 
     // Upsert world (without world name yet)
-    let world_db_id = operations::upsert_world(conn, world_id, timestamp)?;
+    let world_db_id = operations::upsert_world(conn, world_id, timestamp_ms)?;
 
     // Create new instance (world_name_at_join_id will be set later in entering_room)
     let new_instance_id =
-        operations::create_instance(conn, my_account_id, world_db_id, instance_id, timestamp)?;
+        operations::create_instance(conn, my_account_id, world_db_id, instance_id, timestamp_ms)?;
 
     *ctx.current_instance_id = Some(new_instance_id);
 
@@ -52,7 +55,7 @@ pub fn handle(
         my_account_id,
         world_id: world_id.to_string(),
         vrchat_instance_id: instance_id.to_string(),
-        started_at: timestamp.to_string(),
+        started_at: timestamp_ms,
         status: InstanceStatus::Active,
     }))
 }

@@ -1,15 +1,18 @@
 use crate::db::operations;
 use crate::event_handler::HandlerContext;
 use crate::types::VRChatEvent;
+use chrono::{DateTime, Utc};
 use rusqlite::Connection;
 
 pub fn handle(
     conn: &Connection,
     ctx: &mut HandlerContext,
-    timestamp: &str,
+    timestamp: DateTime<Utc>,
     display_name: &str,
     vrchat_user_id: &str,
 ) -> Result<Option<VRChatEvent>, rusqlite::Error> {
+    let timestamp_ms = timestamp.timestamp_millis();
+
     let instance_id = match *ctx.current_instance_id {
         Some(id) => id,
         None => {
@@ -28,11 +31,11 @@ pub fn handle(
     }
 
     // Upsert user in database
-    let user_id = operations::upsert_user(conn, vrchat_user_id, display_name, timestamp)?;
+    let user_id = operations::upsert_user(conn, vrchat_user_id, display_name, timestamp_ms)?;
 
     // Upsert user name history
     let display_name_history_id =
-        operations::upsert_user_name_history(conn, user_id, display_name, timestamp)?;
+        operations::upsert_user_name_history(conn, user_id, display_name, timestamp_ms)?;
 
     // Add user to instance
     let instance_user_id = operations::add_user_to_instance(
@@ -40,7 +43,7 @@ pub fn handle(
         instance_id,
         user_id,
         display_name_history_id,
-        timestamp,
+        timestamp_ms,
     )?;
 
     // Update all context mappings together
@@ -57,7 +60,7 @@ pub fn handle(
                 instance_id,
                 user_id,
                 avatar_id,
-                &avatar_timestamp,
+                avatar_timestamp.timestamp_millis(),
             )?;
 
             let avatar_name = operations::get_avatar_name(conn, avatar_id)?;
@@ -76,7 +79,7 @@ pub fn handle(
         instance_user_id,
         user_id,
         display_name: display_name.to_string(),
-        joined_at: timestamp.to_string(),
+        joined_at: timestamp_ms,
         initial_avatar_id,
         initial_avatar_name,
     }))

@@ -7,7 +7,7 @@ pub fn create_instance(
     my_account_id: i64,
     world_id: i64,
     instance_id: &str,
-    started_at: &str,
+    started_at: i64,
 ) -> Result<i64> {
     conn.execute(
         "INSERT INTO instances (my_account_id, world_id, instance_id, started_at)
@@ -18,7 +18,7 @@ pub fn create_instance(
 }
 
 /// End instance (sets status to 'completed' if currently 'active')
-pub fn end_instance(conn: &Connection, instance_id: i64, ended_at: &str) -> Result<()> {
+pub fn end_instance(conn: &Connection, instance_id: i64, ended_at: i64) -> Result<()> {
     conn.execute(
         "UPDATE instances
          SET ended_at = ?1,
@@ -61,7 +61,7 @@ pub fn add_user_to_instance(
     instance_id: i64,
     user_id: i64,
     display_name_at_join_id: i64,
-    joined_at: &str,
+    joined_at: i64,
 ) -> Result<i64> {
     conn.execute(
         "INSERT INTO instance_users (instance_id, user_id, display_name_at_join_id, joined_at)
@@ -75,7 +75,7 @@ pub fn add_user_to_instance(
 pub fn set_user_left_instance(
     conn: &Connection,
     instance_user_id: i64,
-    left_at: &str,
+    left_at: i64,
 ) -> Result<()> {
     conn.execute(
         "UPDATE instance_users SET left_at = ?1 WHERE id = ?2",
@@ -88,7 +88,7 @@ pub fn set_user_left_instance(
 pub fn set_all_users_left_instance(
     conn: &Connection,
     instance_id: i64,
-    left_at: &str,
+    left_at: i64,
 ) -> Result<()> {
     conn.execute(
         "UPDATE instance_users

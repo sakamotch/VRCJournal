@@ -5,7 +5,7 @@ pub fn record_screenshot(
     conn: &Connection,
     instance_id: i64,
     file_path: &str,
-    taken_at: &str,
+    taken_at: i64,
 ) -> Result<i64> {
     conn.execute(
         "INSERT INTO screenshots (instance_id, file_path, taken_at)

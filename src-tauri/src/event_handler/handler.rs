@@ -1,5 +1,6 @@
 use crate::db::operations;
 use crate::types::{LogEvent, VRChatEvent};
+use chrono::{DateTime, Utc};
 use rusqlite::Connection;
 use std::collections::HashMap;
 
@@ -13,7 +14,7 @@ pub struct HandlerContext<'a> {
     pub user_ids: &'a mut HashMap<String, i64>,
     pub instance_user_ids: &'a mut HashMap<i64, i64>,
     pub display_name_to_user_id: &'a mut HashMap<String, i64>,
-    pub pending_avatars: &'a mut HashMap<String, (i64, String)>,
+    pub pending_avatars: &'a mut HashMap<String, (i64, DateTime<Utc>)>,
 }
 
 /// Event handler for processing log events
@@ -24,7 +25,7 @@ pub struct EventHandler {
     user_ids: HashMap<String, i64>,       // vrchat_user_id -> users.id mapping
     instance_user_ids: HashMap<i64, i64>, // user_id -> instance_users.id mapping
     display_name_to_user_id: HashMap<String, i64>, // display_name -> users.id mapping
-    pending_avatars: HashMap<String, (i64, String)>, // display_name -> (avatar_id, timestamp) for avatars seen before PlayerJoined
+    pending_avatars: HashMap<String, (i64, DateTime<Utc>)>, // display_name -> (avatar_id, timestamp) for avatars seen before PlayerJoined
 }
 
 impl EventHandler {
@@ -102,7 +103,7 @@ impl EventHandler {
             } => handlers::user_authenticated::handle(
                 conn,
                 &mut ctx,
-                &timestamp.to_rfc3339(),
+                timestamp,
                 &user_id,
                 &display_name,
             ),
@@ -113,21 +114,21 @@ impl EventHandler {
             } => handlers::joining_world::handle(
                 conn,
                 &mut ctx,
-                &timestamp.to_rfc3339(),
+                timestamp,
                 &world_id,
                 &instance_id,
             ),
             LogEvent::EnteringRoom {
                 timestamp,
                 world_name,
-            } => handlers::entering_room::handle(conn, &ctx, &timestamp.to_rfc3339(), &world_name),
+            } => handlers::entering_room::handle(conn, &ctx, timestamp, &world_name),
             LogEvent::DestroyingPlayer {
                 timestamp,
                 display_name,
             } => handlers::destroying_player::handle(
                 conn,
                 &mut ctx,
-                &timestamp.to_rfc3339(),
+                timestamp,
                 &display_name,
             ),
             LogEvent::PlayerJoined {
@@ -137,7 +138,7 @@ impl EventHandler {
             } => handlers::player_joined::handle(
                 conn,
                 &mut ctx,
-                &timestamp.to_rfc3339(),
+                timestamp,
                 &display_name,
                 &user_id,
             ),
@@ -148,7 +149,7 @@ impl EventHandler {
             } => handlers::avatar_changed::handle(
                 conn,
                 &mut ctx,
-                &timestamp.to_rfc3339(),
+                timestamp,
                 &display_name,
                 &avatar_name,
             ),
@@ -156,10 +157,10 @@ impl EventHandler {
                 timestamp,
                 file_path,
             } => {
-                handlers::screenshot_taken::handle(conn, &ctx, &timestamp.to_rfc3339(), &file_path)
+                handlers::screenshot_taken::handle(conn, &ctx, timestamp, &file_path)
             }
             LogEvent::EventSyncFailed { timestamp } => {
-                handlers::event_sync_failed::handle(conn, &ctx, &timestamp.to_rfc3339())
+                handlers::event_sync_failed::handle(conn, &ctx, timestamp)
             }
         }
     }

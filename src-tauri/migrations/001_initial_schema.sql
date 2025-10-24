@@ -9,8 +9,8 @@ CREATE TABLE users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id TEXT NOT NULL UNIQUE,  -- VRChat user ID (usr_xxx)
     display_name TEXT NOT NULL,
-    first_seen_at TEXT NOT NULL,
-    last_seen_at TEXT NOT NULL
+    first_seen_at INTEGER NOT NULL,  -- Unix timestamp
+    last_seen_at INTEGER NOT NULL    -- Unix timestamp
 );
 
 CREATE INDEX idx_users_user_id ON users(user_id);
@@ -21,8 +21,8 @@ CREATE TABLE user_name_history (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL,
     display_name TEXT NOT NULL,
-    first_seen_at TEXT NOT NULL,
-    last_seen_at TEXT NOT NULL,
+    first_seen_at INTEGER NOT NULL,  -- Unix timestamp
+    last_seen_at INTEGER NOT NULL,   -- Unix timestamp
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
@@ -32,8 +32,8 @@ CREATE INDEX idx_user_name_history_user_id ON user_name_history(user_id);
 CREATE TABLE my_accounts (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL UNIQUE,  -- References users.id
-    first_authenticated_at TEXT NOT NULL,
-    last_authenticated_at TEXT NOT NULL,
+    first_authenticated_at INTEGER NOT NULL,  -- Unix timestamp
+    last_authenticated_at INTEGER NOT NULL,   -- Unix timestamp
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
@@ -46,8 +46,8 @@ CREATE TABLE worlds (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     world_id TEXT NOT NULL UNIQUE,  -- VRChat world ID (wrld_xxx)
     world_name TEXT NOT NULL,
-    first_seen_at TEXT NOT NULL,
-    last_seen_at TEXT NOT NULL
+    first_seen_at INTEGER NOT NULL,  -- Unix timestamp
+    last_seen_at INTEGER NOT NULL    -- Unix timestamp
 );
 
 CREATE INDEX idx_worlds_world_id ON worlds(world_id);
@@ -58,8 +58,8 @@ CREATE TABLE world_name_history (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     world_id INTEGER NOT NULL,
     world_name TEXT NOT NULL,
-    first_seen_at TEXT NOT NULL,
-    last_seen_at TEXT NOT NULL,
+    first_seen_at INTEGER NOT NULL,  -- Unix timestamp
+    last_seen_at INTEGER NOT NULL,   -- Unix timestamp
     FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE
 );
 
@@ -76,8 +76,8 @@ CREATE TABLE instances (
     world_id INTEGER NOT NULL,
     world_name_at_join_id INTEGER,  -- Snapshot of world name at join time
     instance_id TEXT NOT NULL,  -- VRChat instance ID
-    started_at TEXT NOT NULL,
-    ended_at TEXT,
+    started_at INTEGER NOT NULL,  -- Unix timestamp
+    ended_at INTEGER,             -- Unix timestamp
     status TEXT NOT NULL DEFAULT 'active',  -- 'active', 'completed', 'interrupted', 'error'
     FOREIGN KEY (my_account_id) REFERENCES my_accounts(id) ON DELETE CASCADE,
     FOREIGN KEY (world_id) REFERENCES worlds(id) ON DELETE CASCADE,
@@ -95,8 +95,8 @@ CREATE TABLE instance_users (
     instance_id INTEGER NOT NULL,
     user_id INTEGER NOT NULL,
     display_name_at_join_id INTEGER NOT NULL,  -- Snapshot of display name at join time
-    joined_at TEXT NOT NULL,
-    left_at TEXT,
+    joined_at INTEGER NOT NULL,  -- Unix timestamp
+    left_at INTEGER,             -- Unix timestamp
     FOREIGN KEY (instance_id) REFERENCES instances(id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (display_name_at_join_id) REFERENCES user_name_history(id)
@@ -115,8 +115,8 @@ CREATE TABLE avatars (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     avatar_id TEXT UNIQUE,  -- VRChat avatar ID (avtr_xxx), nullable as it may not be available
     avatar_name TEXT NOT NULL,
-    first_seen_at TEXT NOT NULL,
-    last_seen_at TEXT NOT NULL
+    first_seen_at INTEGER NOT NULL,  -- Unix timestamp
+    last_seen_at INTEGER NOT NULL    -- Unix timestamp
 );
 
 CREATE INDEX idx_avatars_avatar_id ON avatars(avatar_id);
@@ -128,7 +128,7 @@ CREATE TABLE avatar_history (
     instance_id INTEGER NOT NULL,
     user_id INTEGER NOT NULL,  -- Who changed avatar (local or remote)
     avatar_id INTEGER NOT NULL,
-    changed_at TEXT NOT NULL,
+    changed_at INTEGER NOT NULL,  -- Unix timestamp
     FOREIGN KEY (instance_id) REFERENCES instances(id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (avatar_id) REFERENCES avatars(id) ON DELETE CASCADE
@@ -146,7 +146,7 @@ CREATE TABLE screenshots (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     instance_id INTEGER NOT NULL,
     file_path TEXT NOT NULL,
-    taken_at TEXT NOT NULL,
+    taken_at INTEGER NOT NULL,  -- Unix timestamp
     FOREIGN KEY (instance_id) REFERENCES instances(id) ON DELETE CASCADE
 );
 
@@ -163,8 +163,8 @@ CREATE TABLE log_files (
     file_path TEXT NOT NULL UNIQUE,
     file_size INTEGER NOT NULL,
     last_read_position INTEGER NOT NULL DEFAULT 0,  -- Byte offset for resuming
-    last_modified_at TEXT,
-    last_processed_at TEXT NOT NULL
+    last_modified_at INTEGER,           -- Unix timestamp
+    last_processed_at INTEGER NOT NULL  -- Unix timestamp
 );
 
 CREATE INDEX idx_log_files_last_processed_at ON log_files(last_processed_at DESC);

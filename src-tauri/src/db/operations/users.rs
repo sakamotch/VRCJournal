@@ -5,7 +5,7 @@ pub fn upsert_user(
     conn: &Connection,
     user_id: &str,
     display_name: &str,
-    timestamp: &str,
+    timestamp: i64,
 ) -> Result<i64> {
     conn.execute(
         "INSERT INTO users (user_id, display_name, first_seen_at, last_seen_at)
@@ -39,7 +39,7 @@ pub fn upsert_user_name_history(
     conn: &Connection,
     user_id: i64,
     display_name: &str,
-    timestamp: &str,
+    timestamp: i64,
 ) -> Result<i64> {
     // Check if there's an existing entry with the same display name
     let existing: Option<i64> = conn

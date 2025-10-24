@@ -16,13 +16,13 @@ pub enum VRChatEvent {
         my_account_id: i64,
         world_id: String,
         vrchat_instance_id: String,
-        started_at: String,
+        started_at: i64,  // Unix timestamp in milliseconds
         status: InstanceStatus,
     },
 
     InstanceEnded {
         instance_id: i64,
-        ended_at: String,
+        ended_at: i64,  // Unix timestamp in milliseconds
         status: InstanceStatus,
     },
 
@@ -31,7 +31,7 @@ pub enum VRChatEvent {
         instance_user_id: i64,
         user_id: i64,
         display_name: String,
-        joined_at: String,
+        joined_at: i64,  // Unix timestamp in milliseconds
         initial_avatar_id: Option<i64>,
         initial_avatar_name: Option<String>,
     },
@@ -39,7 +39,7 @@ pub enum VRChatEvent {
     UserLeft {
         instance_id: i64,
         instance_user_id: i64,
-        left_at: String,
+        left_at: i64,  // Unix timestamp in milliseconds
     },
 
     AvatarChanged {
@@ -48,25 +48,25 @@ pub enum VRChatEvent {
         display_name: String,
         avatar_id: i64,
         avatar_name: String,
-        changed_at: String,
+        changed_at: i64,  // Unix timestamp in milliseconds
     },
 
     ScreenshotTaken {
         instance_id: i64,
         screenshot_id: i64,
         file_path: String,
-        taken_at: String,
+        taken_at: i64,  // Unix timestamp in milliseconds
     },
 
     WorldNameUpdated {
         instance_id: i64,
         world_name: String,
-        updated_at: String,
+        updated_at: i64,  // Unix timestamp in milliseconds
     },
 
     InstanceSyncFailed {
         instance_id: i64,
-        failed_at: String,
+        failed_at: i64,  // Unix timestamp in milliseconds
         status: InstanceStatus,
     },
 }

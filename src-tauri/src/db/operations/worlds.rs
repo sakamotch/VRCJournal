@@ -1,7 +1,7 @@
 use rusqlite::{Connection, OptionalExtension, Result};
 
 /// Upsert world and return world ID
-pub fn upsert_world(conn: &Connection, world_id: &str, timestamp: &str) -> Result<i64> {
+pub fn upsert_world(conn: &Connection, world_id: &str, timestamp: i64) -> Result<i64> {
     conn.execute(
         "INSERT INTO worlds (world_id, world_name, first_seen_at, last_seen_at)
          VALUES (?1, '', ?2, ?2)
@@ -33,7 +33,7 @@ pub fn upsert_world_name_history(
     conn: &Connection,
     world_id: i64,
     world_name: &str,
-    timestamp: &str,
+    timestamp: i64,
 ) -> Result<i64> {
     // Check if there's an existing entry with the same world name
     let existing: Option<i64> = conn
